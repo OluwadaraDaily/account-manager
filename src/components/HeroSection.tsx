@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
 import { requestGmailAccess, revokeGmailAccess } from "../google/gmailAuth";
+import { GmailImportProgress, importRecentGmailMessages } from "../google/gmailApi";
 
 export function HeroSection() {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importProgress, setImportProgress] = useState<GmailImportProgress | null>(null);
 
   const connectGmail = () => {
     setError(null);
@@ -25,10 +29,26 @@ export function HeroSection() {
   };
 
   const disconnectGmail = () => {
+    setImporting(false);
+    setImportProgress(null);
+    setImportError(null);
     revokeGmailAccess(accessToken);
     setAccessToken(null);
     setConnected(false);
     setError(null);
+  };
+
+  const importGmail = () => {
+    if (!accessToken) return;
+
+    setImporting(true);
+    setImportError(null);
+    setImportProgress(null);
+    void importRecentGmailMessages(accessToken, setImportProgress)
+      .catch(() => {
+        setImportError("Gmail import could not be completed. No message content was saved.");
+      })
+      .finally(() => setImporting(false));
   };
 
   return (
@@ -71,6 +91,31 @@ export function HeroSection() {
           <Icon name={connected ? "check" : "arrow"} size={17} />
         </button>
         {error && <p className="mt-3 text-[12px] leading-5 text-[#ffb4a8]">{error}</p>}
+        {connected && (
+          <div className="mt-5 border-t border-white/10 pt-5">
+            <button
+              onClick={importGmail}
+              disabled={importing}
+              className="flex w-full items-center justify-between rounded-full border border-white/20 px-5 py-3 text-[13px] font-semibold text-white transition hover:border-white/50 disabled:cursor-wait disabled:opacity-60"
+            >
+              {importing ? "Importing recent Gmail…" : "Import recent Gmail"}
+              <Icon name="arrow" size={17} />
+            </button>
+            {importProgress && (
+              <p className="mt-3 text-[12px] leading-5 text-white/60">
+                {importing
+                  ? importProgress.estimatedMessages &&
+                    importProgress.retrievedMessages < importProgress.estimatedMessages
+                    ? `Read ${importProgress.retrievedMessages} of approximately ${importProgress.estimatedMessages} messages`
+                    : `Read ${importProgress.retrievedMessages} messages`
+                  : `Imported ${importProgress.retrievedMessages} messages; ${importProgress.readableMessages} had readable bodies${importProgress.skippedMessages ? `, ${importProgress.skippedMessages} skipped` : ""}.`}
+              </p>
+            )}
+            {importError && (
+              <p className="mt-3 text-[12px] leading-5 text-[#ffb4a8]">{importError}</p>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

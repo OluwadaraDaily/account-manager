@@ -39,6 +39,15 @@ export type DecodedGmailBody = {
   html: string;
 };
 
+export type GmailImportProgress = {
+  pages: number;
+  listedMessages: number;
+  retrievedMessages: number;
+  readableMessages: number;
+  skippedMessages: number;
+  estimatedMessages?: number;
+};
+
 type ListMessagesOptions = {
   maxResults?: number;
   pageToken?: string;
@@ -126,4 +135,52 @@ export function decodeGmailBody(message: GmailMessageDetail): DecodedGmailBody {
   }
 
   return body;
+}
+
+export async function importRecentGmailMessages(
+  accessToken: string,
+  onProgress: (progress: GmailImportProgress) => void,
+): Promise<GmailImportProgress> {
+  let pageToken: string | undefined;
+  let progress: GmailImportProgress = {
+    pages: 0,
+    listedMessages: 0,
+    retrievedMessages: 0,
+    readableMessages: 0,
+    skippedMessages: 0,
+  };
+
+  do {
+    const page = await listGmailMessages(accessToken, {
+      maxResults: 25,
+      pageToken,
+      query: "newer_than:30d",
+    });
+
+    progress = {
+      ...progress,
+      pages: progress.pages + 1,
+      listedMessages: progress.listedMessages + page.messages.length,
+      estimatedMessages: page.resultSizeEstimate,
+    };
+    onProgress(progress);
+
+    for (const message of page.messages) {
+      const detail = await getGmailMessage(accessToken, message.id);
+      const body = decodeGmailBody(detail);
+      const hasReadableBody = Boolean(body.plainText || body.html);
+
+      progress = {
+        ...progress,
+        retrievedMessages: progress.retrievedMessages + 1,
+        readableMessages: progress.readableMessages + (hasReadableBody ? 1 : 0),
+        skippedMessages: progress.skippedMessages + (hasReadableBody ? 0 : 1),
+      };
+      onProgress(progress);
+    }
+
+    pageToken = page.nextPageToken;
+  } while (pageToken);
+
+  return progress;
 }
