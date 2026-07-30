@@ -1,4 +1,5 @@
 import { useState } from "react";
+import * as XLSX from "xlsx";
 
 type Transaction = {
   date: string;
@@ -37,16 +38,42 @@ function App() {
   const [period, setPeriod] = useState("Last 30 days");
   const [activeTab, setActiveTab] = useState("Overview");
 
+  const getExportDetails = () => {
+    const exportedAt = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    const fileStamp = `${exportedAt.getFullYear()}-${pad(exportedAt.getMonth() + 1)}-${pad(exportedAt.getDate())}-${pad(exportedAt.getHours())}${pad(exportedAt.getMinutes())}`;
+
+    return { exportedAt: exportedAt.toISOString(), fileStamp };
+  };
+
   const downloadCsv = () => {
-    const header = "Date,Description,Counterparty,Type,Amount,Status";
-    const rows = transactions.map((item) => [item.date, item.description, item.counterparty, item.type, item.amount, item.status].map((value) => `"${value}"`).join(","));
+    const { exportedAt, fileStamp } = getExportDetails();
+    const header = "Date,Description,Counterparty,Type,Amount,Status,ExportedAt";
+    const rows = transactions.map((item) => [item.date, item.description, item.counterparty, item.type, item.amount, item.status, exportedAt].map((value) => `"${value}"`).join(","));
     const blob = new Blob([[header, ...rows].join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "account-manager-transactions.csv";
+    link.download = `account-manager-transactions-${fileStamp}.csv`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const downloadXlsx = () => {
+    const { exportedAt, fileStamp } = getExportDetails();
+    const rows = transactions.map((item) => ({
+      Date: item.date,
+      Description: item.description,
+      Counterparty: item.counterparty,
+      Type: item.type,
+      Amount: item.amount,
+      Status: item.status,
+      ExportedAt: exportedAt,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+    XLSX.writeFile(workbook, `account-manager-transactions-${fileStamp}.xlsx`);
   };
 
   return (
@@ -97,7 +124,7 @@ function App() {
         <section className="overflow-hidden rounded-[24px] border border-line bg-card">
           <div className="flex flex-col justify-between gap-5 border-b border-line px-5 py-5 sm:flex-row sm:items-center sm:px-7">
             <div><h2 className="font-display text-[20px] font-extrabold tracking-[-0.04em]">Transactions</h2><p className="mt-1 text-[12px] text-muted">5 transactions found in {period.toLowerCase()}</p></div>
-            <div className="flex gap-2"><button className="flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-[12px] font-semibold text-muted transition hover:border-ink hover:text-ink"><Icon name="filter" size={15} /> Filter</button><button onClick={downloadCsv} className="flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-[12px] font-semibold text-white transition hover:bg-moss-dark"><Icon name="download" size={15} /> Export CSV</button></div>
+            <div className="flex flex-wrap gap-2"><button className="flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-[12px] font-semibold text-muted transition hover:border-ink hover:text-ink"><Icon name="filter" size={15} /> Filter</button><button onClick={downloadCsv} className="flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-[12px] font-semibold text-ink transition hover:border-ink"><Icon name="download" size={15} /> CSV</button><button onClick={downloadXlsx} className="flex items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-[12px] font-semibold text-white transition hover:bg-moss-dark"><Icon name="download" size={15} /> XLSX</button></div>
           </div>
           <div className="flex gap-6 border-b border-line px-5 sm:px-7"><Tab label="Overview" active={activeTab === "Overview"} onClick={() => setActiveTab("Overview")} /><Tab label="Needs review" active={activeTab === "Needs review"} onClick={() => setActiveTab("Needs review")} count={1} /></div>
           <div className="overflow-x-auto">

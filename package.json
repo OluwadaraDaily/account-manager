@@ -9,13 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
     "@tailwindcss/vite": "latest",
+    "@vitejs/plugin-react": "latest",
     "react": "latest",
     "react-dom": "latest",
     "tailwindcss": "latest",
+    "typescript": "latest",
     "vite": "latest",
-    "typescript": "latest"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "latest",
