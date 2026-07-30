@@ -1,11 +1,36 @@
+import { useState } from "react";
 import { Icon } from "./Icon";
+import { requestGmailAccess, revokeGmailAccess } from "../google/gmailAuth";
 
-type HeroSectionProps = {
-  connected: boolean;
-  onConnect: () => void;
-};
+export function HeroSection() {
+  const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
-export function HeroSection({ connected, onConnect }: HeroSectionProps) {
+  const connectGmail = () => {
+    setError(null);
+    setConnecting(true);
+    void requestGmailAccess({
+      onSuccess: (token) => {
+        setAccessToken(token);
+        setConnected(true);
+        setConnecting(false);
+      },
+      onError: (message) => {
+        setConnecting(false);
+        setError(message);
+      },
+    });
+  };
+
+  const disconnectGmail = () => {
+    revokeGmailAccess(accessToken);
+    setAccessToken(null);
+    setConnected(false);
+    setError(null);
+  };
+
   return (
     <section className="border-line grid gap-8 border-b py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:py-16">
       <div>
@@ -38,12 +63,14 @@ export function HeroSection({ connected, onConnect }: HeroSectionProps) {
           Read-only Gmail access, local processing, and a spreadsheet you control.
         </p>
         <button
-          onClick={onConnect}
+          onClick={connected ? disconnectGmail : connectGmail}
+          disabled={connecting}
           className="bg-lime text-ink mt-7 flex w-full items-center justify-between rounded-full px-5 py-3.5 text-[13px] font-bold transition hover:bg-[#e6f99b]"
         >
-          {connected ? "Gmail connected" : "Connect Gmail"}
+          {connecting ? "Connecting…" : connected ? "Disconnect Gmail" : "Connect Gmail"}
           <Icon name={connected ? "check" : "arrow"} size={17} />
         </button>
+        {error && <p className="mt-3 text-[12px] leading-5 text-[#ffb4a8]">{error}</p>}
       </div>
     </section>
   );
