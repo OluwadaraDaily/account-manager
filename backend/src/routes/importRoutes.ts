@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import { Router } from "express";
 import { appConfig } from "../config.js";
-import { listGmailMessages } from "../gmailClient.js";
+import { listGmailMessages } from "../integrations/google/gmailClient.js";
 import { parseCookies } from "../http/cookies.js";
 import { validateQuery, type ValidatedLocals } from "../middleware/validation.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
