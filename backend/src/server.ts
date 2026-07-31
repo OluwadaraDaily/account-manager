@@ -62,6 +62,12 @@ function parseCookies(header: string | undefined) {
   return cookies;
 }
 
+function redirectToFrontend(response: express.Response, status: "connected" | "error") {
+  const target = new URL(frontendOrigin);
+  target.searchParams.set("gmail", status);
+  response.redirect(target.toString());
+}
+
 async function exchangeAuthorizationCode(code: string) {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -126,7 +132,7 @@ app.get("/auth/google/start", (_request, response) => {
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
   if (!clientId || !redirectUri) {
-    response.status(503).json({ error: "Google authorization is not configured." });
+    redirectToFrontend(response, "error");
     return;
   }
 
@@ -158,18 +164,18 @@ app.get("/auth/google/callback", async (request, response) => {
   response.setHeader("Set-Cookie", serializeCookie(oauthStateCookieName, "", 0));
 
   if (!state || !expectedState || state !== expectedState) {
-    response.status(400).json({ error: "OAuth state validation failed." });
+    redirectToFrontend(response, "error");
     return;
   }
 
   if (typeof request.query.error === "string") {
-    response.status(400).json({ error: "Google authorization was not completed." });
+    redirectToFrontend(response, "error");
     return;
   }
 
   const code = typeof request.query.code === "string" ? request.query.code : null;
   if (!code) {
-    response.status(400).json({ error: "Google did not return an authorization code." });
+    redirectToFrontend(response, "error");
     return;
   }
 
@@ -189,18 +195,18 @@ app.get("/auth/google/callback", async (request, response) => {
       account,
       new Date(Date.now() + sessionLifetimeSeconds * 1000).toISOString(),
     );
-    response.append("Set-Cookie", serializeCookie(sessionCookieName, sessionId, sessionLifetimeSeconds));
+    response.append(
+      "Set-Cookie",
+      serializeCookie(sessionCookieName, sessionId, sessionLifetimeSeconds),
+    );
 
-    response.json({
-      status: "session_created",
-      googleAccount: { email: account.email, displayName: account.displayName },
-    });
+    redirectToFrontend(response, "connected");
   } catch (error) {
     console.error(
       "Google authorization code exchange failed:",
       error instanceof Error ? error.message : "unknown error",
     );
-    response.status(502).json({ error: "Google authorization could not be completed." });
+    redirectToFrontend(response, "error");
   }
 });
 

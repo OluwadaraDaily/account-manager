@@ -1,54 +1,59 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "./Icon";
-import { requestGmailAccess, revokeGmailAccess } from "../google/gmailAuth";
-import { GmailImportProgress, importRecentGmailMessages } from "../google/gmailApi";
+import {
+  disconnectGmail,
+  getGmailSession,
+  startGmailAuthorization,
+  type GmailSession,
+} from "../google/gmailAuth";
 
 export function HeroSection() {
   const [connected, setConnected] = useState(false);
+  const [account, setAccount] = useState<GmailSession["user"]>();
+  const [checkingSession, setCheckingSession] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [importing, setImporting] = useState(false);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [importProgress, setImportProgress] = useState<GmailImportProgress | null>(null);
+
+  useEffect(() => {
+    const status = new URLSearchParams(window.location.search).get("gmail");
+    if (status === "error") setError("Google authorization could not be completed.");
+    if (status) window.history.replaceState({}, document.title, window.location.pathname);
+
+    let cancelled = false;
+    void getGmailSession()
+      .then((session) => {
+        if (cancelled) return;
+        setConnected(session.authenticated);
+        setAccount(session.user);
+      })
+      .catch(() => {
+        if (!cancelled) setError("The Gmail connection could not be checked.");
+      })
+      .finally(() => {
+        if (!cancelled) setCheckingSession(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const connectGmail = () => {
     setError(null);
     setConnecting(true);
-    void requestGmailAccess({
-      onSuccess: (token) => {
-        setAccessToken(token);
-        setConnected(true);
-        setConnecting(false);
-      },
-      onError: (message) => {
-        setConnecting(false);
-        setError(message);
-      },
-    });
+    startGmailAuthorization();
   };
 
-  const disconnectGmail = () => {
-    setImporting(false);
-    setImportProgress(null);
-    setImportError(null);
-    revokeGmailAccess(accessToken);
-    setAccessToken(null);
-    setConnected(false);
+  const disconnect = () => {
     setError(null);
-  };
-
-  const importGmail = () => {
-    if (!accessToken) return;
-
-    setImporting(true);
-    setImportError(null);
-    setImportProgress(null);
-    void importRecentGmailMessages(accessToken, setImportProgress)
-      .catch(() => {
-        setImportError("Gmail import could not be completed. No message content was saved.");
+    setConnecting(true);
+    void disconnectGmail()
+      .then(() => {
+        setConnected(false);
+        setAccount(undefined);
       })
-      .finally(() => setImporting(false));
+      .catch(() => setError("Gmail could not be disconnected."))
+      .finally(() => setConnecting(false));
   };
 
   return (
@@ -83,37 +88,26 @@ export function HeroSection() {
           Read-only Gmail access, local processing, and a spreadsheet you control.
         </p>
         <button
-          onClick={connected ? disconnectGmail : connectGmail}
-          disabled={connecting}
-          className="bg-lime text-ink mt-7 flex w-full items-center justify-between rounded-full px-5 py-3.5 text-[13px] font-bold transition hover:bg-[#e6f99b]"
+          onClick={connected ? disconnect : connectGmail}
+          disabled={checkingSession || connecting}
+          className="bg-lime text-ink mt-7 flex w-full items-center justify-between rounded-full px-5 py-3.5 text-[13px] font-bold transition hover:bg-[#e6f99b] disabled:cursor-wait disabled:opacity-70"
         >
-          {connecting ? "Connecting…" : connected ? "Disconnect Gmail" : "Connect Gmail"}
+          {checkingSession
+            ? "Checking Gmail…"
+            : connecting
+              ? connected
+                ? "Disconnecting…"
+                : "Connecting…"
+              : connected
+                ? "Disconnect Gmail"
+                : "Connect Gmail"}
           <Icon name={connected ? "check" : "arrow"} size={17} />
         </button>
         {error && <p className="mt-3 text-[12px] leading-5 text-[#ffb4a8]">{error}</p>}
         {connected && (
-          <div className="mt-5 border-t border-white/10 pt-5">
-            <button
-              onClick={importGmail}
-              disabled={importing}
-              className="flex w-full items-center justify-between rounded-full border border-white/20 px-5 py-3 text-[13px] font-semibold text-white transition hover:border-white/50 disabled:cursor-wait disabled:opacity-60"
-            >
-              {importing ? "Importing recent Gmail…" : "Import recent Gmail"}
-              <Icon name="arrow" size={17} />
-            </button>
-            {importProgress && (
-              <p className="mt-3 text-[12px] leading-5 text-white/60">
-                {importing
-                  ? importProgress.estimatedMessages &&
-                    importProgress.retrievedMessages < importProgress.estimatedMessages
-                    ? `Read ${importProgress.retrievedMessages} of approximately ${importProgress.estimatedMessages} messages`
-                    : `Read ${importProgress.retrievedMessages} messages`
-                  : `Imported ${importProgress.retrievedMessages} messages; ${importProgress.readableMessages} had readable bodies${importProgress.skippedMessages ? `, ${importProgress.skippedMessages} skipped` : ""}.`}
-              </p>
-            )}
-            {importError && (
-              <p className="mt-3 text-[12px] leading-5 text-[#ffb4a8]">{importError}</p>
-            )}
+          <div className="mt-5 border-t border-white/10 pt-5 text-[12px] leading-5 text-white/60">
+            Gmail connected{account?.email ? ` as ${account.email}` : ""}. The backend import
+            service comes next.
           </div>
         )}
       </div>

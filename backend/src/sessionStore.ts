@@ -89,7 +89,9 @@ export class SqliteSessionStore implements SessionStore {
   }
 
   async delete(sessionId: string) {
-    this.database.prepare("DELETE FROM auth_sessions WHERE session_hash = ?").run(hashSessionId(sessionId));
+    this.database
+      .prepare("DELETE FROM auth_sessions WHERE session_hash = ?")
+      .run(hashSessionId(sessionId));
   }
 
   async close() {
@@ -106,7 +108,13 @@ export class PostgresSessionStore implements SessionStore {
       `INSERT INTO auth_sessions
         (session_hash, google_subject, email, display_name, expires_at, created_at)
        VALUES ($1, $2, $3, $4, $5, NOW())`,
-      [hashSessionId(sessionId), account.googleSubject, account.email, account.displayName, expiresAt],
+      [
+        hashSessionId(sessionId),
+        account.googleSubject,
+        account.email,
+        account.displayName,
+        expiresAt,
+      ],
     );
     return sessionId;
   }
@@ -123,7 +131,9 @@ export class PostgresSessionStore implements SessionStore {
   }
 
   async delete(sessionId: string) {
-    await this.pool.query("DELETE FROM auth_sessions WHERE session_hash = $1", [hashSessionId(sessionId)]);
+    await this.pool.query("DELETE FROM auth_sessions WHERE session_hash = $1", [
+      hashSessionId(sessionId),
+    ]);
   }
 
   async close() {
