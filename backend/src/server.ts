@@ -214,10 +214,7 @@ app.get("/auth/google/callback", async (request, response) => {
 
     redirectToFrontend(response, "connected");
   } catch (error) {
-    console.error(
-      "Google authorization code exchange failed:",
-      error instanceof Error ? error.message : "unknown error",
-    );
+    console.error("Google authorization code exchange failed.");
     redirectToFrontend(response, "error");
   }
 });
