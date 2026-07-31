@@ -1,34 +1,21 @@
 import { randomUUID } from "node:crypto";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
-import dotenv from "dotenv";
 import express from "express";
 import { OAuth2Client } from "google-auth-library";
 import type { HealthResponse } from "@account-manager/shared";
+import { appConfig } from "./config.js";
 import { listGmailMessages } from "./gmailClient.js";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { createSessionStore } from "./sessionStore.js";
 import { decryptToken, encryptToken } from "./tokenCrypto.js";
 
-dotenv.config({
-  path: resolve(dirname(fileURLToPath(import.meta.url)), "../.env"),
-});
-
 const app = express();
-const port = Number(process.env.PORT ?? 8787);
-const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:5174";
-const oauthStateCookieName = "account_manager_oauth_state";
-const sessionCookieName = "account_manager_session";
-const oauthStateLifetimeSeconds = 10 * 60;
-const sessionLifetimeSeconds = 30 * 24 * 60 * 60;
-const secureCookies = process.env.SESSION_COOKIE_SECURE === "true";
 const refreshTokenStorePromise = createRefreshTokenStore();
 const sessionStorePromise = createSessionStore();
 
 app.disable("x-powered-by");
 
 app.use((request, response, next) => {
-  response.setHeader("Access-Control-Allow-Origin", frontendOrigin);
+  response.setHeader("Access-Control-Allow-Origin", appConfig.frontendOrigin);
   response.setHeader("Access-Control-Allow-Credentials", "true");
   response.setHeader("Access-Control-Allow-Headers", "Content-Type");
   response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -52,7 +39,7 @@ function serializeCookie(name: string, value: string, maxAgeSeconds: number) {
     "HttpOnly",
     "SameSite=Lax",
   ];
-  if (secureCookies) attributes.push("Secure");
+  if (appConfig.secureCookies) attributes.push("Secure");
   return attributes.join("; ");
 }
 
@@ -71,7 +58,7 @@ function parseCookies(header: string | undefined) {
 }
 
 function redirectToFrontend(response: express.Response, status: "connected" | "error") {
-  const target = new URL(frontendOrigin);
+  const target = new URL(appConfig.frontendOrigin);
   target.searchParams.set("gmail", status);
   response.redirect(target.toString());
 }
@@ -171,7 +158,7 @@ app.get("/auth/google/start", (_request, response) => {
 
   response.setHeader(
     "Set-Cookie",
-    serializeCookie(oauthStateCookieName, state, oauthStateLifetimeSeconds),
+    serializeCookie(appConfig.oauthStateCookieName, state, appConfig.oauthStateLifetimeSeconds),
   );
   response.redirect(authorizationUrl.toString());
 });
@@ -179,9 +166,9 @@ app.get("/auth/google/start", (_request, response) => {
 app.get("/auth/google/callback", async (request, response) => {
   const cookies = parseCookies(request.headers.cookie);
   const state = typeof request.query.state === "string" ? request.query.state : null;
-  const expectedState = cookies.get(oauthStateCookieName);
+  const expectedState = cookies.get(appConfig.oauthStateCookieName);
 
-  response.setHeader("Set-Cookie", serializeCookie(oauthStateCookieName, "", 0));
+  response.setHeader("Set-Cookie", serializeCookie(appConfig.oauthStateCookieName, "", 0));
 
   if (!state || !expectedState || state !== expectedState) {
     redirectToFrontend(response, "error");
@@ -213,11 +200,11 @@ app.get("/auth/google/callback", async (request, response) => {
 
     const sessionId = await sessionStore.create(
       account,
-      new Date(Date.now() + sessionLifetimeSeconds * 1000).toISOString(),
+      new Date(Date.now() + appConfig.sessionLifetimeSeconds * 1000).toISOString(),
     );
     response.append(
       "Set-Cookie",
-      serializeCookie(sessionCookieName, sessionId, sessionLifetimeSeconds),
+      serializeCookie(appConfig.sessionCookieName, sessionId, appConfig.sessionLifetimeSeconds),
     );
 
     redirectToFrontend(response, "connected");
@@ -228,7 +215,7 @@ app.get("/auth/google/callback", async (request, response) => {
 });
 
 app.get("/auth/session", async (request, response) => {
-  const sessionId = parseCookies(request.headers.cookie).get(sessionCookieName);
+  const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
   const sessionStore = await sessionStorePromise;
   const account = sessionId ? await sessionStore.get(sessionId) : null;
 
@@ -244,7 +231,7 @@ app.get("/auth/session", async (request, response) => {
 });
 
 app.get("/imports/gmail/messages", async (request, response) => {
-  const sessionId = parseCookies(request.headers.cookie).get(sessionCookieName);
+  const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
   const sessionStore = await sessionStorePromise;
   const account = sessionId ? await sessionStore.get(sessionId) : null;
 
@@ -279,12 +266,12 @@ app.get("/imports/gmail/messages", async (request, response) => {
 
 app.post("/auth/logout", async (request, response) => {
   const origin = request.get("origin");
-  if (origin && origin !== frontendOrigin) {
+  if (origin && origin !== appConfig.frontendOrigin) {
     response.status(403).json({ error: "Origin is not allowed." });
     return;
   }
 
-  const sessionId = parseCookies(request.headers.cookie).get(sessionCookieName);
+  const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
   if (sessionId) {
     const sessionStore = await sessionStorePromise;
     const refreshTokenStore = await refreshTokenStorePromise;
@@ -304,7 +291,7 @@ app.post("/auth/logout", async (request, response) => {
     await sessionStore.delete(sessionId);
   }
 
-  response.setHeader("Set-Cookie", serializeCookie(sessionCookieName, "", 0));
+  response.setHeader("Set-Cookie", serializeCookie(appConfig.sessionCookieName, "", 0));
   response.status(204).end();
 });
 
@@ -317,6 +304,6 @@ app.get("/health", (_request, response) => {
   response.json(body);
 });
 
-app.listen(port, () => {
-  console.log(`Account Manager backend listening on http://localhost:${port}`);
+app.listen(appConfig.port, () => {
+  console.log(`Account Manager backend listening on http://localhost:${appConfig.port}`);
 });
