@@ -1,8 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
-import { mkdirSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import Database from "better-sqlite3";
-import { Pool } from "pg";
+import { createDatabaseConnection } from "./db/database.js";
+import { createSqliteDatabase, type SqliteDatabase } from "./db/sqlite.js";
+import type { PostgresPool } from "./db/postgres.js";
 import type { GoogleAccount } from "./refreshTokenStore.js";
 
 export interface SessionStore {
@@ -46,14 +45,10 @@ function toAccount(row: SessionRow): GoogleAccount {
 }
 
 export class SqliteSessionStore implements SessionStore {
-  private readonly database: Database.Database;
+  private readonly database: SqliteDatabase;
 
-  constructor(databasePath = process.env.DATABASE_PATH ?? "./data/account-manager.sqlite") {
-    const resolvedPath = databasePath === ":memory:" ? databasePath : resolve(databasePath);
-    if (resolvedPath !== ":memory:") mkdirSync(dirname(resolvedPath), { recursive: true });
-
-    this.database = new Database(resolvedPath);
-    this.database.pragma("journal_mode = WAL");
+  constructor(database: SqliteDatabase = createSqliteDatabase()) {
+    this.database = database;
     this.database.exec(schema.replaceAll("TIMESTAMPTZ", "TEXT"));
   }
 
@@ -100,7 +95,7 @@ export class SqliteSessionStore implements SessionStore {
 }
 
 export class PostgresSessionStore implements SessionStore {
-  constructor(private readonly pool: Pool) {}
+  constructor(private readonly pool: PostgresPool) {}
 
   async create(account: GoogleAccount, expiresAt: string) {
     const sessionId = createSessionId();
@@ -142,11 +137,12 @@ export class PostgresSessionStore implements SessionStore {
 }
 
 export async function createSessionStore(): Promise<SessionStore> {
-  if (process.env.DATABASE_URL) {
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    await pool.query(schema);
-    return new PostgresSessionStore(pool);
+  const connection = createDatabaseConnection();
+
+  if (connection.dialect === "postgres") {
+    await connection.pool.query(schema);
+    return new PostgresSessionStore(connection.pool);
   }
 
-  return new SqliteSessionStore();
+  return new SqliteSessionStore(connection.database);
 }
