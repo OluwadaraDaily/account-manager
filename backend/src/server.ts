@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import express from "express";
 import { OAuth2Client } from "google-auth-library";
 import type { HealthResponse } from "@account-manager/shared";
+import { listGmailMessages } from "./gmailClient.js";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { createSessionStore } from "./sessionStore.js";
 import { decryptToken, encryptToken } from "./tokenCrypto.js";
@@ -240,6 +241,40 @@ app.get("/auth/session", async (request, response) => {
     authenticated: true,
     user: { email: account.email, displayName: account.displayName },
   });
+});
+
+app.get("/imports/gmail/messages", async (request, response) => {
+  const sessionId = parseCookies(request.headers.cookie).get(sessionCookieName);
+  const sessionStore = await sessionStorePromise;
+  const account = sessionId ? await sessionStore.get(sessionId) : null;
+
+  if (!account) {
+    response.status(401).json({ error: "Gmail authentication is required." });
+    return;
+  }
+
+  const refreshTokenStore = await refreshTokenStorePromise;
+  const encryptedToken = await refreshTokenStore.get(account);
+
+  if (!encryptedToken) {
+    response.status(409).json({ error: "Gmail is not connected." });
+    return;
+  }
+
+  const pageToken =
+    typeof request.query.pageToken === "string" ? request.query.pageToken : undefined;
+
+  try {
+    const result = await listGmailMessages({
+      refreshToken: decryptToken(encryptedToken),
+      pageToken,
+    });
+
+    response.json(result);
+  } catch {
+    console.error("Gmail message listing failed.");
+    response.status(502).json({ error: "Gmail messages could not be retrieved." });
+  }
 });
 
 app.post("/auth/logout", async (request, response) => {
