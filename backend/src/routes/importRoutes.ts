@@ -4,8 +4,8 @@ import { appConfig } from "../config.js";
 import { listGmailMessages } from "../gmailClient.js";
 import { parseCookies } from "../http/cookies.js";
 import { validateQuery, type ValidatedLocals } from "../middleware/validation.js";
-import type { RefreshTokenStore } from "../refreshTokenStore.js";
-import type { SessionStore } from "../sessionStore.js";
+import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
+import type { SessionStore } from "../db/repositories/sessionStore.js";
 import { decryptToken } from "../tokenCrypto.js";
 import { importMessagesQuerySchema } from "../validators/importValidators.js";
 

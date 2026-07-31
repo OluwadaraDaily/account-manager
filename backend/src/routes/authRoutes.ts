@@ -8,8 +8,8 @@ import {
   revokeGoogleRefreshToken,
   verifyGoogleIdentity,
 } from "../integrations/google/googleOAuth.js";
-import type { RefreshTokenStore } from "../refreshTokenStore.js";
-import type { SessionStore } from "../sessionStore.js";
+import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
+import type { SessionStore } from "../db/repositories/sessionStore.js";
 import { decryptToken, encryptToken } from "../tokenCrypto.js";
 
 type AuthRouterDependencies = {

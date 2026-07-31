@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
-import { createDatabaseConnection, type DatabaseConnection } from "./db/database.js";
-import { createSqliteDatabase, type SqliteDatabase } from "./db/sqlite.js";
-import type { PostgresPool } from "./db/postgres.js";
+import { createDatabaseConnection, type DatabaseConnection } from "../database.js";
+import { createSqliteDatabase, type SqliteDatabase } from "../sqlite.js";
+import type { PostgresPool } from "../postgres.js";
 import type { GoogleAccount } from "./refreshTokenStore.js";
 
 export interface SessionStore {
