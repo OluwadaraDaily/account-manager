@@ -4,11 +4,18 @@
   "version": "0.1.0",
   "type": "module",
   "workspaces": [
-    "frontend"
+    "frontend",
+    "backend",
+    "shared"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace frontend",
-    "build": "npm run build --workspace frontend",
+    "dev": "npm run dev:frontend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "dev:backend": "npm run dev --workspace backend",
+    "build": "npm run build:shared && npm run build:frontend && npm run build:backend",
+    "build:shared": "npm run build --workspace shared",
+    "build:frontend": "npm run build --workspace frontend",
+    "build:backend": "npm run build --workspace backend",
     "preview": "npm run preview --workspace frontend",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
