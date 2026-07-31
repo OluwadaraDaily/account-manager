@@ -4,7 +4,7 @@ import { OAuth2Client } from "google-auth-library";
 import type { HealthResponse } from "@account-manager/shared";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { createSessionStore } from "./sessionStore.js";
-import { encryptToken } from "./tokenCrypto.js";
+import { decryptToken, encryptToken } from "./tokenCrypto.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -127,6 +127,18 @@ async function verifyGoogleIdentity(idToken: string) {
   };
 }
 
+async function revokeGoogleRefreshToken(refreshToken: string) {
+  const response = await fetch("https://oauth2.googleapis.com/revoke", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ token: refreshToken }),
+  });
+
+  if (!response.ok && response.status !== 400) {
+    throw new Error(`Google token revocation failed with status ${response.status}.`);
+  }
+}
+
 app.get("/auth/google/start", (_request, response) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const redirectUri = process.env.GOOGLE_REDIRECT_URI;
@@ -236,6 +248,20 @@ app.post("/auth/logout", async (request, response) => {
   const sessionId = parseCookies(request.headers.cookie).get(sessionCookieName);
   if (sessionId) {
     const sessionStore = await sessionStorePromise;
+    const refreshTokenStore = await refreshTokenStorePromise;
+    const account = await sessionStore.get(sessionId);
+
+    if (account) {
+      try {
+        const encryptedToken = await refreshTokenStore.get(account);
+        if (encryptedToken) await revokeGoogleRefreshToken(decryptToken(encryptedToken));
+      } catch {
+        console.warn("Google token revocation failed; local credentials will still be deleted.");
+      } finally {
+        await refreshTokenStore.delete(account);
+      }
+    }
+
     await sessionStore.delete(sessionId);
   }
 
