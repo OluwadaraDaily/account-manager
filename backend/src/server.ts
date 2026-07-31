@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import express from "express";
+import { OAuth2Client } from "google-auth-library";
 import type { HealthResponse } from "@account-manager/shared";
+import { SqliteRefreshTokenStore } from "./refreshTokenStore.js";
+import { encryptToken } from "./tokenCrypto.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
@@ -8,6 +11,7 @@ const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:5174";
 const oauthStateCookieName = "account_manager_oauth_state";
 const oauthStateLifetimeSeconds = 10 * 60;
 const secureCookies = process.env.SESSION_COOKIE_SECURE === "true";
+const refreshTokenStore = new SqliteRefreshTokenStore();
 
 app.disable("x-powered-by");
 
@@ -89,7 +93,28 @@ async function exchangeAuthorizationCode(code: string) {
     throw new Error("Google token exchange did not return the expected tokens.");
   }
 
-  return { hasRefreshToken: Boolean(tokens.refresh_token) };
+  return {
+    idToken: tokens.id_token,
+    refreshToken: tokens.refresh_token ?? null,
+  };
+}
+
+async function verifyGoogleIdentity(idToken: string) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) throw new Error("GOOGLE_CLIENT_ID is not configured.");
+
+  const ticket = await new OAuth2Client(clientId).verifyIdToken({
+    idToken,
+    audience: clientId,
+  });
+  const payload = ticket.getPayload();
+  if (!payload?.sub) throw new Error("Google identity did not include a subject.");
+
+  return {
+    googleSubject: payload.sub,
+    email: payload.email ?? null,
+    displayName: payload.name ?? null,
+  };
 }
 
 app.get("/auth/google/start", (_request, response) => {
@@ -145,11 +170,18 @@ app.get("/auth/google/callback", async (request, response) => {
   }
 
   try {
-    const result = await exchangeAuthorizationCode(code);
+    const tokens = await exchangeAuthorizationCode(code);
+    const account = await verifyGoogleIdentity(tokens.idToken);
+
+    if (tokens.refreshToken) {
+      refreshTokenStore.save(account, encryptToken(tokens.refreshToken));
+    } else if (!refreshTokenStore.has(account)) {
+      throw new Error("Google did not return a refresh token for this account.");
+    }
+
     response.json({
-      status: "authorization_code_exchanged",
-      refreshTokenReceived: result.hasRefreshToken,
-      message: "The code was exchanged successfully. Tokens were not stored yet.",
+      status: "refresh_token_stored",
+      googleAccount: { email: account.email, displayName: account.displayName },
     });
   } catch (error) {
     console.error(

@@ -10,7 +10,10 @@
   },
   "dependencies": {
     "@account-manager/shared": "0.1.0",
-    "express": "latest"
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^13.0.2",
+    "express": "latest",
+    "google-auth-library": "^11.0.0"
   },
   "devDependencies": {
     "@types/express": "latest",
