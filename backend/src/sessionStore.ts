@@ -17,17 +17,6 @@ type SessionRow = {
   display_name: string | null;
 };
 
-const schema = `
-  CREATE TABLE IF NOT EXISTS auth_sessions (
-    session_hash TEXT PRIMARY KEY,
-    google_subject TEXT NOT NULL,
-    email TEXT,
-    display_name TEXT,
-    expires_at TIMESTAMPTZ NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL
-  )
-`;
-
 function hashSessionId(sessionId: string) {
   return createHash("sha256").update(sessionId).digest("hex");
 }
@@ -52,7 +41,6 @@ export class SqliteSessionStore implements SessionStore {
     private readonly ownsDatabase = true,
   ) {
     this.database = database;
-    this.database.exec(schema.replaceAll("TIMESTAMPTZ", "TEXT"));
   }
 
   async create(account: GoogleAccount, expiresAt: string) {
@@ -147,7 +135,6 @@ export async function createSessionStore(connection?: DatabaseConnection): Promi
   const activeConnection = connection ?? createDatabaseConnection();
 
   if (activeConnection.dialect === "postgres") {
-    await activeConnection.pool.query(schema);
     return new PostgresSessionStore(activeConnection.pool, ownsConnection);
   }
 

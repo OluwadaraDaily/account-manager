@@ -24,20 +24,6 @@ export interface RefreshTokenStore {
   close(): Promise<void>;
 }
 
-const postgresSchema = `
-  CREATE TABLE IF NOT EXISTS google_refresh_tokens (
-    google_subject TEXT PRIMARY KEY,
-    email TEXT,
-    display_name TEXT,
-    ciphertext TEXT NOT NULL,
-    iv TEXT NOT NULL,
-    auth_tag TEXT NOT NULL,
-    key_version INTEGER NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL,
-    updated_at TIMESTAMPTZ NOT NULL
-  )
-`;
-
 function toEncryptedToken(row: TokenRow): EncryptedToken {
   return {
     ciphertext: row.ciphertext,
@@ -55,7 +41,6 @@ export class SqliteRefreshTokenStore implements RefreshTokenStore {
     private readonly ownsDatabase = true,
   ) {
     this.database = database;
-    this.database.exec(postgresSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   }
 
   async save(account: GoogleAccount, encryptedToken: EncryptedToken) {
@@ -172,7 +157,6 @@ export async function createRefreshTokenStore(
   const activeConnection = connection ?? createDatabaseConnection();
 
   if (activeConnection.dialect === "postgres") {
-    await activeConnection.pool.query(postgresSchema);
     return new PostgresRefreshTokenStore(activeConnection.pool, ownsConnection);
   }
 
