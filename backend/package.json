@@ -16,7 +16,8 @@
     "dotenv": "^17.4.2",
     "express": "latest",
     "google-auth-library": "^11.0.0",
-    "pg": "^8.22.0"
+    "pg": "^8.22.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/express": "latest",
