@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { createDatabaseConnection } from "./db/database.js";
+import { createDatabaseConnection, type DatabaseConnection } from "./db/database.js";
 import { createSqliteDatabase, type SqliteDatabase } from "./db/sqlite.js";
 import type { PostgresPool } from "./db/postgres.js";
 import type { GoogleAccount } from "./refreshTokenStore.js";
@@ -47,7 +47,10 @@ function toAccount(row: SessionRow): GoogleAccount {
 export class SqliteSessionStore implements SessionStore {
   private readonly database: SqliteDatabase;
 
-  constructor(database: SqliteDatabase = createSqliteDatabase()) {
+  constructor(
+    database: SqliteDatabase = createSqliteDatabase(),
+    private readonly ownsDatabase = true,
+  ) {
     this.database = database;
     this.database.exec(schema.replaceAll("TIMESTAMPTZ", "TEXT"));
   }
@@ -90,12 +93,15 @@ export class SqliteSessionStore implements SessionStore {
   }
 
   async close() {
-    this.database.close();
+    if (this.ownsDatabase) this.database.close();
   }
 }
 
 export class PostgresSessionStore implements SessionStore {
-  constructor(private readonly pool: PostgresPool) {}
+  constructor(
+    private readonly pool: PostgresPool,
+    private readonly ownsPool = true,
+  ) {}
 
   async create(account: GoogleAccount, expiresAt: string) {
     const sessionId = createSessionId();
@@ -132,17 +138,18 @@ export class PostgresSessionStore implements SessionStore {
   }
 
   async close() {
-    await this.pool.end();
+    if (this.ownsPool) await this.pool.end();
   }
 }
 
-export async function createSessionStore(): Promise<SessionStore> {
-  const connection = createDatabaseConnection();
+export async function createSessionStore(connection?: DatabaseConnection): Promise<SessionStore> {
+  const ownsConnection = !connection;
+  const activeConnection = connection ?? createDatabaseConnection();
 
-  if (connection.dialect === "postgres") {
-    await connection.pool.query(schema);
-    return new PostgresSessionStore(connection.pool);
+  if (activeConnection.dialect === "postgres") {
+    await activeConnection.pool.query(schema);
+    return new PostgresSessionStore(activeConnection.pool, ownsConnection);
   }
 
-  return new SqliteSessionStore(connection.database);
+  return new SqliteSessionStore(activeConnection.database, ownsConnection);
 }

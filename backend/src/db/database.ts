@@ -1,13 +1,16 @@
-import { createPostgresPool, type PostgresPool } from "./postgres.js";
-import { createSqliteDatabase, type SqliteDatabase } from "./sqlite.js";
+import { closePostgresPool, createPostgresPool, type PostgresPool } from "./postgres.js";
+import { closeSqliteDatabase, createSqliteDatabase, type SqliteDatabase } from "./sqlite.js";
 
 export type DatabaseConnection =
-  { dialect: "sqlite"; database: SqliteDatabase } | { dialect: "postgres"; pool: PostgresPool };
+  | { dialect: "sqlite"; database: SqliteDatabase; close: () => Promise<void> }
+  | { dialect: "postgres"; pool: PostgresPool; close: () => Promise<void> };
 
 export function createDatabaseConnection(): DatabaseConnection {
   if (process.env.DATABASE_URL) {
-    return { dialect: "postgres", pool: createPostgresPool() };
+    const pool = createPostgresPool();
+    return { dialect: "postgres", pool, close: () => closePostgresPool(pool) };
   }
 
-  return { dialect: "sqlite", database: createSqliteDatabase() };
+  const database = createSqliteDatabase();
+  return { dialect: "sqlite", database, close: () => closeSqliteDatabase(database) };
 }

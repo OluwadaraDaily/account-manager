@@ -1,5 +1,6 @@
 import { createApp } from "./app.js";
 import { appConfig } from "./config.js";
+import { createDatabaseConnection } from "./db/database.js";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { createSessionStore } from "./sessionStore.js";
 import { createAuthRouter } from "./routes/authRoutes.js";
@@ -7,8 +8,9 @@ import { createHealthRouter } from "./routes/healthRoutes.js";
 import { createImportRouter } from "./routes/importRoutes.js";
 
 const app = createApp();
-const refreshTokenStorePromise = createRefreshTokenStore();
-const sessionStorePromise = createSessionStore();
+const databaseConnection = createDatabaseConnection();
+const refreshTokenStorePromise = createRefreshTokenStore(databaseConnection);
+const sessionStorePromise = createSessionStore(databaseConnection);
 
 app.use(createHealthRouter());
 app.use(

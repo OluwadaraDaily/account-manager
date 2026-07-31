@@ -1,4 +1,4 @@
-import { createDatabaseConnection } from "./db/database.js";
+import { createDatabaseConnection, type DatabaseConnection } from "./db/database.js";
 import { createSqliteDatabase, type SqliteDatabase } from "./db/sqlite.js";
 import type { PostgresPool } from "./db/postgres.js";
 import type { EncryptedToken } from "./tokenCrypto.js";
@@ -50,7 +50,10 @@ function toEncryptedToken(row: TokenRow): EncryptedToken {
 export class SqliteRefreshTokenStore implements RefreshTokenStore {
   private readonly database: SqliteDatabase;
 
-  constructor(database: SqliteDatabase = createSqliteDatabase()) {
+  constructor(
+    database: SqliteDatabase = createSqliteDatabase(),
+    private readonly ownsDatabase = true,
+  ) {
     this.database = database;
     this.database.exec(postgresSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   }
@@ -104,12 +107,15 @@ export class SqliteRefreshTokenStore implements RefreshTokenStore {
   }
 
   async close() {
-    this.database.close();
+    if (this.ownsDatabase) this.database.close();
   }
 }
 
 export class PostgresRefreshTokenStore implements RefreshTokenStore {
-  constructor(private readonly pool: PostgresPool) {}
+  constructor(
+    private readonly pool: PostgresPool,
+    private readonly ownsPool = true,
+  ) {}
 
   async save(account: GoogleAccount, encryptedToken: EncryptedToken) {
     await this.pool.query(
@@ -155,17 +161,20 @@ export class PostgresRefreshTokenStore implements RefreshTokenStore {
   }
 
   async close() {
-    await this.pool.end();
+    if (this.ownsPool) await this.pool.end();
   }
 }
 
-export async function createRefreshTokenStore(): Promise<RefreshTokenStore> {
-  const connection = createDatabaseConnection();
+export async function createRefreshTokenStore(
+  connection?: DatabaseConnection,
+): Promise<RefreshTokenStore> {
+  const ownsConnection = !connection;
+  const activeConnection = connection ?? createDatabaseConnection();
 
-  if (connection.dialect === "postgres") {
-    await connection.pool.query(postgresSchema);
-    return new PostgresRefreshTokenStore(connection.pool);
+  if (activeConnection.dialect === "postgres") {
+    await activeConnection.pool.query(postgresSchema);
+    return new PostgresRefreshTokenStore(activeConnection.pool, ownsConnection);
   }
 
-  return new SqliteRefreshTokenStore(connection.database);
+  return new SqliteRefreshTokenStore(activeConnection.database, ownsConnection);
 }

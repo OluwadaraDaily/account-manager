@@ -15,3 +15,7 @@ export function createSqliteDatabase(
   database.pragma("journal_mode = WAL");
   return database;
 }
+
+export async function closeSqliteDatabase(database: SqliteDatabase) {
+  database.close();
+}
