@@ -1,7 +1,7 @@
-import type { Response } from "express";
 import { Router } from "express";
 import { appConfig } from "../config.js";
 import { parseCookies, serializeCookie } from "../http/cookies.js";
+import { redirectToFrontend } from "../http/redirects.js";
 import {
   createGoogleAuthorizationRequest,
   exchangeGoogleAuthorizationCode,
@@ -16,12 +16,6 @@ type AuthRouterDependencies = {
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
   sessionStorePromise: Promise<SessionStore>;
 };
-
-function redirectToFrontend(response: Response, status: "connected" | "error") {
-  const target = new URL(appConfig.frontendOrigin);
-  target.searchParams.set("gmail", status);
-  response.redirect(target.toString());
-}
 
 export function createAuthRouter({
   refreshTokenStorePromise,
