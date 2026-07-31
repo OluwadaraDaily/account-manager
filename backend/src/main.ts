@@ -1,35 +1,17 @@
 import { randomUUID } from "node:crypto";
-import express from "express";
+import type { Response } from "express";
 import { OAuth2Client } from "google-auth-library";
 import type { HealthResponse } from "@account-manager/shared";
+import { createApp } from "./app.js";
 import { appConfig } from "./config.js";
 import { listGmailMessages } from "./gmailClient.js";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { createSessionStore } from "./sessionStore.js";
 import { decryptToken, encryptToken } from "./tokenCrypto.js";
 
-const app = express();
+const app = createApp();
 const refreshTokenStorePromise = createRefreshTokenStore();
 const sessionStorePromise = createSessionStore();
-
-app.disable("x-powered-by");
-
-app.use((request, response, next) => {
-  response.setHeader("Access-Control-Allow-Origin", appConfig.frontendOrigin);
-  response.setHeader("Access-Control-Allow-Credentials", "true");
-  response.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  response.setHeader("Vary", "Origin");
-
-  if (request.method === "OPTIONS") {
-    response.sendStatus(204);
-    return;
-  }
-
-  next();
-});
-
-app.use(express.json({ limit: "64kb" }));
 
 function serializeCookie(name: string, value: string, maxAgeSeconds: number) {
   const attributes = [
@@ -57,7 +39,7 @@ function parseCookies(header: string | undefined) {
   return cookies;
 }
 
-function redirectToFrontend(response: express.Response, status: "connected" | "error") {
+function redirectToFrontend(response: Response, status: "connected" | "error") {
   const target = new URL(appConfig.frontendOrigin);
   target.searchParams.set("gmail", status);
   response.redirect(target.toString());
