@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import express from "express";
 import { OAuth2Client } from "google-auth-library";
 import type { HealthResponse } from "@account-manager/shared";
-import { SqliteRefreshTokenStore } from "./refreshTokenStore.js";
+import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { encryptToken } from "./tokenCrypto.js";
 
 const app = express();
@@ -11,7 +11,7 @@ const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:5174";
 const oauthStateCookieName = "account_manager_oauth_state";
 const oauthStateLifetimeSeconds = 10 * 60;
 const secureCookies = process.env.SESSION_COOKIE_SECURE === "true";
-const refreshTokenStore = new SqliteRefreshTokenStore();
+const refreshTokenStorePromise = createRefreshTokenStore();
 
 app.disable("x-powered-by");
 
@@ -172,10 +172,11 @@ app.get("/auth/google/callback", async (request, response) => {
   try {
     const tokens = await exchangeAuthorizationCode(code);
     const account = await verifyGoogleIdentity(tokens.idToken);
+    const refreshTokenStore = await refreshTokenStorePromise;
 
     if (tokens.refreshToken) {
-      refreshTokenStore.save(account, encryptToken(tokens.refreshToken));
-    } else if (!refreshTokenStore.has(account)) {
+      await refreshTokenStore.save(account, encryptToken(tokens.refreshToken));
+    } else if (!(await refreshTokenStore.has(account))) {
       throw new Error("Google did not return a refresh token for this account.");
     }
 

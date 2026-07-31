@@ -1,6 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import Database from "better-sqlite3";
+import { Pool } from "pg";
 import type { EncryptedToken } from "./tokenCrypto.js";
 
 export type GoogleAccount = {
@@ -16,7 +17,38 @@ type TokenRow = {
   key_version: number;
 };
 
-export class SqliteRefreshTokenStore {
+export interface RefreshTokenStore {
+  save(account: GoogleAccount, encryptedToken: EncryptedToken): Promise<void>;
+  has(account: Pick<GoogleAccount, "googleSubject">): Promise<boolean>;
+  get(account: Pick<GoogleAccount, "googleSubject">): Promise<EncryptedToken | null>;
+  delete(account: Pick<GoogleAccount, "googleSubject">): Promise<void>;
+  close(): Promise<void>;
+}
+
+const postgresSchema = `
+  CREATE TABLE IF NOT EXISTS google_refresh_tokens (
+    google_subject TEXT PRIMARY KEY,
+    email TEXT,
+    display_name TEXT,
+    ciphertext TEXT NOT NULL,
+    iv TEXT NOT NULL,
+    auth_tag TEXT NOT NULL,
+    key_version INTEGER NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+  )
+`;
+
+function toEncryptedToken(row: TokenRow): EncryptedToken {
+  return {
+    ciphertext: row.ciphertext,
+    iv: row.iv,
+    authTag: row.auth_tag,
+    keyVersion: row.key_version,
+  };
+}
+
+export class SqliteRefreshTokenStore implements RefreshTokenStore {
   private readonly database: Database.Database;
 
   constructor(databasePath = process.env.DATABASE_PATH ?? "./data/account-manager.sqlite") {
@@ -26,22 +58,10 @@ export class SqliteRefreshTokenStore {
     this.database = new Database(resolvedPath);
     this.database.pragma("foreign_keys = ON");
     this.database.pragma("journal_mode = WAL");
-    this.database.exec(`
-      CREATE TABLE IF NOT EXISTS google_refresh_tokens (
-        google_subject TEXT PRIMARY KEY,
-        email TEXT,
-        display_name TEXT,
-        ciphertext TEXT NOT NULL,
-        iv TEXT NOT NULL,
-        auth_tag TEXT NOT NULL,
-        key_version INTEGER NOT NULL,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-      )
-    `);
+    this.database.exec(postgresSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   }
 
-  save(account: GoogleAccount, encryptedToken: EncryptedToken) {
+  async save(account: GoogleAccount, encryptedToken: EncryptedToken) {
     const now = new Date().toISOString();
     this.database
       .prepare(
@@ -66,37 +86,91 @@ export class SqliteRefreshTokenStore {
       );
   }
 
-  has(account: Pick<GoogleAccount, "googleSubject">) {
+  async has(account: Pick<GoogleAccount, "googleSubject">) {
     const row = this.database
       .prepare("SELECT 1 AS present FROM google_refresh_tokens WHERE google_subject = ?")
       .get(account.googleSubject) as { present: number } | undefined;
     return Boolean(row?.present);
   }
 
-  get(account: Pick<GoogleAccount, "googleSubject">): EncryptedToken | null {
+  async get(account: Pick<GoogleAccount, "googleSubject">) {
     const row = this.database
       .prepare(
         "SELECT ciphertext, iv, auth_tag, key_version FROM google_refresh_tokens WHERE google_subject = ?",
       )
       .get(account.googleSubject) as TokenRow | undefined;
 
-    return row
-      ? {
-          ciphertext: row.ciphertext,
-          iv: row.iv,
-          authTag: row.auth_tag,
-          keyVersion: row.key_version,
-        }
-      : null;
+    return row ? toEncryptedToken(row) : null;
   }
 
-  delete(account: Pick<GoogleAccount, "googleSubject">) {
+  async delete(account: Pick<GoogleAccount, "googleSubject">) {
     this.database
       .prepare("DELETE FROM google_refresh_tokens WHERE google_subject = ?")
       .run(account.googleSubject);
   }
 
-  close() {
+  async close() {
     this.database.close();
   }
+}
+
+export class PostgresRefreshTokenStore implements RefreshTokenStore {
+  constructor(private readonly pool: Pool) {}
+
+  async save(account: GoogleAccount, encryptedToken: EncryptedToken) {
+    await this.pool.query(
+      `INSERT INTO google_refresh_tokens
+        (google_subject, email, display_name, ciphertext, iv, auth_tag, key_version, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+       ON CONFLICT (google_subject) DO UPDATE SET email = EXCLUDED.email,
+         display_name = EXCLUDED.display_name, ciphertext = EXCLUDED.ciphertext,
+         iv = EXCLUDED.iv, auth_tag = EXCLUDED.auth_tag, key_version = EXCLUDED.key_version,
+         updated_at = NOW()`,
+      [
+        account.googleSubject,
+        account.email,
+        account.displayName,
+        encryptedToken.ciphertext,
+        encryptedToken.iv,
+        encryptedToken.authTag,
+        encryptedToken.keyVersion,
+      ],
+    );
+  }
+
+  async has(account: Pick<GoogleAccount, "googleSubject">) {
+    const result = await this.pool.query(
+      "SELECT 1 FROM google_refresh_tokens WHERE google_subject = $1",
+      [account.googleSubject],
+    );
+    return result.rowCount !== 0;
+  }
+
+  async get(account: Pick<GoogleAccount, "googleSubject">) {
+    const result = await this.pool.query<TokenRow>(
+      "SELECT ciphertext, iv, auth_tag, key_version FROM google_refresh_tokens WHERE google_subject = $1",
+      [account.googleSubject],
+    );
+    return result.rows[0] ? toEncryptedToken(result.rows[0]) : null;
+  }
+
+  async delete(account: Pick<GoogleAccount, "googleSubject">) {
+    await this.pool.query("DELETE FROM google_refresh_tokens WHERE google_subject = $1", [
+      account.googleSubject,
+    ]);
+  }
+
+  async close() {
+    await this.pool.end();
+  }
+}
+
+export async function createRefreshTokenStore(): Promise<RefreshTokenStore> {
+  if (process.env.DATABASE_URL) {
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    await pool.query(postgresSchema);
+    return new PostgresRefreshTokenStore(pool);
+  }
+
+  return new SqliteRefreshTokenStore();
 }
