@@ -3,15 +3,19 @@ import express from "express";
 import { OAuth2Client } from "google-auth-library";
 import type { HealthResponse } from "@account-manager/shared";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
+import { createSessionStore } from "./sessionStore.js";
 import { encryptToken } from "./tokenCrypto.js";
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);
 const frontendOrigin = process.env.FRONTEND_ORIGIN ?? "http://localhost:5174";
 const oauthStateCookieName = "account_manager_oauth_state";
+const sessionCookieName = "account_manager_session";
 const oauthStateLifetimeSeconds = 10 * 60;
+const sessionLifetimeSeconds = 30 * 24 * 60 * 60;
 const secureCookies = process.env.SESSION_COOKIE_SECURE === "true";
 const refreshTokenStorePromise = createRefreshTokenStore();
+const sessionStorePromise = createSessionStore();
 
 app.disable("x-powered-by");
 
@@ -19,7 +23,7 @@ app.use((request, response, next) => {
   response.setHeader("Access-Control-Allow-Origin", frontendOrigin);
   response.setHeader("Access-Control-Allow-Credentials", "true");
   response.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  response.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
+  response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   response.setHeader("Vary", "Origin");
 
   if (request.method === "OPTIONS") {
@@ -173,6 +177,7 @@ app.get("/auth/google/callback", async (request, response) => {
     const tokens = await exchangeAuthorizationCode(code);
     const account = await verifyGoogleIdentity(tokens.idToken);
     const refreshTokenStore = await refreshTokenStorePromise;
+    const sessionStore = await sessionStorePromise;
 
     if (tokens.refreshToken) {
       await refreshTokenStore.save(account, encryptToken(tokens.refreshToken));
@@ -180,8 +185,14 @@ app.get("/auth/google/callback", async (request, response) => {
       throw new Error("Google did not return a refresh token for this account.");
     }
 
+    const sessionId = await sessionStore.create(
+      account,
+      new Date(Date.now() + sessionLifetimeSeconds * 1000).toISOString(),
+    );
+    response.append("Set-Cookie", serializeCookie(sessionCookieName, sessionId, sessionLifetimeSeconds));
+
     response.json({
-      status: "refresh_token_stored",
+      status: "session_created",
       googleAccount: { email: account.email, displayName: account.displayName },
     });
   } catch (error) {
@@ -191,6 +202,39 @@ app.get("/auth/google/callback", async (request, response) => {
     );
     response.status(502).json({ error: "Google authorization could not be completed." });
   }
+});
+
+app.get("/auth/session", async (request, response) => {
+  const sessionId = parseCookies(request.headers.cookie).get(sessionCookieName);
+  const sessionStore = await sessionStorePromise;
+  const account = sessionId ? await sessionStore.get(sessionId) : null;
+
+  if (!account) {
+    response.json({ authenticated: false });
+    return;
+  }
+
+  response.json({
+    authenticated: true,
+    user: { email: account.email, displayName: account.displayName },
+  });
+});
+
+app.post("/auth/logout", async (request, response) => {
+  const origin = request.get("origin");
+  if (origin && origin !== frontendOrigin) {
+    response.status(403).json({ error: "Origin is not allowed." });
+    return;
+  }
+
+  const sessionId = parseCookies(request.headers.cookie).get(sessionCookieName);
+  if (sessionId) {
+    const sessionStore = await sessionStorePromise;
+    await sessionStore.delete(sessionId);
+  }
+
+  response.setHeader("Set-Cookie", serializeCookie(sessionCookieName, "", 0));
+  response.status(204).end();
 });
 
 app.get("/health", (_request, response) => {
