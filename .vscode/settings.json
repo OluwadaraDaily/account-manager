@@ -21,9 +21,4 @@
   "[typescriptreact]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "files.exclude": {
-    "**/.env": true,
-    "**/.env.*": true,
-    "**/.env.example": false
-  }
 }
