@@ -1,10 +1,17 @@
 import { randomUUID } from "node:crypto";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+import dotenv from "dotenv";
 import express from "express";
 import { OAuth2Client } from "google-auth-library";
 import type { HealthResponse } from "@account-manager/shared";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { createSessionStore } from "./sessionStore.js";
 import { decryptToken, encryptToken } from "./tokenCrypto.js";
+
+dotenv.config({
+  path: resolve(dirname(fileURLToPath(import.meta.url)), "../.env"),
+});
 
 const app = express();
 const port = Number(process.env.PORT ?? 8787);

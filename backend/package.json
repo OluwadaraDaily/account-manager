@@ -13,6 +13,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/pg": "^8.20.0",
     "better-sqlite3": "^13.0.2",
+    "dotenv": "^17.4.2",
     "express": "latest",
     "google-auth-library": "^11.0.0",
     "pg": "^8.22.0"

@@ -106,8 +106,7 @@ export function HeroSection() {
         {error && <p className="mt-3 text-[12px] leading-5 text-[#ffb4a8]">{error}</p>}
         {connected && (
           <div className="mt-5 border-t border-white/10 pt-5 text-[12px] leading-5 text-white/60">
-            Gmail connected{account?.email ? ` as ${account.email}` : ""}. The backend import
-            service comes next.
+            Gmail connected{account?.email ? ` as ${account.email}` : ""}
           </div>
         )}
       </div>
