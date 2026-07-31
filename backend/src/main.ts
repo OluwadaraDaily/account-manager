@@ -1,13 +1,11 @@
-import { randomUUID } from "node:crypto";
-import type { Response } from "express";
-import { OAuth2Client } from "google-auth-library";
 import { createApp } from "./app.js";
 import { appConfig } from "./config.js";
 import { listGmailMessages } from "./gmailClient.js";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { createSessionStore } from "./sessionStore.js";
-import { decryptToken, encryptToken } from "./tokenCrypto.js";
+import { decryptToken } from "./tokenCrypto.js";
 import { parseCookies, serializeCookie } from "./http/cookies.js";
+import { createAuthRouter } from "./routes/authRoutes.js";
 import { createHealthRouter } from "./routes/healthRoutes.js";
 
 const app = createApp();
@@ -15,179 +13,12 @@ const refreshTokenStorePromise = createRefreshTokenStore();
 const sessionStorePromise = createSessionStore();
 
 app.use(createHealthRouter());
-
-function redirectToFrontend(response: Response, status: "connected" | "error") {
-  const target = new URL(appConfig.frontendOrigin);
-  target.searchParams.set("gmail", status);
-  response.redirect(target.toString());
-}
-
-async function exchangeAuthorizationCode(code: string) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-
-  if (!clientId || !clientSecret || !redirectUri) {
-    throw new Error("Google OAuth server configuration is incomplete.");
-  }
-
-  const response = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
-      code,
-      grant_type: "authorization_code",
-      redirect_uri: redirectUri,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Google token exchange failed with status ${response.status}.`);
-  }
-
-  const tokens = (await response.json()) as {
-    access_token?: string;
-    id_token?: string;
-    refresh_token?: string;
-  };
-
-  if (!tokens.access_token || !tokens.id_token) {
-    throw new Error("Google token exchange did not return the expected tokens.");
-  }
-
-  return {
-    idToken: tokens.id_token,
-    refreshToken: tokens.refresh_token ?? null,
-  };
-}
-
-async function verifyGoogleIdentity(idToken: string) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) throw new Error("GOOGLE_CLIENT_ID is not configured.");
-
-  const ticket = await new OAuth2Client(clientId).verifyIdToken({
-    idToken,
-    audience: clientId,
-  });
-  const payload = ticket.getPayload();
-  if (!payload?.sub) throw new Error("Google identity did not include a subject.");
-
-  return {
-    googleSubject: payload.sub,
-    email: payload.email ?? null,
-    displayName: payload.name ?? null,
-  };
-}
-
-async function revokeGoogleRefreshToken(refreshToken: string) {
-  const response = await fetch("https://oauth2.googleapis.com/revoke", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ token: refreshToken }),
-  });
-
-  if (!response.ok && response.status !== 400) {
-    throw new Error(`Google token revocation failed with status ${response.status}.`);
-  }
-}
-
-app.get("/auth/google/start", (_request, response) => {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
-
-  if (!clientId || !redirectUri) {
-    redirectToFrontend(response, "error");
-    return;
-  }
-
-  const state = randomUUID();
-  const authorizationUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
-  authorizationUrl.searchParams.set("client_id", clientId);
-  authorizationUrl.searchParams.set("redirect_uri", redirectUri);
-  authorizationUrl.searchParams.set("response_type", "code");
-  authorizationUrl.searchParams.set(
-    "scope",
-    "openid email profile https://www.googleapis.com/auth/gmail.readonly",
-  );
-  authorizationUrl.searchParams.set("access_type", "offline");
-  authorizationUrl.searchParams.set("prompt", "consent");
-  authorizationUrl.searchParams.set("state", state);
-
-  response.setHeader(
-    "Set-Cookie",
-    serializeCookie(appConfig.oauthStateCookieName, state, appConfig.oauthStateLifetimeSeconds),
-  );
-  response.redirect(authorizationUrl.toString());
-});
-
-app.get("/auth/google/callback", async (request, response) => {
-  const cookies = parseCookies(request.headers.cookie);
-  const state = typeof request.query.state === "string" ? request.query.state : null;
-  const expectedState = cookies.get(appConfig.oauthStateCookieName);
-
-  response.setHeader("Set-Cookie", serializeCookie(appConfig.oauthStateCookieName, "", 0));
-
-  if (!state || !expectedState || state !== expectedState) {
-    redirectToFrontend(response, "error");
-    return;
-  }
-
-  if (typeof request.query.error === "string") {
-    redirectToFrontend(response, "error");
-    return;
-  }
-
-  const code = typeof request.query.code === "string" ? request.query.code : null;
-  if (!code) {
-    redirectToFrontend(response, "error");
-    return;
-  }
-
-  try {
-    const tokens = await exchangeAuthorizationCode(code);
-    const account = await verifyGoogleIdentity(tokens.idToken);
-    const refreshTokenStore = await refreshTokenStorePromise;
-    const sessionStore = await sessionStorePromise;
-
-    if (tokens.refreshToken) {
-      await refreshTokenStore.save(account, encryptToken(tokens.refreshToken));
-    } else if (!(await refreshTokenStore.has(account))) {
-      throw new Error("Google did not return a refresh token for this account.");
-    }
-
-    const sessionId = await sessionStore.create(
-      account,
-      new Date(Date.now() + appConfig.sessionLifetimeSeconds * 1000).toISOString(),
-    );
-    response.append(
-      "Set-Cookie",
-      serializeCookie(appConfig.sessionCookieName, sessionId, appConfig.sessionLifetimeSeconds),
-    );
-
-    redirectToFrontend(response, "connected");
-  } catch (error) {
-    console.error("Google authorization code exchange failed.");
-    redirectToFrontend(response, "error");
-  }
-});
-
-app.get("/auth/session", async (request, response) => {
-  const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
-  const sessionStore = await sessionStorePromise;
-  const account = sessionId ? await sessionStore.get(sessionId) : null;
-
-  if (!account) {
-    response.json({ authenticated: false });
-    return;
-  }
-
-  response.json({
-    authenticated: true,
-    user: { email: account.email, displayName: account.displayName },
-  });
-});
+app.use(
+  createAuthRouter({
+    refreshTokenStorePromise,
+    sessionStorePromise,
+  }),
+);
 
 app.get("/imports/gmail/messages", async (request, response) => {
   const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
@@ -221,37 +52,6 @@ app.get("/imports/gmail/messages", async (request, response) => {
     console.error("Gmail message listing failed.");
     response.status(502).json({ error: "Gmail messages could not be retrieved." });
   }
-});
-
-app.post("/auth/logout", async (request, response) => {
-  const origin = request.get("origin");
-  if (origin && origin !== appConfig.frontendOrigin) {
-    response.status(403).json({ error: "Origin is not allowed." });
-    return;
-  }
-
-  const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
-  if (sessionId) {
-    const sessionStore = await sessionStorePromise;
-    const refreshTokenStore = await refreshTokenStorePromise;
-    const account = await sessionStore.get(sessionId);
-
-    if (account) {
-      try {
-        const encryptedToken = await refreshTokenStore.get(account);
-        if (encryptedToken) await revokeGoogleRefreshToken(decryptToken(encryptedToken));
-      } catch {
-        console.warn("Google token revocation failed; local credentials will still be deleted.");
-      } finally {
-        await refreshTokenStore.delete(account);
-      }
-    }
-
-    await sessionStore.delete(sessionId);
-  }
-
-  response.setHeader("Set-Cookie", serializeCookie(appConfig.sessionCookieName, "", 0));
-  response.status(204).end();
 });
 
 app.listen(appConfig.port, () => {
