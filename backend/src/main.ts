@@ -1,17 +1,19 @@
 import { randomUUID } from "node:crypto";
 import type { Response } from "express";
 import { OAuth2Client } from "google-auth-library";
-import type { HealthResponse } from "@account-manager/shared";
 import { createApp } from "./app.js";
 import { appConfig } from "./config.js";
 import { listGmailMessages } from "./gmailClient.js";
 import { createRefreshTokenStore } from "./refreshTokenStore.js";
 import { createSessionStore } from "./sessionStore.js";
 import { decryptToken, encryptToken } from "./tokenCrypto.js";
+import { createHealthRouter } from "./routes/healthRoutes.js";
 
 const app = createApp();
 const refreshTokenStorePromise = createRefreshTokenStore();
 const sessionStorePromise = createSessionStore();
+
+app.use(createHealthRouter());
 
 function serializeCookie(name: string, value: string, maxAgeSeconds: number) {
   const attributes = [
@@ -275,15 +277,6 @@ app.post("/auth/logout", async (request, response) => {
 
   response.setHeader("Set-Cookie", serializeCookie(appConfig.sessionCookieName, "", 0));
   response.status(204).end();
-});
-
-app.get("/health", (_request, response) => {
-  const body: HealthResponse = {
-    service: "account-manager-backend",
-    status: "ok",
-  };
-
-  response.json(body);
 });
 
 app.listen(appConfig.port, () => {
