@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
-import { tokenConfig } from "./config.js";
+import { tokenConfig } from "../config.js";
 
 const algorithm = "aes-256-gcm";
 

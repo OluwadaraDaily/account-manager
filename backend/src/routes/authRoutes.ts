@@ -10,7 +10,7 @@ import {
 } from "../integrations/google/googleOAuth.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { SessionStore } from "../db/repositories/sessionStore.js";
-import { decryptToken, encryptToken } from "../tokenCrypto.js";
+import { decryptToken, encryptToken } from "../security/encryption.js";
 
 type AuthRouterDependencies = {
   refreshTokenStorePromise: Promise<RefreshTokenStore>;

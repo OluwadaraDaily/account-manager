@@ -1,7 +1,7 @@
 import { createDatabaseConnection, type DatabaseConnection } from "../database.js";
 import { createSqliteDatabase, type SqliteDatabase } from "../sqlite.js";
 import type { PostgresPool } from "../postgres.js";
-import type { EncryptedToken } from "../../tokenCrypto.js";
+import type { EncryptedToken } from "../../security/encryption.js";
 
 export type GoogleAccount = {
   googleSubject: string;

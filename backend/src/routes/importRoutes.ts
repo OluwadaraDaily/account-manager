@@ -6,7 +6,7 @@ import { parseCookies } from "../http/cookies.js";
 import { validateQuery, type ValidatedLocals } from "../middleware/validation.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { SessionStore } from "../db/repositories/sessionStore.js";
-import { decryptToken } from "../tokenCrypto.js";
+import { decryptToken } from "../security/encryption.js";
 import { importMessagesQuerySchema } from "../validators/importValidators.js";
 
 type ImportRouterDependencies = {
