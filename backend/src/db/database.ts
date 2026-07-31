@@ -1,3 +1,4 @@
+import { databaseConfig } from "../config.js";
 import { closePostgresPool, createPostgresPool, type PostgresPool } from "./postgres.js";
 import { closeSqliteDatabase, createSqliteDatabase, type SqliteDatabase } from "./sqlite.js";
 
@@ -6,7 +7,7 @@ export type DatabaseConnection =
   | { dialect: "postgres"; pool: PostgresPool; close: () => Promise<void> };
 
 export function createDatabaseConnection(): DatabaseConnection {
-  if (process.env.DATABASE_URL) {
+  if (databaseConfig.url) {
     const pool = createPostgresPool();
     return { dialect: "postgres", pool, close: () => closePostgresPool(pool) };
   }

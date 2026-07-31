@@ -15,3 +15,18 @@ export const appConfig = {
   sessionLifetimeSeconds: 30 * 24 * 60 * 60,
   secureCookies: process.env.SESSION_COOKIE_SECURE === "true",
 };
+
+export const googleConfig = {
+  clientId: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  redirectUri: process.env.GOOGLE_REDIRECT_URI,
+};
+
+export const databaseConfig = {
+  url: process.env.DATABASE_URL,
+  path: process.env.DATABASE_PATH ?? "./data/account-manager.sqlite",
+};
+
+export const tokenConfig = {
+  encryptionKey: process.env.TOKEN_ENCRYPTION_KEY,
+};

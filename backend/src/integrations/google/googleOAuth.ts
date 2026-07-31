@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { OAuth2Client } from "google-auth-library";
+import { googleConfig } from "../../config.js";
 
 export type GoogleAuthorizationRequest = {
   state: string;
@@ -7,8 +8,7 @@ export type GoogleAuthorizationRequest = {
 };
 
 export function createGoogleAuthorizationRequest(): GoogleAuthorizationRequest | null {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const { clientId, redirectUri } = googleConfig;
 
   if (!clientId || !redirectUri) return null;
 
@@ -29,9 +29,7 @@ export function createGoogleAuthorizationRequest(): GoogleAuthorizationRequest |
 }
 
 export async function exchangeGoogleAuthorizationCode(code: string) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+  const { clientId, clientSecret, redirectUri } = googleConfig;
 
   if (!clientId || !clientSecret || !redirectUri) {
     throw new Error("Google OAuth server configuration is incomplete.");
@@ -70,7 +68,7 @@ export async function exchangeGoogleAuthorizationCode(code: string) {
 }
 
 export async function verifyGoogleIdentity(idToken: string) {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const { clientId } = googleConfig;
   if (!clientId) throw new Error("GOOGLE_CLIENT_ID is not configured.");
 
   const ticket = await new OAuth2Client(clientId).verifyIdToken({

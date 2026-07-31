@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { tokenConfig } from "./config.js";
 
 const algorithm = "aes-256-gcm";
 
@@ -10,7 +11,7 @@ export type EncryptedToken = {
 };
 
 function getEncryptionKey() {
-  const encodedKey = process.env.TOKEN_ENCRYPTION_KEY;
+  const encodedKey = tokenConfig.encryptionKey;
   if (!encodedKey) throw new Error("TOKEN_ENCRYPTION_KEY is not configured.");
 
   const key = Buffer.from(encodedKey, "base64");

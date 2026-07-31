@@ -1,12 +1,11 @@
 import { mkdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import Database from "better-sqlite3";
+import { databaseConfig } from "../config.js";
 
 export type SqliteDatabase = Database.Database;
 
-export function createSqliteDatabase(
-  databasePath = process.env.DATABASE_PATH ?? "./data/account-manager.sqlite",
-): SqliteDatabase {
+export function createSqliteDatabase(databasePath = databaseConfig.path): SqliteDatabase {
   const resolvedPath = databasePath === ":memory:" ? databasePath : resolve(databasePath);
   if (resolvedPath !== ":memory:") mkdirSync(dirname(resolvedPath), { recursive: true });
 

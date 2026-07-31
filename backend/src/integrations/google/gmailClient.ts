@@ -1,4 +1,5 @@
 import { OAuth2Client } from "google-auth-library";
+import { googleConfig } from "../../config.js";
 
 type GmailMessageReference = {
   id: string;
@@ -26,8 +27,7 @@ export async function listGmailMessages({
   refreshToken,
   pageToken,
 }: ListMessagesOptions): Promise<GmailMessageList> {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const { clientId, clientSecret } = googleConfig;
 
   if (!clientId || !clientSecret) {
     throw new Error("Google OAuth server configuration is incomplete.");
