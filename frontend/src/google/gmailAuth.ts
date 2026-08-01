@@ -25,6 +25,20 @@ export type GmailMessageSearchResult = {
   resultSizeEstimate?: number;
 };
 
+export type GmailMessageMetadata = {
+  id: string;
+  threadId: string;
+  headers: {
+    from: string | null;
+    subject: string | null;
+    date: string | null;
+  };
+};
+
+export type GmailMessageMetadataResult = {
+  messages: GmailMessageMetadata[];
+};
+
 export function startGmailAuthorization() {
   window.location.assign(`${backendOrigin}/auth/google/start`);
 }
@@ -70,4 +84,22 @@ export async function searchGmailMessages(
   }
 
   return (await response.json()) as GmailMessageSearchResult;
+}
+
+export async function getGmailMessageMetadata(
+  messageIds: string[],
+): Promise<GmailMessageMetadataResult> {
+  const response = await fetch(`${backendOrigin}/imports/gmail/messages/metadata`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messageIds }),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "Gmail message details could not be retrieved.");
+  }
+
+  return (await response.json()) as GmailMessageMetadataResult;
 }

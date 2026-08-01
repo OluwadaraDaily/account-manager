@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { searchGmailMessages, type GmailMessageSearchResult } from "../google/gmailAuth";
+import {
+  getGmailMessageMetadata,
+  searchGmailMessages,
+  type GmailMessageMetadata,
+  type GmailMessageSearchResult,
+} from "../google/gmailAuth";
 import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
 
 const inputClassName =
@@ -23,6 +28,7 @@ export function GmailSearchForm() {
   });
   const [searching, setSearching] = useState(false);
   const [result, setResult] = useState<GmailMessageSearchResult | null>(null);
+  const [messageMetadata, setMessageMetadata] = useState<GmailMessageMetadata[]>([]);
   const [error, setError] = useState<string | null>(null);
   const dateRangeError = Boolean(
     searchForm.fromDate && searchForm.toDate && searchForm.fromDate > searchForm.toDate,
@@ -32,6 +38,7 @@ export function GmailSearchForm() {
     event.preventDefault();
     setError(null);
     setResult(null);
+    setMessageMetadata([]);
 
     if (dateRangeError) {
       setError("The start date must be on or before the end date.");
@@ -48,7 +55,15 @@ export function GmailSearchForm() {
       subject: searchForm.subject || undefined,
       keyword: searchForm.keyword || undefined,
     })
-      .then(setResult)
+      .then(async (searchResult) => {
+        setResult(searchResult);
+        if (searchResult.messages.length === 0) return;
+
+        const metadata = await getGmailMessageMetadata(
+          searchResult.messages.map((message) => message.id),
+        );
+        setMessageMetadata(metadata.messages);
+      })
       .catch((searchError: unknown) => {
         setError(searchError instanceof Error ? searchError.message : "Gmail search failed.");
       })
@@ -197,6 +212,24 @@ export function GmailSearchForm() {
             ? ` from an estimated ${result.resultSizeEstimate} matches.`
             : "."}
         </p>
+      )}
+      {messageMetadata.length > 0 && (
+        <div className="border-line mt-4 max-h-80 overflow-y-auto rounded-[12px] border bg-white">
+          <h3 className="sr-only">Matching Gmail messages</h3>
+          <ul aria-label="Matching Gmail messages" className="divide-line divide-y">
+            {messageMetadata.map((message) => (
+              <li key={message.id} className="px-4 py-3 text-[12px]">
+                <p className="text-ink font-semibold">
+                  {message.headers.subject || "(No subject)"}
+                </p>
+                <p className="text-muted mt-1 truncate">
+                  {message.headers.from || "Unknown sender"}
+                  {message.headers.date ? ` · ${message.headers.date}` : ""}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );

@@ -17,3 +17,9 @@ export const importMessagesQuerySchema = z
   });
 
 export type ImportMessagesQuery = z.infer<typeof importMessagesQuerySchema>;
+
+export const importMessageMetadataBodySchema = z.object({
+  messageIds: z.array(z.string().min(1).max(200)).min(1).max(100),
+});
+
+export type ImportMessageMetadataBody = z.infer<typeof importMessageMetadataBodySchema>;
