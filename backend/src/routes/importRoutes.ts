@@ -7,6 +7,7 @@ import { validateQuery, type ValidatedLocals } from "../middleware/validation.js
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { SessionStore } from "../db/repositories/sessionStore.js";
 import { decryptToken } from "../security/encryption.js";
+import { buildGmailSearchQuery } from "../import/gmailSearch.js";
 import { importMessagesQuerySchema } from "../validators/importValidators.js";
 
 type ImportRouterDependencies = {
@@ -27,7 +28,8 @@ export function createImportRouter({
       request,
       response: Response<unknown, ValidatedLocals<typeof importMessagesQuerySchema>>,
     ) => {
-      const { pageToken } = response.locals.validatedQuery;
+      const { pageToken, senderEmail, after, before, subject, keyword } =
+        response.locals.validatedQuery;
       const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
       const sessionStore = await sessionStorePromise;
       const account = sessionId ? await sessionStore.get(sessionId) : null;
@@ -49,6 +51,7 @@ export function createImportRouter({
         const result = await listGmailMessages({
           refreshToken: decryptToken(encryptedToken),
           pageToken,
+          q: buildGmailSearchQuery({ senderEmail, after, before, subject, keyword }),
         });
 
         response.json(result);

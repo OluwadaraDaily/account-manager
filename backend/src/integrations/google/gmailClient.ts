@@ -21,11 +21,13 @@ type GmailMessageListResponse = {
 type ListMessagesOptions = {
   refreshToken: string;
   pageToken?: string;
+  q?: string;
 };
 
 export async function listGmailMessages({
   refreshToken,
   pageToken,
+  q,
 }: ListMessagesOptions): Promise<GmailMessageList> {
   const { clientId, clientSecret } = googleConfig;
 
@@ -42,6 +44,7 @@ export async function listGmailMessages({
   const url = new URL("https://gmail.googleapis.com/gmail/v1/users/me/messages");
   url.searchParams.set("maxResults", "100");
   if (pageToken) url.searchParams.set("pageToken", pageToken);
+  if (q) url.searchParams.set("q", q);
 
   const response = await fetch(url, {
     headers: { Authorization: `Bearer ${accessToken.token}` },
