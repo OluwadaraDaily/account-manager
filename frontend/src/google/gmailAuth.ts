@@ -11,6 +11,20 @@ export type GmailSession = {
   };
 };
 
+export type GmailSearchCriteria = {
+  senderEmail?: string;
+  after?: number;
+  before?: number;
+  subject?: string;
+  keyword?: string;
+};
+
+export type GmailMessageSearchResult = {
+  messages: Array<{ id: string; threadId: string }>;
+  nextPageToken?: string;
+  resultSizeEstimate?: number;
+};
+
 export function startGmailAuthorization() {
   window.location.assign(`${backendOrigin}/auth/google/start`);
 }
@@ -31,4 +45,29 @@ export async function disconnectGmail() {
   });
 
   if (!response.ok) throw new Error("Gmail could not be disconnected.");
+}
+
+export async function searchGmailMessages(
+  criteria: GmailSearchCriteria,
+): Promise<GmailMessageSearchResult> {
+  const params = new URLSearchParams();
+
+  if (criteria.senderEmail) params.set("senderEmail", criteria.senderEmail);
+  if (criteria.after !== undefined) params.set("after", String(criteria.after));
+  if (criteria.before !== undefined) params.set("before", String(criteria.before));
+  if (criteria.subject) params.set("subject", criteria.subject);
+  if (criteria.keyword) params.set("keyword", criteria.keyword);
+
+  const query = params.toString();
+  const response = await fetch(
+    `${backendOrigin}/imports/gmail/messages${query ? `?${query}` : ""}`,
+    { credentials: "include" },
+  );
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "Gmail messages could not be searched.");
+  }
+
+  return (await response.json()) as GmailMessageSearchResult;
 }

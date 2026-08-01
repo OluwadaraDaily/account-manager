@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
+import { GmailSearchForm } from "./GmailSearchForm";
 import { TransactionTable } from "./TransactionTable";
 import { TransactionTabs } from "./TransactionTabs";
 import type { Transaction } from "../types/transaction";
@@ -24,6 +25,7 @@ export function TransactionWorkspace({
 
   return (
     <section className="border-line bg-card overflow-hidden rounded-[24px] border">
+      <GmailSearchForm />
       <div className="border-line flex flex-col justify-between gap-5 border-b px-5 py-5 sm:flex-row sm:items-center sm:px-7">
         <div>
           <h2 className="font-display text-[20px] font-extrabold tracking-[-0.04em]">
