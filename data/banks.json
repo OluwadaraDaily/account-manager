@@ -1,0 +1,723 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-01T12:15:30.345Z",
+  "scope": "retail-deposit-money-banks",
+  "banks": [
+    {
+      "id": "access-bank",
+      "displayName": "Access Bank",
+      "legalName": "Access Bank Limited",
+      "aliases": ["Access Bank", "Access"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": ["accessbankplc.com"],
+      "customerServiceEmails": ["contactcenter@accessbankplc.com"],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["access", "access bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        },
+        {
+          "type": "contact",
+          "url": "https://www.accessbankplc.com/help/complaint-channels",
+          "kind": "customer-service"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "fidelity-bank",
+      "displayName": "Fidelity Bank",
+      "legalName": "Fidelity Bank Plc",
+      "aliases": ["Fidelity Bank"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["fidelity bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "fcmb",
+      "displayName": "First City Monument Bank",
+      "legalName": "First City Monument Bank Limited",
+      "aliases": ["FCMB", "First City Monument Bank"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["fcmb", "first city monument bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "first-bank",
+      "displayName": "First Bank",
+      "legalName": "First Bank Nigeria Limited",
+      "aliases": ["First Bank", "FirstBank Nigeria"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["first bank", "firstbank nigeria"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "gtbank",
+      "displayName": "GTBank",
+      "legalName": "Guaranty Trust Bank Limited",
+      "aliases": ["GTBank", "Guaranty Trust Bank", "GTCO"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": ["gtbank.com"],
+      "customerServiceEmails": ["gtbankmailsupport@gtbank.com"],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["gtbank", "gtco", "guaranty trust bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        },
+        {
+          "type": "contact",
+          "url": "https://www.gtbank.com/privacy-policy",
+          "kind": "customer-service"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "uba",
+      "displayName": "UBA",
+      "legalName": "United Bank for Africa Plc",
+      "aliases": ["UBA", "United Bank for Africa"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": ["ubagroup.com"],
+      "customerServiceEmails": ["cfc@ubagroup.com"],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["uba", "united bank for africa"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        },
+        {
+          "type": "contact",
+          "url": "https://www.ubagroup.com/nigeria/help/contact-us/",
+          "kind": "customer-service"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "zenith-bank",
+      "displayName": "Zenith Bank",
+      "legalName": "Zenith Bank Plc",
+      "aliases": ["Zenith Bank"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["zenith bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "citibank-nigeria",
+      "displayName": "Citibank Nigeria",
+      "legalName": "Citibank Nigeria Limited",
+      "aliases": ["Citibank", "Citi Nigeria"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["citi nigeria", "citibank", "citibank nigeria"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "ecobank",
+      "displayName": "Ecobank",
+      "legalName": "Ecobank Nigeria Limited",
+      "aliases": ["Ecobank Nigeria", "Ecobank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["ecobank", "ecobank nigeria"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "heritage-bank",
+      "displayName": "Heritage Bank",
+      "legalName": "Heritage Bank Plc",
+      "aliases": ["Heritage Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["heritage bank"],
+      "status": "inactive",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        },
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: Heritage Bank licence revocation",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/CBN%20Press%20Release%20Heritage%20030624.pdf",
+          "asOf": "2024-06-03"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "globus-bank",
+      "displayName": "Globus Bank",
+      "legalName": "Globus Bank Limited",
+      "aliases": ["Globus Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["globus bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "keystone-bank",
+      "displayName": "Keystone Bank",
+      "legalName": "Keystone Bank Limited",
+      "aliases": ["Keystone Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["keystone bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "polaris-bank",
+      "displayName": "Polaris Bank",
+      "legalName": "Polaris Bank Limited",
+      "aliases": ["Polaris Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["polaris bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "stanbic-ibtc",
+      "displayName": "Stanbic IBTC",
+      "legalName": "Stanbic IBTC Bank Limited",
+      "aliases": ["Stanbic IBTC", "Stanbic"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["stanbic", "stanbic ibtc"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "standard-chartered",
+      "displayName": "Standard Chartered",
+      "legalName": "Standard Chartered Bank Limited",
+      "aliases": ["Standard Chartered", "Standard Chartered Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["standard chartered", "standard chartered bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "sterling-bank",
+      "displayName": "Sterling Bank",
+      "legalName": "Sterling Bank Limited",
+      "aliases": ["Sterling Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["sterling bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "titan-trust-bank",
+      "displayName": "Titan Trust Bank",
+      "legalName": "Titan Trust Bank Limited",
+      "aliases": ["Titan Trust Bank", "Titan Trust"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["titan trust", "titan trust bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "union-bank",
+      "displayName": "Union Bank",
+      "legalName": "Union Bank of Nigeria Plc",
+      "aliases": ["Union Bank", "Union Bank of Nigeria"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": ["unionbankng.com"],
+      "customerServiceEmails": ["customerservice@unionbankng.com"],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["union bank", "union bank of nigeria"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        },
+        {
+          "type": "contact",
+          "url": "https://unionbankng.com/support/",
+          "kind": "customer-service"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "unity-bank",
+      "displayName": "Unity Bank",
+      "legalName": "Unity Bank Plc",
+      "aliases": ["Unity Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["unity bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "wema-bank",
+      "displayName": "Wema Bank",
+      "legalName": "Wema Bank Plc",
+      "aliases": ["Wema Bank", "ALAT by Wema"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["alat by wema", "wema bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "premium-trust-bank",
+      "displayName": "Premium Trust Bank",
+      "legalName": "Premium Trust Bank Limited",
+      "aliases": ["Premium Trust Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["premium trust bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "optimus-bank",
+      "displayName": "Optimus Bank",
+      "legalName": "Optimus Bank Limited",
+      "aliases": ["Optimus Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["optimus bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "providus-bank",
+      "displayName": "Providus Bank",
+      "legalName": "Providus Bank Limited",
+      "aliases": ["Providus Bank"],
+      "licenceCategory": "commercial-regional",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["providus bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "parallex-bank",
+      "displayName": "Parallex Bank",
+      "legalName": "Parallex Bank Limited",
+      "aliases": ["Parallex Bank"],
+      "licenceCategory": "commercial-regional",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["parallex bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "suntrust-bank",
+      "displayName": "SunTrust Bank",
+      "legalName": "SunTrust Bank Nigeria Limited",
+      "aliases": ["SunTrust Bank", "SunTrust"],
+      "licenceCategory": "commercial-regional",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["suntrust", "suntrust bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "signature-bank",
+      "displayName": "Signature Bank",
+      "legalName": "Signature Bank Limited",
+      "aliases": ["Signature Bank"],
+      "licenceCategory": "commercial-regional",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["signature bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "jaiz-bank",
+      "displayName": "Jaiz Bank",
+      "legalName": "Jaiz Bank Plc",
+      "aliases": ["Jaiz Bank"],
+      "licenceCategory": "non-interest-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["jaiz bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "taj-bank",
+      "displayName": "Taj Bank",
+      "legalName": "Taj Bank Limited",
+      "aliases": ["Taj Bank"],
+      "licenceCategory": "non-interest-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["taj bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "lotus-bank",
+      "displayName": "Lotus Bank",
+      "legalName": "Lotus Bank Limited",
+      "aliases": ["Lotus Bank"],
+      "licenceCategory": "non-interest-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["lotus bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    },
+    {
+      "id": "alternative-bank",
+      "displayName": "Alternative Bank",
+      "legalName": "Alternative Bank Limited",
+      "aliases": ["Alternative Bank"],
+      "licenceCategory": "non-interest-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "candidateContactEmails": [],
+      "transactionNotificationSenderEmails": [],
+      "searchTerms": ["alternative bank"],
+      "status": "needs-review",
+      "verificationStatus": "needs-review",
+      "sources": [
+        {
+          "type": "regulatory",
+          "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+          "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+          "asOf": "2024-04-26"
+        }
+      ],
+      "checkedAt": null
+    }
+  ]
+}

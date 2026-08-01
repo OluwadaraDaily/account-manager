@@ -16,6 +16,7 @@
     "build:shared": "npm run build --workspace shared",
     "build:frontend": "npm run build --workspace frontend",
     "build:backend": "npm run build --workspace backend",
+    "banks:generate": "node scripts/generate-bank-directory.mjs --fetch",
     "preview": "npm run preview --workspace frontend",
     "format": "prettier --write .",
     "format:check": "prettier --check ."

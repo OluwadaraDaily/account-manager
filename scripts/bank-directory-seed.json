@@ -1,0 +1,338 @@
+{
+  "scope": "retail-deposit-money-banks",
+  "regulatorySources": [
+    {
+      "name": "Central Bank of Nigeria: List of Deposit Money Banks as at 26 April 2024",
+      "url": "https://www.cbn.gov.ng/Out/2024/CCD/LIST%20OF%20DEPOSIT%20MONEY%20BANKS%20AS%20AT%2026TH%20APRIL%2C%202024%20%281%29.pdf",
+      "asOf": "2024-04-26"
+    },
+    {
+      "name": "Central Bank of Nigeria: Heritage Bank licence revocation",
+      "url": "https://www.cbn.gov.ng/Out/2024/CCD/CBN%20Press%20Release%20Heritage%20030624.pdf",
+      "asOf": "2024-06-03"
+    }
+  ],
+  "banks": [
+    {
+      "id": "access-bank",
+      "displayName": "Access Bank",
+      "legalName": "Access Bank Limited",
+      "aliases": ["Access Bank", "Access"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": ["accessbankplc.com"],
+      "customerServiceEmails": ["contactcenter@accessbankplc.com"],
+      "contactSources": [
+        {
+          "url": "https://www.accessbankplc.com/help/complaint-channels",
+          "kind": "customer-service"
+        }
+      ]
+    },
+    {
+      "id": "fidelity-bank",
+      "displayName": "Fidelity Bank",
+      "legalName": "Fidelity Bank Plc",
+      "aliases": ["Fidelity Bank"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "fcmb",
+      "displayName": "First City Monument Bank",
+      "legalName": "First City Monument Bank Limited",
+      "aliases": ["FCMB", "First City Monument Bank"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "first-bank",
+      "displayName": "First Bank",
+      "legalName": "First Bank Nigeria Limited",
+      "aliases": ["First Bank", "FirstBank Nigeria"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "gtbank",
+      "displayName": "GTBank",
+      "legalName": "Guaranty Trust Bank Limited",
+      "aliases": ["GTBank", "Guaranty Trust Bank", "GTCO"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": ["gtbank.com"],
+      "customerServiceEmails": ["gtbankmailsupport@gtbank.com"],
+      "contactSources": [
+        {
+          "url": "https://www.gtbank.com/privacy-policy",
+          "kind": "customer-service"
+        }
+      ]
+    },
+    {
+      "id": "uba",
+      "displayName": "UBA",
+      "legalName": "United Bank for Africa Plc",
+      "aliases": ["UBA", "United Bank for Africa"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": ["ubagroup.com"],
+      "customerServiceEmails": ["cfc@ubagroup.com"],
+      "contactSources": [
+        {
+          "url": "https://www.ubagroup.com/nigeria/help/contact-us/",
+          "kind": "customer-service"
+        }
+      ]
+    },
+    {
+      "id": "zenith-bank",
+      "displayName": "Zenith Bank",
+      "legalName": "Zenith Bank Plc",
+      "aliases": ["Zenith Bank"],
+      "licenceCategory": "commercial-international",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "citibank-nigeria",
+      "displayName": "Citibank Nigeria",
+      "legalName": "Citibank Nigeria Limited",
+      "aliases": ["Citibank", "Citi Nigeria"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "ecobank",
+      "displayName": "Ecobank",
+      "legalName": "Ecobank Nigeria Limited",
+      "aliases": ["Ecobank Nigeria", "Ecobank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "heritage-bank",
+      "displayName": "Heritage Bank",
+      "legalName": "Heritage Bank Plc",
+      "aliases": ["Heritage Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": [],
+      "status": "inactive"
+    },
+    {
+      "id": "globus-bank",
+      "displayName": "Globus Bank",
+      "legalName": "Globus Bank Limited",
+      "aliases": ["Globus Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "keystone-bank",
+      "displayName": "Keystone Bank",
+      "legalName": "Keystone Bank Limited",
+      "aliases": ["Keystone Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "polaris-bank",
+      "displayName": "Polaris Bank",
+      "legalName": "Polaris Bank Limited",
+      "aliases": ["Polaris Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "stanbic-ibtc",
+      "displayName": "Stanbic IBTC",
+      "legalName": "Stanbic IBTC Bank Limited",
+      "aliases": ["Stanbic IBTC", "Stanbic"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "standard-chartered",
+      "displayName": "Standard Chartered",
+      "legalName": "Standard Chartered Bank Limited",
+      "aliases": ["Standard Chartered", "Standard Chartered Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "sterling-bank",
+      "displayName": "Sterling Bank",
+      "legalName": "Sterling Bank Limited",
+      "aliases": ["Sterling Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "titan-trust-bank",
+      "displayName": "Titan Trust Bank",
+      "legalName": "Titan Trust Bank Limited",
+      "aliases": ["Titan Trust Bank", "Titan Trust"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "union-bank",
+      "displayName": "Union Bank",
+      "legalName": "Union Bank of Nigeria Plc",
+      "aliases": ["Union Bank", "Union Bank of Nigeria"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": ["unionbankng.com"],
+      "customerServiceEmails": ["customerservice@unionbankng.com"],
+      "contactSources": [
+        {
+          "url": "https://unionbankng.com/support/",
+          "kind": "customer-service"
+        }
+      ]
+    },
+    {
+      "id": "unity-bank",
+      "displayName": "Unity Bank",
+      "legalName": "Unity Bank Plc",
+      "aliases": ["Unity Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "wema-bank",
+      "displayName": "Wema Bank",
+      "legalName": "Wema Bank Plc",
+      "aliases": ["Wema Bank", "ALAT by Wema"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "premium-trust-bank",
+      "displayName": "Premium Trust Bank",
+      "legalName": "Premium Trust Bank Limited",
+      "aliases": ["Premium Trust Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "optimus-bank",
+      "displayName": "Optimus Bank",
+      "legalName": "Optimus Bank Limited",
+      "aliases": ["Optimus Bank"],
+      "licenceCategory": "commercial-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "providus-bank",
+      "displayName": "Providus Bank",
+      "legalName": "Providus Bank Limited",
+      "aliases": ["Providus Bank"],
+      "licenceCategory": "commercial-regional",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "parallex-bank",
+      "displayName": "Parallex Bank",
+      "legalName": "Parallex Bank Limited",
+      "aliases": ["Parallex Bank"],
+      "licenceCategory": "commercial-regional",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "suntrust-bank",
+      "displayName": "SunTrust Bank",
+      "legalName": "SunTrust Bank Nigeria Limited",
+      "aliases": ["SunTrust Bank", "SunTrust"],
+      "licenceCategory": "commercial-regional",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "signature-bank",
+      "displayName": "Signature Bank",
+      "legalName": "Signature Bank Limited",
+      "aliases": ["Signature Bank"],
+      "licenceCategory": "commercial-regional",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "jaiz-bank",
+      "displayName": "Jaiz Bank",
+      "legalName": "Jaiz Bank Plc",
+      "aliases": ["Jaiz Bank"],
+      "licenceCategory": "non-interest-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "taj-bank",
+      "displayName": "Taj Bank",
+      "legalName": "Taj Bank Limited",
+      "aliases": ["Taj Bank"],
+      "licenceCategory": "non-interest-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "lotus-bank",
+      "displayName": "Lotus Bank",
+      "legalName": "Lotus Bank Limited",
+      "aliases": ["Lotus Bank"],
+      "licenceCategory": "non-interest-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    },
+    {
+      "id": "alternative-bank",
+      "displayName": "Alternative Bank",
+      "legalName": "Alternative Bank Limited",
+      "aliases": ["Alternative Bank"],
+      "licenceCategory": "non-interest-national",
+      "officialDomains": [],
+      "customerServiceEmails": [],
+      "contactSources": []
+    }
+  ]
+}
