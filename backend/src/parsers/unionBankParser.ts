@@ -4,14 +4,28 @@ import type { GmailMessageContent } from "../integrations/google/gmailClient.js"
 const fieldLabels = {
   amount: ["transaction amount", "debit amount", "credit amount", "amount"],
   counterparty: ["counterparty", "merchant", "beneficiary", "recipient", "sender"],
-  description: ["narration", "description", "details", "remarks"],
+  description: ["transaction description", "narration", "description", "details", "remarks"],
   channel: ["channel", "transaction channel", "via"],
-  date: ["transaction date", "value date", "date"],
+  date: ["transaction date & time", "transaction date", "value date", "date"],
+  type: ["transaction type"],
 };
 
 function captureField(text: string, labels: string[]) {
   const pattern = new RegExp(`(?:^|\\n)\\s*(?:${labels.join("|")})\\s*[:=-]\\s*([^\\n]+)`, "i");
   return text.match(pattern)?.[1]?.trim() || null;
+}
+
+function captureAdjacentField(text: string, labels: string[]) {
+  const normalizedLabels = labels.map((label) => label.toLowerCase());
+  const lines = text.split(/\r?\n/);
+
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!normalizedLabels.includes(lines[index].trim().toLowerCase())) continue;
+    const nextValue = lines.slice(index + 1).find((line) => line.trim());
+    if (nextValue) return nextValue.trim();
+  }
+
+  return null;
 }
 
 function parseDateValue(value: string | null) {
@@ -47,6 +61,9 @@ function parseDateValue(value: string | null) {
     return month ? toIsoDate(Number(monthMatch[3]), month, Number(monthMatch[1])) : null;
   }
 
+  const namedDate = new Date(value);
+  if (!Number.isNaN(namedDate.getTime())) return namedDate.toISOString().slice(0, 10);
+
   return null;
 }
 
@@ -78,7 +95,8 @@ function fallbackMessageDate(message: GmailMessageContent) {
 }
 
 function parseAmount(text: string) {
-  const labeledValue = captureField(text, fieldLabels.amount);
+  const labeledValue =
+    captureField(text, fieldLabels.amount) ?? captureAdjacentField(text, fieldLabels.amount);
   const amountSource =
     labeledValue ?? text.match(/(?:NGN|₦|Naira)\s*[0-9][0-9,]*(?:\.[0-9]{1,2})?/i)?.[0] ?? null;
   if (!amountSource) return null;
@@ -102,10 +120,18 @@ export function parseUnionBankTransaction(
 
   const hasDebitSignal = /\b(debit(?:ed)?|withdrawn|purchase|payment)\b/i.test(searchableText);
   const hasCreditSignal = /\b(credit(?:ed)?|deposit|received)\b/i.test(searchableText);
-  const direction = hasDebitSignal === hasCreditSignal ? null : hasDebitSignal ? "debit" : "credit";
+  const transactionType =
+    captureField(bodyText, fieldLabels.type) ?? captureAdjacentField(bodyText, fieldLabels.type);
+  const hasDebitAlertSignal = /debitalert/i.test(transactionType ?? "");
+  const hasCreditAlertSignal = /creditalert/i.test(transactionType ?? "");
+  const debitSignal = hasDebitSignal || hasDebitAlertSignal;
+  const creditSignal = hasCreditSignal || hasCreditAlertSignal;
+  const direction = debitSignal === creditSignal ? null : debitSignal ? "debit" : "credit";
   const amount = parseAmount(bodyText);
   const transactionDate =
-    parseDateValue(captureField(bodyText, fieldLabels.date)) ?? fallbackMessageDate(message);
+    parseDateValue(
+      captureField(bodyText, fieldLabels.date) ?? captureAdjacentField(bodyText, fieldLabels.date),
+    ) ?? fallbackMessageDate(message);
 
   return {
     sourceMessageId: message.id,
@@ -113,8 +139,17 @@ export function parseUnionBankTransaction(
     direction,
     amount,
     currency: amount ? "NGN" : null,
-    counterparty: captureField(bodyText, fieldLabels.counterparty),
-    description: captureField(bodyText, fieldLabels.description) ?? (subject || null),
-    channel: captureField(bodyText, fieldLabels.channel),
+    counterparty:
+      captureField(bodyText, fieldLabels.counterparty) ??
+      captureAdjacentField(bodyText, fieldLabels.counterparty),
+    description:
+      captureField(bodyText, fieldLabels.description) ??
+      captureAdjacentField(bodyText, fieldLabels.description) ??
+      (subject || null),
+    channel:
+      captureField(bodyText, fieldLabels.channel) ??
+      captureAdjacentField(bodyText, fieldLabels.channel) ??
+      bodyText.match(/\b(POS|ATM|USSD|mobile|internet)\b/i)?.[1]?.toUpperCase() ??
+      null,
   };
 }

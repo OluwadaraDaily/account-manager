@@ -1,0 +1,68 @@
+Hello Customer,
+                                        
+                                        TRANSACTION ALERT SERVICE
+                                        
+                                        
+                                            We wish to inform you that the following transaction occurred against your
+                                            bank account with us.
+                                        
+                                        
+                                    
+                                
+                            
+                        
+                    
+                    
+                        
+                            
+                                
+                                    Transaction Details
+                                    
+                                
+                                
+                                    Transaction Type
+                                    DebitAlert!
+                                
+                                
+                                    Account No
+[ACCOUNT]
+                                
+                                
+                                    Transaction Location
+                                    UBN HEAD OFFICE 
+                                
+                                
+                                    Transaction Description
+POS example transaction
+                                
+                                
+                                    Transaction Amount
+                                    NGN 12,345.67
+                                
+                                
+                                    Transaction Date & Time
+01-Feb-2026 12:00
+                                
+                                
+                                    Balance
+                                    NGN 12,345.67
+                                
+                            
+                        
+                    
+                    
+                    
+                        
+                            
+                                
+                                    
+                                        
+                                            For enquiries, please call UnionCare - our 24/7 Customer Service Centre on [PHONE] or [PHONE]. You can also send us an email at [EMAIL]
+                                        
+                                        
+                                        
+                                            Thank you for Banking with Union Bank.
+                                        
+                                        
+                                        
+                                            Our Union Bank-Alert service sent this mail to you using a default setting and the information you supplied to us when your account was opened or when you subscribed to the service. If you wish to limit the type of mails you receive or the email address(es) in use, please visit any UBN PLC Branch to update your details.
