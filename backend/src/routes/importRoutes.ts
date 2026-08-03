@@ -11,6 +11,7 @@ import { validateBody, validateQuery, type ValidatedLocals } from "../middleware
 import type { ImportJobStore } from "../db/repositories/importJobStore.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { SessionStore } from "../db/repositories/sessionStore.js";
+import type { createGmailImportJobRunner } from "../import/gmailImportJobRunner.js";
 import { decryptToken } from "../security/encryption.js";
 import { buildGmailSearchQuery } from "../import/gmailSearch.js";
 import {
@@ -23,12 +24,14 @@ type ImportRouterDependencies = {
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
   sessionStorePromise: Promise<SessionStore>;
   importJobStorePromise: Promise<ImportJobStore>;
+  runGmailImportJob: ReturnType<typeof createGmailImportJobRunner>;
 };
 
 export function createImportRouter({
   refreshTokenStorePromise,
   sessionStorePromise,
   importJobStorePromise,
+  runGmailImportJob,
 }: ImportRouterDependencies) {
   const router = Router();
 
@@ -87,6 +90,7 @@ export function createImportRouter({
       });
 
       response.status(202).json({ job });
+      void runGmailImportJob(job.id, account.googleSubject);
     },
   );
 
