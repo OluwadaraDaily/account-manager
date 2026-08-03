@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { bankDirectoryEntries } from "../data/bankDirectory";
 import { createGmailImportJob, getGmailImportJob, type GmailImportJob } from "../google/gmailAuth";
 import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
 
@@ -6,6 +7,7 @@ const inputClassName =
   "border-line bg-card text-ink focus:border-moss focus-visible:ring-moss min-w-0 rounded-[12px] border px-3 py-2.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
 type SearchForm = {
+  bankId: string;
   senderEmail: string;
   fromDate: string;
   toDate: string;
@@ -15,6 +17,7 @@ type SearchForm = {
 
 export function GmailSearchForm() {
   const [searchForm, setSearchForm] = useState<SearchForm>({
+    bankId: "union-bank",
     senderEmail: "",
     fromDate: "",
     toDate: "",
@@ -118,8 +121,29 @@ export function GmailSearchForm() {
               : "gmail-search-error"
             : "gmail-search-description"
         }
-        className="grid gap-3 md:grid-cols-2 lg:grid-cols-5"
+        className="grid gap-3 md:grid-cols-2 lg:grid-cols-6"
       >
+        <label
+          htmlFor="gmail-bank"
+          className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold"
+        >
+          Bank
+          <select
+            id="gmail-bank"
+            required
+            value={searchForm.bankId}
+            onChange={(event) =>
+              setSearchForm((current) => ({ ...current, bankId: event.target.value }))
+            }
+            className={inputClassName}
+          >
+            {bankDirectoryEntries.map((bank) => (
+              <option key={bank.id} value={bank.id}>
+                {bank.displayName}
+              </option>
+            ))}
+          </select>
+        </label>
         <label
           htmlFor="gmail-sender-email"
           className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold"
@@ -203,7 +227,7 @@ export function GmailSearchForm() {
             className={inputClassName}
           />
         </label>
-        <div className="flex flex-col justify-end md:col-span-2 lg:col-span-5">
+        <div className="flex flex-col justify-end md:col-span-2 lg:col-span-6">
           <button
             type="submit"
             disabled={searching || importActive}
