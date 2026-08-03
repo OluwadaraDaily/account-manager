@@ -94,6 +94,27 @@ export function createImportRouter({
     },
   );
 
+  router.get("/imports/gmail/jobs/:jobId", async (request, response) => {
+    const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
+    const sessionStore = await sessionStorePromise;
+    const account = sessionId ? await sessionStore.get(sessionId) : null;
+
+    if (!account) {
+      response.status(401).json({ error: "Gmail authentication is required." });
+      return;
+    }
+
+    const importJobStore = await importJobStorePromise;
+    const job = await importJobStore.get(request.params.jobId, account.googleSubject);
+
+    if (!job) {
+      response.status(404).json({ error: "Import job was not found." });
+      return;
+    }
+
+    response.json({ job });
+  });
+
   router.get(
     "/imports/gmail/messages",
     validateQuery(importMessagesQuerySchema),
