@@ -36,6 +36,7 @@ export function GmailSearchForm() {
     searchForm.fromDate && searchForm.toDate && searchForm.fromDate > searchForm.toDate,
   );
   const importActive = job !== null && ["queued", "running"].includes(job.status);
+  const noMatches = job?.status === "completed" && job.progress.messagesDiscovered === 0;
 
   useEffect(() => {
     if (!job || !["queued", "running"].includes(job.status)) return;
@@ -286,9 +287,15 @@ export function GmailSearchForm() {
           aria-live="polite"
           aria-atomic="true"
         >
-          Import {job.status}: {job.progress.messagesDiscovered} message
-          {job.progress.messagesDiscovered === 1 ? "" : "s"} discovered.
-          {job.status === "completed" && " Message discovery is complete."}
+          {noMatches ? (
+            "No matching messages found. Adjust the sender, dates, subject, or keyword and try again."
+          ) : (
+            <>
+              Import {job.status}: {job.progress.messagesDiscovered} message
+              {job.progress.messagesDiscovered === 1 ? "" : "s"} discovered.
+              {job.status === "completed" && " Message discovery is complete."}
+            </>
+          )}
         </p>
       )}
     </section>
