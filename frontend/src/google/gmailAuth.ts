@@ -39,6 +39,20 @@ export type GmailMessageMetadataResult = {
   messages: GmailMessageMetadata[];
 };
 
+export type GmailImportJobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+
+export type GmailImportJob = {
+  id: string;
+  status: GmailImportJobStatus;
+  progress: {
+    messagesDiscovered: number;
+    messagesProcessed: number;
+    transactionsExtracted: number;
+    messagesSkipped: number;
+  };
+  errorMessage: string | null;
+};
+
 export function startGmailAuthorization() {
   window.location.assign(`${backendOrigin}/auth/google/start`);
 }
@@ -102,4 +116,35 @@ export async function getGmailMessageMetadata(
   }
 
   return (await response.json()) as GmailMessageMetadataResult;
+}
+
+export async function createGmailImportJob(criteria: GmailSearchCriteria): Promise<GmailImportJob> {
+  const response = await fetch(`${backendOrigin}/imports/gmail/jobs`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(criteria),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "The Gmail import could not be started.");
+  }
+
+  const body = (await response.json()) as { job: GmailImportJob };
+  return body.job;
+}
+
+export async function getGmailImportJob(jobId: string): Promise<GmailImportJob> {
+  const response = await fetch(`${backendOrigin}/imports/gmail/jobs/${encodeURIComponent(jobId)}`, {
+    credentials: "include",
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? "The Gmail import status could not be retrieved.");
+  }
+
+  const body = (await response.json()) as { job: GmailImportJob };
+  return body.job;
 }

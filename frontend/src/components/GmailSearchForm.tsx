@@ -1,10 +1,5 @@
-import { useState } from "react";
-import {
-  getGmailMessageMetadata,
-  searchGmailMessages,
-  type GmailMessageMetadata,
-  type GmailMessageSearchResult,
-} from "../google/gmailAuth";
+import { useEffect, useState } from "react";
+import { createGmailImportJob, getGmailImportJob, type GmailImportJob } from "../google/gmailAuth";
 import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
 
 const inputClassName =
@@ -27,18 +22,53 @@ export function GmailSearchForm() {
     keyword: "",
   });
   const [searching, setSearching] = useState(false);
-  const [result, setResult] = useState<GmailMessageSearchResult | null>(null);
-  const [messageMetadata, setMessageMetadata] = useState<GmailMessageMetadata[]>([]);
+  const [job, setJob] = useState<GmailImportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const dateRangeError = Boolean(
     searchForm.fromDate && searchForm.toDate && searchForm.fromDate > searchForm.toDate,
   );
+  const importActive = job !== null && ["queued", "running"].includes(job.status);
+
+  useEffect(() => {
+    if (!job || !["queued", "running"].includes(job.status)) return;
+
+    let cancelled = false;
+    let timeoutId: number | undefined;
+
+    const poll = async () => {
+      try {
+        const nextJob = await getGmailImportJob(job.id);
+        if (cancelled) return;
+
+        setJob(nextJob);
+        if (nextJob.status === "queued" || nextJob.status === "running") {
+          timeoutId = window.setTimeout(() => void poll(), 1000);
+        } else if (nextJob.status === "failed") {
+          setError(nextJob.errorMessage ?? "The Gmail import failed.");
+        }
+      } catch (pollError: unknown) {
+        if (!cancelled) {
+          setError(
+            pollError instanceof Error
+              ? pollError.message
+              : "The Gmail import status could not be retrieved.",
+          );
+        }
+      }
+    };
+
+    void poll();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, [job]);
 
   const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
-    setResult(null);
-    setMessageMetadata([]);
+    setJob(null);
 
     if (dateRangeError) {
       setError("The start date must be on or before the end date.");
@@ -48,22 +78,14 @@ export function GmailSearchForm() {
     const { after, before } = localDateRangeToUnixSeconds(searchForm.fromDate, searchForm.toDate);
     setSearching(true);
 
-    void searchGmailMessages({
+    void createGmailImportJob({
       senderEmail: searchForm.senderEmail || undefined,
       after,
       before,
       subject: searchForm.subject || undefined,
       keyword: searchForm.keyword || undefined,
     })
-      .then(async (searchResult) => {
-        setResult(searchResult);
-        if (searchResult.messages.length === 0) return;
-
-        const metadata = await getGmailMessageMetadata(
-          searchResult.messages.map((message) => message.id),
-        );
-        setMessageMetadata(metadata.messages);
-      })
+      .then((createdJob) => setJob(createdJob))
       .catch((searchError: unknown) => {
         setError(searchError instanceof Error ? searchError.message : "Gmail search failed.");
       })
@@ -88,7 +110,7 @@ export function GmailSearchForm() {
       </div>
       <form
         onSubmit={submitSearch}
-        aria-busy={searching}
+        aria-busy={searching || importActive}
         aria-describedby={
           error
             ? dateRangeError
@@ -184,10 +206,14 @@ export function GmailSearchForm() {
         <div className="flex flex-col justify-end md:col-span-2 lg:col-span-5">
           <button
             type="submit"
-            disabled={searching}
+            disabled={searching || importActive}
             className="bg-ink hover:bg-moss-dark focus-visible:ring-moss focus-visible:ring-offset-paper w-full rounded-[12px] px-4 py-2.5 text-[12px] font-bold text-white transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
           >
-            {searching ? "Searching Gmail…" : "Search matching messages"}
+            {searching
+              ? "Starting Gmail import…"
+              : importActive
+                ? "Importing Gmail…"
+                : "Search matching messages"}
           </button>
         </div>
       </form>
@@ -200,36 +226,17 @@ export function GmailSearchForm() {
           {error}
         </p>
       )}
-      {result && (
+      {job && (
         <p
           className="text-muted mt-3 text-[12px]"
           role="status"
           aria-live="polite"
           aria-atomic="true"
         >
-          This page returned {result.messages.length} message references
-          {result.resultSizeEstimate !== undefined
-            ? ` from an estimated ${result.resultSizeEstimate} matches.`
-            : "."}
+          Import {job.status}: {job.progress.messagesDiscovered} message
+          {job.progress.messagesDiscovered === 1 ? "" : "s"} discovered.
+          {job.status === "completed" && " Message discovery is complete."}
         </p>
-      )}
-      {messageMetadata.length > 0 && (
-        <div className="border-line mt-4 max-h-80 overflow-y-auto rounded-[12px] border bg-white">
-          <h3 className="sr-only">Matching Gmail messages</h3>
-          <ul aria-label="Matching Gmail messages" className="divide-line divide-y">
-            {messageMetadata.map((message) => (
-              <li key={message.id} className="px-4 py-3 text-[12px]">
-                <p className="text-ink font-semibold">
-                  {message.headers.subject || "(No subject)"}
-                </p>
-                <p className="text-muted mt-1 truncate">
-                  {message.headers.from || "Unknown sender"}
-                  {message.headers.date ? ` · ${message.headers.date}` : ""}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </div>
       )}
     </section>
   );
