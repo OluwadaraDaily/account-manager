@@ -1,6 +1,7 @@
 import type { Response } from "express";
 import { Router } from "express";
 import { appConfig } from "../config.js";
+import type { BankDirectoryStore } from "../db/repositories/bankDirectoryStore.js";
 import {
   getGmailMessageMetadata,
   listGmailMessages,
@@ -21,6 +22,7 @@ import {
 } from "../validators/importValidators.js";
 
 type ImportRouterDependencies = {
+  bankDirectoryStorePromise: Promise<BankDirectoryStore>;
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
   sessionStorePromise: Promise<SessionStore>;
   importJobStorePromise: Promise<ImportJobStore>;
@@ -28,6 +30,7 @@ type ImportRouterDependencies = {
 };
 
 export function createImportRouter({
+  bankDirectoryStorePromise,
   refreshTokenStorePromise,
   sessionStorePromise,
   importJobStorePromise,
@@ -81,10 +84,26 @@ export function createImportRouter({
         return;
       }
 
+      const bankDirectoryStore = await bankDirectoryStorePromise;
+      const bank = await bankDirectoryStore.get(bankId);
+
+      if (!bank || bank.status === "inactive") {
+        response.status(400).json({ error: "The selected bank is not available for import." });
+        return;
+      }
+
+      const resolvedSenderEmail = senderEmail ?? bank.transactionNotificationSenderEmail;
+      if (!resolvedSenderEmail) {
+        response.status(400).json({
+          error: "A transaction sender email is required before importing this bank.",
+        });
+        return;
+      }
+
       const importJobStore = await importJobStorePromise;
       const job = await importJobStore.create(account.googleSubject, {
         bankId,
-        senderEmail: senderEmail ?? null,
+        senderEmail: resolvedSenderEmail,
         after: after ?? null,
         before: before ?? null,
         subject: subject ?? null,

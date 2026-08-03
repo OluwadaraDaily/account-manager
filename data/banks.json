@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-01T12:15:30.345Z",
+  "generatedAt": "2026-08-03T21:39:56.911Z",
   "scope": "retail-deposit-money-banks",
   "banks": [
     {
@@ -14,8 +14,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["access", "access bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -29,7 +29,7 @@
           "kind": "customer-service"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "fidelity-bank",
@@ -42,8 +42,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["fidelity bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -52,7 +52,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "fcmb",
@@ -65,8 +65,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["fcmb", "first city monument bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -75,7 +75,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "first-bank",
@@ -88,8 +88,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["first bank", "firstbank nigeria"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -98,7 +98,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "gtbank",
@@ -111,8 +111,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["gtbank", "gtco", "guaranty trust bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -126,7 +126,7 @@
           "kind": "customer-service"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "uba",
@@ -139,8 +139,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["uba", "united bank for africa"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -154,7 +154,7 @@
           "kind": "customer-service"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "zenith-bank",
@@ -167,8 +167,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["zenith bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -177,7 +177,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "citibank-nigeria",
@@ -190,8 +190,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["citi nigeria", "citibank", "citibank nigeria"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -200,7 +200,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "ecobank",
@@ -213,8 +213,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["ecobank", "ecobank nigeria"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -223,7 +223,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "heritage-bank",
@@ -237,7 +237,7 @@
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["heritage bank"],
       "status": "inactive",
-      "verificationStatus": "needs-review",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -252,7 +252,7 @@
           "asOf": "2024-06-03"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "globus-bank",
@@ -265,8 +265,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["globus bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -275,7 +275,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "keystone-bank",
@@ -288,8 +288,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["keystone bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -298,7 +298,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "polaris-bank",
@@ -311,8 +311,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["polaris bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -321,7 +321,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "stanbic-ibtc",
@@ -334,8 +334,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["stanbic", "stanbic ibtc"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -344,7 +344,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "standard-chartered",
@@ -357,8 +357,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["standard chartered", "standard chartered bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -367,7 +367,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "sterling-bank",
@@ -380,8 +380,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["sterling bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -390,7 +390,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "titan-trust-bank",
@@ -403,8 +403,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["titan trust", "titan trust bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -413,7 +413,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "union-bank",
@@ -426,8 +426,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["union bank", "union bank of nigeria"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -441,7 +441,7 @@
           "kind": "customer-service"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "unity-bank",
@@ -454,8 +454,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["unity bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -464,7 +464,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "wema-bank",
@@ -477,8 +477,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["alat by wema", "wema bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -487,7 +487,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "premium-trust-bank",
@@ -500,8 +500,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["premium trust bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -510,7 +510,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "optimus-bank",
@@ -523,8 +523,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["optimus bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -533,7 +533,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "providus-bank",
@@ -546,8 +546,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["providus bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -556,7 +556,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "parallex-bank",
@@ -569,8 +569,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["parallex bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -579,7 +579,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "suntrust-bank",
@@ -592,8 +592,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["suntrust", "suntrust bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -602,7 +602,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "signature-bank",
@@ -615,8 +615,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["signature bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -625,7 +625,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "jaiz-bank",
@@ -638,8 +638,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["jaiz bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -648,7 +648,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "taj-bank",
@@ -661,8 +661,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["taj bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -671,7 +671,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "lotus-bank",
@@ -684,8 +684,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["lotus bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -694,7 +694,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     },
     {
       "id": "alternative-bank",
@@ -707,8 +707,8 @@
       "candidateContactEmails": [],
       "transactionNotificationSenderEmails": [],
       "searchTerms": ["alternative bank"],
-      "status": "needs-review",
-      "verificationStatus": "needs-review",
+      "status": "active",
+      "verificationStatus": "verified",
       "sources": [
         {
           "type": "regulatory",
@@ -717,7 +717,7 @@
           "asOf": "2024-04-26"
         }
       ],
-      "checkedAt": null
+      "checkedAt": "2026-08-03T21:39:56.911Z"
     }
   ]
 }

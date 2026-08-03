@@ -180,6 +180,7 @@ export function GmailSearchForm() {
           <input
             id="gmail-sender-email"
             type="email"
+            required
             autoComplete="email"
             value={searchForm.senderEmail}
             onChange={(event) =>

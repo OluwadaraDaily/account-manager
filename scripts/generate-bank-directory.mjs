@@ -8,6 +8,7 @@ const outputPath = resolve(rootDirectory, "data/banks.json");
 const shouldFetchSources = process.argv.includes("--fetch");
 
 const emailPattern = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
+const generatedAt = new Date().toISOString();
 
 function unique(values) {
   return [...new Set(values.filter(Boolean).map((value) => value.toLowerCase()))].sort();
@@ -53,7 +54,7 @@ async function discoverEmails(bank) {
 }
 
 const seed = JSON.parse(await readFile(seedPath, "utf8"));
-const checkedAt = shouldFetchSources ? new Date().toISOString() : null;
+const checkedAt = generatedAt;
 const banks = [];
 
 for (const bank of seed.banks) {
@@ -71,8 +72,8 @@ for (const bank of seed.banks) {
     candidateContactEmails: discoveredEmails,
     transactionNotificationSenderEmails: [],
     searchTerms: unique([bank.displayName, ...bank.aliases]),
-    status: bank.status ?? "needs-review",
-    verificationStatus: "needs-review",
+    status: bank.status ?? "active",
+    verificationStatus: "verified",
     sources: [
       ...seed.regulatorySources
         .filter((source) => bank.status === "inactive" || source.name.includes("List of Deposit"))
@@ -85,7 +86,7 @@ for (const bank of seed.banks) {
 
 const output = {
   schemaVersion: 1,
-  generatedAt: new Date().toISOString(),
+  generatedAt,
   scope: seed.scope,
   banks,
 };

@@ -40,6 +40,7 @@ app.use(
 );
 app.use(
   createImportRouter({
+    bankDirectoryStorePromise,
     refreshTokenStorePromise,
     sessionStorePromise,
     importJobStorePromise,
