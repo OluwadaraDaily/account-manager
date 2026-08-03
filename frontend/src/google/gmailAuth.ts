@@ -23,6 +23,12 @@ export type GmailImportCriteria = GmailSearchCriteria & {
   bankId: string;
 };
 
+export type BankDirectoryRecord = {
+  id: string;
+  displayName: string;
+  transactionNotificationSenderEmail: string | null;
+};
+
 export type GmailMessageSearchResult = {
   messages: Array<{ id: string; threadId: string }>;
   nextPageToken?: string;
@@ -68,6 +74,13 @@ export async function getGmailSession(): Promise<GmailSession> {
 
 export async function disconnectGmail() {
   await apiClient.post("/auth/logout");
+}
+
+export async function getBankDirectoryRecord(bankId: string): Promise<BankDirectoryRecord> {
+  const response = await apiClient.get<{ bank: BankDirectoryRecord }>(
+    `/banks/${encodeURIComponent(bankId)}`,
+  );
+  return response.data.bank;
 }
 
 export async function searchGmailMessages(

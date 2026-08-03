@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { bankDirectoryEntries } from "../data/bankDirectory";
-import { createGmailImportJob, getGmailImportJob, type GmailImportJob } from "../google/gmailAuth";
+import {
+  createGmailImportJob,
+  getBankDirectoryRecord,
+  getGmailImportJob,
+  type GmailImportJob,
+} from "../google/gmailAuth";
 import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
 
 const inputClassName =
@@ -67,6 +72,28 @@ export function GmailSearchForm() {
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
   }, [job]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    setSearchForm((current) => ({ ...current, senderEmail: "" }));
+    void getBankDirectoryRecord(searchForm.bankId)
+      .then((bank) => {
+        if (!cancelled) {
+          setSearchForm((current) => ({
+            ...current,
+            senderEmail: bank.transactionNotificationSenderEmail ?? "",
+          }));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError("The selected bank's sender details could not be loaded.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [searchForm.bankId]);
 
   const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
