@@ -1,7 +1,6 @@
-const backendOrigin = (import.meta.env.VITE_BACKEND_ORIGIN ?? "http://localhost:8787").replace(
-  /\/$/,
-  "",
-);
+import { apiClient } from "../api/client";
+
+const backendOrigin = apiClient.defaults.baseURL ?? "";
 
 export type GmailSession = {
   authenticated: boolean;
@@ -58,21 +57,12 @@ export function startGmailAuthorization() {
 }
 
 export async function getGmailSession(): Promise<GmailSession> {
-  const response = await fetch(`${backendOrigin}/auth/session`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) throw new Error("The Gmail session could not be checked.");
-  return (await response.json()) as GmailSession;
+  const response = await apiClient.get<GmailSession>("/auth/session");
+  return response.data;
 }
 
 export async function disconnectGmail() {
-  const response = await fetch(`${backendOrigin}/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-  });
-
-  if (!response.ok) throw new Error("Gmail could not be disconnected.");
+  await apiClient.post("/auth/logout");
 }
 
 export async function searchGmailMessages(

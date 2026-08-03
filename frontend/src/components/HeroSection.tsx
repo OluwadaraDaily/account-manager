@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Icon } from "./Icon";
 import {
   disconnectGmail,
@@ -8,52 +9,47 @@ import {
 } from "../google/gmailAuth";
 
 export function HeroSection() {
-  const [connected, setConnected] = useState(false);
-  const [account, setAccount] = useState<GmailSession["user"]>();
-  const [checkingSession, setCheckingSession] = useState(true);
-  const [connecting, setConnecting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const [authorizationError, setAuthorizationError] = useState<string | null>(null);
+  const [redirecting, setRedirecting] = useState(false);
+  const sessionQuery = useQuery({
+    queryKey: ["gmail", "session"],
+    queryFn: getGmailSession,
+    retry: false,
+  });
+  const disconnectMutation = useMutation({
+    mutationFn: disconnectGmail,
+    onSuccess: () => {
+      queryClient.setQueryData<GmailSession>(["gmail", "session"], {
+        authenticated: false,
+      });
+    },
+  });
 
   useEffect(() => {
     const status = new URLSearchParams(window.location.search).get("gmail");
-    if (status === "error") setError("Google authorization could not be completed.");
+    if (status === "error") setAuthorizationError("Google authorization could not be completed.");
     if (status) window.history.replaceState({}, document.title, window.location.pathname);
-
-    let cancelled = false;
-    void getGmailSession()
-      .then((session) => {
-        if (cancelled) return;
-        setConnected(session.authenticated);
-        setAccount(session.user);
-      })
-      .catch(() => {
-        if (!cancelled) setError("The Gmail connection could not be checked.");
-      })
-      .finally(() => {
-        if (!cancelled) setCheckingSession(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
+  const connected = sessionQuery.data?.authenticated ?? false;
+  const account = sessionQuery.data?.user;
+  const checkingSession = sessionQuery.isPending;
+  const connecting = redirecting || disconnectMutation.isPending;
+  const error =
+    authorizationError ??
+    (sessionQuery.error instanceof Error ? sessionQuery.error.message : null) ??
+    (disconnectMutation.error instanceof Error ? disconnectMutation.error.message : null);
+
   const connectGmail = () => {
-    setError(null);
-    setConnecting(true);
+    setAuthorizationError(null);
+    setRedirecting(true);
     startGmailAuthorization();
   };
 
   const disconnect = () => {
-    setError(null);
-    setConnecting(true);
-    void disconnectGmail()
-      .then(() => {
-        setConnected(false);
-        setAccount(undefined);
-      })
-      .catch(() => setError("Gmail could not be disconnected."))
-      .finally(() => setConnecting(false));
+    setAuthorizationError(null);
+    disconnectMutation.mutate();
   };
 
   return (
