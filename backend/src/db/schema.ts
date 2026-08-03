@@ -31,6 +31,8 @@ const importJobSchema = `
     google_subject TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed', 'cancelled')),
     bank_id TEXT,
+    search_mode TEXT NOT NULL DEFAULT 'sender'
+      CHECK (search_mode IN ('sender', 'bank-fallback')),
     sender_email TEXT,
     after_timestamp INTEGER,
     before_timestamp INTEGER,
@@ -79,6 +81,9 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
     );
+    await connection.pool.query(
+      "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS search_mode TEXT NOT NULL DEFAULT 'sender'",
+    );
     return;
   }
 
@@ -92,5 +97,10 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     .all() as Array<{ name: string }>;
   if (!columns.some((column) => column.name === "bank_id")) {
     connection.database.exec("ALTER TABLE gmail_import_jobs ADD COLUMN bank_id TEXT");
+  }
+  if (!columns.some((column) => column.name === "search_mode")) {
+    connection.database.exec(
+      "ALTER TABLE gmail_import_jobs ADD COLUMN search_mode TEXT NOT NULL DEFAULT 'sender'",
+    );
   }
 }

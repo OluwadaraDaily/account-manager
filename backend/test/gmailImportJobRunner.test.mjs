@@ -16,6 +16,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
     status: "queued",
     criteria: {
       bankId: "union-bank",
+      searchMode: "sender",
       senderEmail: "alerts@unionbankng.com",
       after: null,
       before: null,

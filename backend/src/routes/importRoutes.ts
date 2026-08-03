@@ -65,7 +65,7 @@ export function createImportRouter({
       request,
       response: Response<unknown, ValidatedLocals<typeof createImportJobBodySchema>>,
     ) => {
-      const { bankId, senderEmail, after, before, subject, keyword } =
+      const { bankId, searchMode, senderEmail, after, before, subject, keyword } =
         response.locals.validatedBody;
       const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
       const sessionStore = await sessionStorePromise;
@@ -92,8 +92,18 @@ export function createImportRouter({
         return;
       }
 
-      const resolvedSenderEmail = senderEmail ?? bank.transactionNotificationSenderEmail;
-      if (!resolvedSenderEmail) {
+      if (searchMode === "bank-fallback" && bank.verificationStatus !== "verified") {
+        response
+          .status(400)
+          .json({ error: "The selected bank is not verified for fallback search." });
+        return;
+      }
+
+      const resolvedSenderEmail =
+        searchMode === "bank-fallback"
+          ? null
+          : (senderEmail ?? bank.transactionNotificationSenderEmail);
+      if (searchMode === "sender" && !resolvedSenderEmail) {
         response.status(400).json({
           error: "A transaction sender email is required before importing this bank.",
         });
@@ -103,6 +113,7 @@ export function createImportRouter({
       const importJobStore = await importJobStorePromise;
       const job = await importJobStore.create(account.googleSubject, {
         bankId,
+        searchMode,
         senderEmail: resolvedSenderEmail,
         after: after ?? null,
         before: before ?? null,

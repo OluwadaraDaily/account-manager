@@ -45,8 +45,28 @@ export function createGmailImportJobRunner({
 
       if (!encryptedToken) throw new Error("Gmail is no longer connected.");
 
+      const bankDirectoryStore = bankDirectoryStorePromise ? await bankDirectoryStorePromise : null;
+      const fallbackBank =
+        job.criteria.searchMode === "bank-fallback" && bankDirectoryStore && job.criteria.bankId
+          ? await bankDirectoryStore.get(job.criteria.bankId)
+          : null;
+
+      if (
+        job.criteria.searchMode === "bank-fallback" &&
+        (!fallbackBank ||
+          fallbackBank.status === "inactive" ||
+          fallbackBank.verificationStatus !== "verified")
+      ) {
+        throw new Error("The selected bank is not verified for fallback search.");
+      }
+
       const query = buildGmailSearchQuery({
-        senderEmail: job.criteria.senderEmail ?? undefined,
+        senderEmail:
+          job.criteria.searchMode === "bank-fallback"
+            ? undefined
+            : (job.criteria.senderEmail ?? undefined),
+        bankDomains: fallbackBank?.officialDomains,
+        bankSearchTerms: fallbackBank?.searchTerms,
         after: job.criteria.after ?? undefined,
         before: job.criteria.before ?? undefined,
         subject: job.criteria.subject ?? undefined,
@@ -60,7 +80,6 @@ export function createGmailImportJobRunner({
       let messagesSkipped = job.progress.messagesSkipped;
       let senderConfirmed = false;
       const senderEmail = job.criteria.senderEmail?.toLowerCase() ?? null;
-      const bankDirectoryStore = bankDirectoryStorePromise ? await bankDirectoryStorePromise : null;
 
       do {
         const result: GmailMessageList = await listMessages({ refreshToken, pageToken, q: query });

@@ -25,7 +25,10 @@ export const importMessagesQuerySchema = gmailSearchCriteriaObjectSchema
 export type ImportMessagesQuery = z.infer<typeof importMessagesQuerySchema>;
 
 export const createImportJobBodySchema = gmailSearchCriteriaObjectSchema
-  .extend({ bankId: z.string().trim().min(1).max(100) })
+  .extend({
+    bankId: z.string().trim().min(1).max(100),
+    searchMode: z.enum(["sender", "bank-fallback"]).optional().default("sender"),
+  })
   .refine(validDateRange, dateRangeError);
 
 export type CreateImportJobBody = z.infer<typeof createImportJobBodySchema>;

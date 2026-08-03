@@ -96,8 +96,7 @@ export function GmailSearchForm() {
     };
   }, [searchForm.bankId]);
 
-  const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const startImport = (searchMode: "sender" | "bank-fallback") => {
     setError(null);
     setJob(null);
 
@@ -111,7 +110,8 @@ export function GmailSearchForm() {
 
     void createGmailImportJob({
       bankId: searchForm.bankId,
-      senderEmail: searchForm.senderEmail || undefined,
+      searchMode,
+      senderEmail: searchMode === "bank-fallback" ? undefined : searchForm.senderEmail || undefined,
       after,
       before,
       subject: searchForm.subject || undefined,
@@ -123,6 +123,13 @@ export function GmailSearchForm() {
       })
       .finally(() => setSearching(false));
   };
+
+  const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    startImport("sender");
+  };
+
+  const startBroaderSearch = () => startImport("bank-fallback");
 
   return (
     <section
@@ -288,7 +295,18 @@ export function GmailSearchForm() {
           aria-atomic="true"
         >
           {noMatches ? (
-            "No matching messages found. Adjust the sender, dates, subject, or keyword and try again."
+            <>
+              No matching messages found. Adjust the sender, dates, subject, or keyword, or try a
+              broader search for this bank.
+              <button
+                type="button"
+                onClick={startBroaderSearch}
+                disabled={searching || importActive}
+                className="text-moss-dark ml-1 font-bold underline underline-offset-2 disabled:opacity-60"
+              >
+                Try broader bank search
+              </button>
+            </>
           ) : (
             <>
               Import {job.status}: {job.progress.messagesDiscovered} message

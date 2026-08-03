@@ -4,9 +4,11 @@ import { createSqliteDatabase, type SqliteDatabase } from "../sqlite.js";
 import type { PostgresPool } from "../postgres.js";
 
 export type ImportJobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+export type ImportSearchMode = "sender" | "bank-fallback";
 
 export type ImportJobCriteria = {
   bankId: string | null;
+  searchMode: ImportSearchMode;
   senderEmail: string | null;
   after: number | null;
   before: number | null;
@@ -57,6 +59,7 @@ type ImportJobRow = {
   google_subject: string;
   status: ImportJobStatus;
   bank_id: string | null;
+  search_mode: ImportSearchMode;
   sender_email: string | null;
   after_timestamp: number | null;
   before_timestamp: number | null;
@@ -81,6 +84,7 @@ function toImportJob(row: ImportJobRow): ImportJob {
     status: row.status,
     criteria: {
       bankId: row.bank_id,
+      searchMode: row.search_mode,
       senderEmail: row.sender_email,
       after: row.after_timestamp,
       before: row.before_timestamp,
@@ -110,7 +114,8 @@ function assertNonNegative(value: number, field: string) {
 
 function getColumns() {
   return `
-    job_id, google_subject, status, bank_id, sender_email, after_timestamp, before_timestamp,
+    job_id, google_subject, status, bank_id, search_mode, sender_email,
+    after_timestamp, before_timestamp,
     subject, keyword, page_token, messages_discovered, messages_processed,
     transactions_extracted, messages_skipped, error_message, created_at, updated_at,
     started_at, completed_at`;
@@ -132,14 +137,16 @@ export class SqliteImportJobStore implements ImportJobStore {
     this.database
       .prepare(
         `INSERT INTO gmail_import_jobs
-          (job_id, google_subject, status, bank_id, sender_email, after_timestamp, before_timestamp,
+          (job_id, google_subject, status, bank_id, search_mode, sender_email,
+           after_timestamp, before_timestamp,
            subject, keyword, created_at, updated_at)
-         VALUES (?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
         googleSubject,
         criteria.bankId,
+        criteria.searchMode,
         criteria.senderEmail,
         criteria.after,
         criteria.before,
@@ -223,14 +230,16 @@ export class PostgresImportJobStore implements ImportJobStore {
     const id = randomUUID();
     const result = await this.pool.query<ImportJobRow>(
       `INSERT INTO gmail_import_jobs
-        (job_id, google_subject, status, bank_id, sender_email, after_timestamp, before_timestamp,
+        (job_id, google_subject, status, bank_id, search_mode, sender_email,
+         after_timestamp, before_timestamp,
          subject, keyword, created_at, updated_at)
-       VALUES ($1, $2, 'queued', $3, $4, $5, $6, $7, $8, NOW(), NOW())
+       VALUES ($1, $2, 'queued', $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
        RETURNING ${getColumns()}`,
       [
         id,
         googleSubject,
         criteria.bankId,
+        criteria.searchMode,
         criteria.senderEmail,
         criteria.after,
         criteria.before,

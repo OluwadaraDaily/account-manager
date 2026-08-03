@@ -21,6 +21,7 @@ export type GmailSearchCriteria = {
 
 export type GmailImportCriteria = GmailSearchCriteria & {
   bankId: string;
+  searchMode?: "sender" | "bank-fallback";
 };
 
 export type BankDirectoryRecord = {
