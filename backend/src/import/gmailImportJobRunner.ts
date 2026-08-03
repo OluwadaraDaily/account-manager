@@ -1,6 +1,12 @@
-import { listGmailMessages, type GmailMessageList } from "../integrations/google/gmailClient.js";
+import {
+  getGmailMessageContent,
+  listGmailMessages,
+  type GmailMessageContent,
+  type GmailMessageList,
+} from "../integrations/google/gmailClient.js";
 import type { ImportJobStore } from "../db/repositories/importJobStore.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
+import { parseUnionBankTransaction } from "../parsers/unionBankParser.js";
 import { decryptToken } from "../security/encryption.js";
 import { buildGmailSearchQuery } from "./gmailSearch.js";
 
@@ -8,12 +14,14 @@ type GmailImportJobRunnerDependencies = {
   importJobStorePromise: Promise<ImportJobStore>;
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
   listMessages?: typeof listGmailMessages;
+  getMessageContent?: typeof getGmailMessageContent;
 };
 
 export function createGmailImportJobRunner({
   importJobStorePromise,
   refreshTokenStorePromise,
   listMessages = listGmailMessages,
+  getMessageContent = getGmailMessageContent,
 }: GmailImportJobRunnerDependencies) {
   return async function runGmailImportJob(jobId: string, googleSubject: string) {
     const importJobStore = await importJobStorePromise;
@@ -44,10 +52,44 @@ export function createGmailImportJobRunner({
       const refreshToken = decryptToken(encryptedToken);
       let pageToken = job.pageToken ?? undefined;
       let messagesDiscovered = job.progress.messagesDiscovered;
+      let messagesProcessed = job.progress.messagesProcessed;
+      let transactionsExtracted = job.progress.transactionsExtracted;
+      let messagesSkipped = job.progress.messagesSkipped;
 
       do {
         const result: GmailMessageList = await listMessages({ refreshToken, pageToken, q: query });
         messagesDiscovered += result.messages.length;
+
+        for (const messageReference of result.messages) {
+          let messageContent: GmailMessageContent | null = null;
+
+          try {
+            messageContent = await getMessageContent({
+              refreshToken,
+              messageId: messageReference.id,
+            });
+
+            const transaction = parseUnionBankTransaction(messageContent);
+            messagesProcessed += 1;
+
+            if (transaction) {
+              transactionsExtracted += 1;
+            } else {
+              messagesSkipped += 1;
+            }
+          } finally {
+            messageContent = null;
+          }
+
+          await importJobStore.update(job.id, googleSubject, {
+            status: "running",
+            messagesDiscovered,
+            messagesProcessed,
+            transactionsExtracted,
+            messagesSkipped,
+          });
+        }
+
         pageToken = result.nextPageToken;
 
         await importJobStore.update(job.id, googleSubject, {
@@ -60,7 +102,7 @@ export function createGmailImportJobRunner({
     } catch {
       await importJobStore.update(job.id, googleSubject, {
         status: "failed",
-        errorMessage: "Gmail import discovery failed.",
+        errorMessage: "Gmail import failed.",
         completedAt: new Date().toISOString(),
       });
       console.error("Gmail import job failed.");
