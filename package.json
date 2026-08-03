@@ -18,6 +18,7 @@
     "build:backend": "npm run build --workspace backend",
     "banks:generate": "node scripts/generate-bank-directory.mjs --fetch",
     "fixtures:capture-union": "npm run build:shared && npm run build:backend && node scripts/capture-redacted-union-fixtures.mjs",
+    "test:parser": "npm run build:shared && npm run build:backend && node --test backend/test/unionBankParser.test.mjs",
     "preview": "npm run preview --workspace frontend",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
