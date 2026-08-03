@@ -17,6 +17,7 @@
     "build:frontend": "npm run build --workspace frontend",
     "build:backend": "npm run build --workspace backend",
     "banks:generate": "node scripts/generate-bank-directory.mjs --fetch",
+    "banks:seed": "npm run build:backend && node scripts/seed-bank-directory.mjs",
     "fixtures:capture-union": "npm run build:shared && npm run build:backend && node scripts/capture-redacted-union-fixtures.mjs",
     "test:parser": "npm run build:shared && npm run build:backend && node --test backend/test/unionBankParser.test.mjs",
     "preview": "npm run preview --workspace frontend",

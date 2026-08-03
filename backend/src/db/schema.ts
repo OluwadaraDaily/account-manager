@@ -49,11 +49,33 @@ const importJobSchema = `
   )
 `;
 
+const bankDirectorySchema = `
+  CREATE TABLE IF NOT EXISTS bank_directory (
+    bank_id TEXT PRIMARY KEY,
+    display_name TEXT NOT NULL,
+    legal_name TEXT NOT NULL,
+    aliases_json TEXT NOT NULL,
+    licence_category TEXT NOT NULL,
+    official_domains_json TEXT NOT NULL,
+    customer_service_emails_json TEXT NOT NULL,
+    candidate_contact_emails_json TEXT NOT NULL,
+    transaction_notification_sender_email TEXT,
+    search_terms_json TEXT NOT NULL,
+    status TEXT NOT NULL,
+    verification_status TEXT NOT NULL,
+    sources_json TEXT NOT NULL,
+    checked_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+  )
+`;
+
 export async function initializeDatabase(connection: DatabaseConnection) {
   if (connection.dialect === "postgres") {
     await connection.pool.query(sessionSchema);
     await connection.pool.query(refreshTokenSchema);
     await connection.pool.query(importJobSchema);
+    await connection.pool.query(bankDirectorySchema);
     await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
     );
@@ -63,6 +85,7 @@ export async function initializeDatabase(connection: DatabaseConnection) {
   connection.database.exec(sessionSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(refreshTokenSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(importJobSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
+  connection.database.exec(bankDirectorySchema.replaceAll("TIMESTAMPTZ", "TEXT"));
 
   const columns = connection.database
     .prepare("PRAGMA table_info(gmail_import_jobs)")
