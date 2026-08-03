@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "latest",
+    "@tanstack/react-query": "^5.101.4",
     "@vitejs/plugin-react": "latest",
+    "axios": "^1.19.0",
     "react": "latest",
     "react-dom": "latest",
     "tailwindcss": "latest",
