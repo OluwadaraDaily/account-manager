@@ -62,7 +62,8 @@ export function createImportRouter({
       request,
       response: Response<unknown, ValidatedLocals<typeof createImportJobBodySchema>>,
     ) => {
-      const { senderEmail, after, before, subject, keyword } = response.locals.validatedBody;
+      const { bankId, senderEmail, after, before, subject, keyword } =
+        response.locals.validatedBody;
       const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
       const sessionStore = await sessionStorePromise;
       const account = sessionId ? await sessionStore.get(sessionId) : null;
@@ -82,6 +83,7 @@ export function createImportRouter({
 
       const importJobStore = await importJobStorePromise;
       const job = await importJobStore.create(account.googleSubject, {
+        bankId,
         senderEmail: senderEmail ?? null,
         after: after ?? null,
         before: before ?? null,

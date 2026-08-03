@@ -30,6 +30,7 @@ const importJobSchema = `
     job_id TEXT PRIMARY KEY,
     google_subject TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed', 'cancelled')),
+    bank_id TEXT,
     sender_email TEXT,
     after_timestamp INTEGER,
     before_timestamp INTEGER,
@@ -53,10 +54,20 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(sessionSchema);
     await connection.pool.query(refreshTokenSchema);
     await connection.pool.query(importJobSchema);
+    await connection.pool.query(
+      "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
+    );
     return;
   }
 
   connection.database.exec(sessionSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(refreshTokenSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(importJobSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
+
+  const columns = connection.database
+    .prepare("PRAGMA table_info(gmail_import_jobs)")
+    .all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === "bank_id")) {
+    connection.database.exec("ALTER TABLE gmail_import_jobs ADD COLUMN bank_id TEXT");
+  }
 }

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const timestampSchema = z.coerce.number().int().nonnegative();
 
-const importCriteriaObjectSchema = z.object({
+const gmailSearchCriteriaObjectSchema = z.object({
   senderEmail: z.string().email().optional(),
   after: timestampSchema.optional(),
   before: timestampSchema.optional(),
@@ -18,16 +18,15 @@ const dateRangeError = {
   path: ["before"],
 };
 
-export const importMessagesQuerySchema = importCriteriaObjectSchema
+export const importMessagesQuerySchema = gmailSearchCriteriaObjectSchema
   .extend({ pageToken: z.string().min(1).max(500).optional() })
   .refine(validDateRange, dateRangeError);
 
 export type ImportMessagesQuery = z.infer<typeof importMessagesQuerySchema>;
 
-export const createImportJobBodySchema = importCriteriaObjectSchema.refine(
-  validDateRange,
-  dateRangeError,
-);
+export const createImportJobBodySchema = gmailSearchCriteriaObjectSchema
+  .extend({ bankId: z.string().trim().min(1).max(100) })
+  .refine(validDateRange, dateRangeError);
 
 export type CreateImportJobBody = z.infer<typeof createImportJobBodySchema>;
 

@@ -82,6 +82,7 @@ export function GmailSearchForm() {
     setSearching(true);
 
     void createGmailImportJob({
+      bankId: searchForm.bankId,
       senderEmail: searchForm.senderEmail || undefined,
       after,
       before,

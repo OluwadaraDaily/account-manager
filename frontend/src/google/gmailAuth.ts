@@ -11,11 +11,16 @@ export type GmailSession = {
 };
 
 export type GmailSearchCriteria = {
+  bankId?: string;
   senderEmail?: string;
   after?: number;
   before?: number;
   subject?: string;
   keyword?: string;
+};
+
+export type GmailImportCriteria = GmailSearchCriteria & {
+  bankId: string;
 };
 
 export type GmailMessageSearchResult = {
@@ -108,7 +113,7 @@ export async function getGmailMessageMetadata(
   return (await response.json()) as GmailMessageMetadataResult;
 }
 
-export async function createGmailImportJob(criteria: GmailSearchCriteria): Promise<GmailImportJob> {
+export async function createGmailImportJob(criteria: GmailImportCriteria): Promise<GmailImportJob> {
   const response = await fetch(`${backendOrigin}/imports/gmail/jobs`, {
     method: "POST",
     credentials: "include",
