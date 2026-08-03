@@ -5,7 +5,7 @@ import { HeroSection } from "./components/HeroSection";
 import { PrivacyNotice } from "./components/PrivacyNotice";
 import { TransactionWorkspace } from "./components/TransactionWorkspace";
 import { mockTransactions } from "./data/mockTransactions";
-import { downloadTransactionsAsCsv, downloadTransactionsAsXlsx } from "./utils/exportTransactions";
+import { downloadTransactionsAsCsv } from "./utils/exportTransactions";
 
 function App() {
   const [period, setPeriod] = useState("Last 30 days");
@@ -20,7 +20,6 @@ function App() {
           period={period}
           transactions={mockTransactions}
           onExportCsv={() => downloadTransactionsAsCsv(mockTransactions)}
-          onExportXlsx={() => downloadTransactionsAsXlsx(mockTransactions)}
         />
         <PrivacyNotice />
       </main>

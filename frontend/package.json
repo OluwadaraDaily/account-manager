@@ -17,8 +17,7 @@
     "react-dom": "latest",
     "tailwindcss": "latest",
     "typescript": "latest",
-    "vite": "latest",
-    "xlsx": "^0.18.5"
+    "vite": "latest"
   },
   "devDependencies": {
     "@types/react": "latest",

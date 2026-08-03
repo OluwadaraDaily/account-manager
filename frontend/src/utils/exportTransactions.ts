@@ -1,4 +1,3 @@
-import * as XLSX from "xlsx";
 import type { Transaction } from "../types/transaction";
 
 type ExportDetails = {
@@ -41,21 +40,4 @@ export function downloadTransactionsAsCsv(transactions: Transaction[]): void {
   link.download = `account-manager-transactions-${fileStamp}.csv`;
   link.click();
   URL.revokeObjectURL(url);
-}
-
-export function downloadTransactionsAsXlsx(transactions: Transaction[]): void {
-  const { exportedAt, fileStamp } = getExportDetails();
-  const rows = transactions.map((item) => ({
-    Date: item.date,
-    Description: item.description,
-    Counterparty: item.counterparty,
-    Type: item.type,
-    Amount: item.amount,
-    Status: item.status,
-    ExportedAt: exportedAt,
-  }));
-  const worksheet = XLSX.utils.json_to_sheet(rows);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
-  XLSX.writeFile(workbook, `account-manager-transactions-${fileStamp}.xlsx`);
 }

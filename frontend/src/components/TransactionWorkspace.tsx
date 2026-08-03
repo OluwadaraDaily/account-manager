@@ -9,14 +9,12 @@ type TransactionWorkspaceProps = {
   period: string;
   transactions: Transaction[];
   onExportCsv: () => void;
-  onExportXlsx: () => void;
 };
 
 export function TransactionWorkspace({
   period,
   transactions,
   onExportCsv,
-  onExportXlsx,
 }: TransactionWorkspaceProps) {
   const [activeTab, setActiveTab] = useState("Overview");
   const visibleTransactions = transactions.filter(
@@ -44,12 +42,6 @@ export function TransactionWorkspace({
             className="border-line text-ink hover:border-ink flex items-center gap-2 rounded-full border px-4 py-2.5 text-[12px] font-semibold transition"
           >
             <Icon name="download" size={15} /> CSV
-          </button>
-          <button
-            onClick={onExportXlsx}
-            className="bg-ink hover:bg-moss-dark flex items-center gap-2 rounded-full px-4 py-2.5 text-[12px] font-semibold text-white transition"
-          >
-            <Icon name="download" size={15} /> XLSX
           </button>
         </div>
       </div>
