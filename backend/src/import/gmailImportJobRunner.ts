@@ -5,6 +5,7 @@ import {
   type GmailMessageList,
 } from "../integrations/google/gmailClient.js";
 import type { ImportJobStore } from "../db/repositories/importJobStore.js";
+import type { BankDirectoryStore } from "../db/repositories/bankDirectoryStore.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import { parseUnionBankTransaction } from "../parsers/unionBankParser.js";
 import { decryptToken } from "../security/encryption.js";
@@ -12,6 +13,7 @@ import { buildGmailSearchQuery } from "./gmailSearch.js";
 
 type GmailImportJobRunnerDependencies = {
   importJobStorePromise: Promise<ImportJobStore>;
+  bankDirectoryStorePromise?: Promise<BankDirectoryStore>;
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
   listMessages?: typeof listGmailMessages;
   getMessageContent?: typeof getGmailMessageContent;
@@ -19,6 +21,7 @@ type GmailImportJobRunnerDependencies = {
 
 export function createGmailImportJobRunner({
   importJobStorePromise,
+  bankDirectoryStorePromise,
   refreshTokenStorePromise,
   listMessages = listGmailMessages,
   getMessageContent = getGmailMessageContent,
@@ -55,6 +58,9 @@ export function createGmailImportJobRunner({
       let messagesProcessed = job.progress.messagesProcessed;
       let transactionsExtracted = job.progress.transactionsExtracted;
       let messagesSkipped = job.progress.messagesSkipped;
+      let senderConfirmed = false;
+      const senderEmail = job.criteria.senderEmail?.toLowerCase() ?? null;
+      const bankDirectoryStore = bankDirectoryStorePromise ? await bankDirectoryStorePromise : null;
 
       do {
         const result: GmailMessageList = await listMessages({ refreshToken, pageToken, q: query });
@@ -68,6 +74,23 @@ export function createGmailImportJobRunner({
               refreshToken,
               messageId: messageReference.id,
             });
+
+            const messageSender = messageContent.headers.from
+              ?.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]
+              ?.toLowerCase();
+            if (
+              !senderConfirmed &&
+              bankDirectoryStore &&
+              job.criteria.bankId &&
+              senderEmail &&
+              messageSender === senderEmail
+            ) {
+              const savedBank = await bankDirectoryStore.setTransactionNotificationSender(
+                job.criteria.bankId,
+                senderEmail,
+              );
+              if (savedBank) senderConfirmed = true;
+            }
 
             const transaction = parseUnionBankTransaction(messageContent);
             messagesProcessed += 1;

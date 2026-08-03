@@ -15,7 +15,8 @@ test("processes Gmail messages sequentially and updates extraction progress", as
     googleSubject: "google-subject",
     status: "queued",
     criteria: {
-      senderEmail: null,
+      bankId: "union-bank",
+      senderEmail: "alerts@unionbankng.com",
       after: null,
       before: null,
       subject: null,
@@ -36,6 +37,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
   };
   const updates = [];
   const messageIds = [];
+  const savedSenders = [];
 
   const runner = createGmailImportJobRunner({
     importJobStorePromise: Promise.resolve({
@@ -45,6 +47,12 @@ test("processes Gmail messages sequentially and updates extraction progress", as
       async update(_jobId, _googleSubject, changes) {
         updates.push(changes);
         return job;
+      },
+    }),
+    bankDirectoryStorePromise: Promise.resolve({
+      async setTransactionNotificationSender(bankId, senderEmail) {
+        savedSenders.push({ bankId, senderEmail });
+        return { id: bankId };
       },
     }),
     refreshTokenStorePromise: Promise.resolve({
@@ -97,6 +105,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
   await runner("job-1", "google-subject");
 
   assert.deepEqual(messageIds, ["transaction-message", "skipped-message"]);
+  assert.deepEqual(savedSenders, [{ bankId: "union-bank", senderEmail: "alerts@unionbankng.com" }]);
   const progressUpdate = updates.at(-2);
   assert.equal(progressUpdate.messagesDiscovered, 2);
   assert.equal(progressUpdate.messagesProcessed, 2);

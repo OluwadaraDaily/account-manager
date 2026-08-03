@@ -25,6 +25,7 @@ const bankDirectoryStorePromise = databaseReady.then(() =>
   createBankDirectoryStore(databaseConnection),
 );
 const runGmailImportJob = createGmailImportJobRunner({
+  bankDirectoryStorePromise,
   importJobStorePromise,
   refreshTokenStorePromise,
 });
