@@ -2,6 +2,7 @@ import type { Server } from "node:http";
 import { createApp } from "./app.js";
 import { appConfig } from "./config.js";
 import { createDatabaseConnection } from "./db/database.js";
+import { createImportJobStore } from "./db/repositories/importJobStore.js";
 import { initializeDatabase } from "./db/schema.js";
 import { createRefreshTokenStore } from "./db/repositories/refreshTokenStore.js";
 import { createSessionStore } from "./db/repositories/sessionStore.js";
@@ -16,6 +17,7 @@ const refreshTokenStorePromise = databaseReady.then(() =>
   createRefreshTokenStore(databaseConnection),
 );
 const sessionStorePromise = databaseReady.then(() => createSessionStore(databaseConnection));
+const importJobStorePromise = databaseReady.then(() => createImportJobStore(databaseConnection));
 
 app.use(createHealthRouter());
 app.use(
@@ -28,6 +30,7 @@ app.use(
   createImportRouter({
     refreshTokenStorePromise,
     sessionStorePromise,
+    importJobStorePromise,
   }),
 );
 

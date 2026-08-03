@@ -8,11 +8,13 @@ import {
 } from "../integrations/google/gmailClient.js";
 import { parseCookies } from "../http/cookies.js";
 import { validateBody, validateQuery, type ValidatedLocals } from "../middleware/validation.js";
+import type { ImportJobStore } from "../db/repositories/importJobStore.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { SessionStore } from "../db/repositories/sessionStore.js";
 import { decryptToken } from "../security/encryption.js";
 import { buildGmailSearchQuery } from "../import/gmailSearch.js";
 import {
+  createImportJobBodySchema,
   importMessageMetadataBodySchema,
   importMessagesQuerySchema,
 } from "../validators/importValidators.js";
@@ -20,11 +22,13 @@ import {
 type ImportRouterDependencies = {
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
   sessionStorePromise: Promise<SessionStore>;
+  importJobStorePromise: Promise<ImportJobStore>;
 };
 
 export function createImportRouter({
   refreshTokenStorePromise,
   sessionStorePromise,
+  importJobStorePromise,
 }: ImportRouterDependencies) {
   const router = Router();
 
@@ -47,6 +51,44 @@ export function createImportRouter({
     await Promise.all(Array.from({ length: workerCount }, () => worker()));
     return results;
   }
+
+  router.post(
+    "/imports/gmail/jobs",
+    validateBody(createImportJobBodySchema),
+    async (
+      request,
+      response: Response<unknown, ValidatedLocals<typeof createImportJobBodySchema>>,
+    ) => {
+      const { senderEmail, after, before, subject, keyword } = response.locals.validatedBody;
+      const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
+      const sessionStore = await sessionStorePromise;
+      const account = sessionId ? await sessionStore.get(sessionId) : null;
+
+      if (!account) {
+        response.status(401).json({ error: "Gmail authentication is required." });
+        return;
+      }
+
+      const refreshTokenStore = await refreshTokenStorePromise;
+      const encryptedToken = await refreshTokenStore.get(account);
+
+      if (!encryptedToken) {
+        response.status(409).json({ error: "Gmail is not connected." });
+        return;
+      }
+
+      const importJobStore = await importJobStorePromise;
+      const job = await importJobStore.create(account.googleSubject, {
+        senderEmail: senderEmail ?? null,
+        after: after ?? null,
+        before: before ?? null,
+        subject: subject ?? null,
+        keyword: keyword ?? null,
+      });
+
+      response.status(202).json({ job });
+    },
+  );
 
   router.get(
     "/imports/gmail/messages",
