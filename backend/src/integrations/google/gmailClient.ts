@@ -54,6 +54,53 @@ type GmailMessageContentResponse = {
   };
 };
 
+const retryableGmailStatuses = new Set([429, 500, 502, 503, 504]);
+const maxGmailRequestAttempts = 3;
+const defaultRetryDelayMs = 250;
+const maxRetryDelayMs = 5_000;
+
+function getRetryDelayMs(response: Response, attempt: number) {
+  const retryAfterSeconds = Number(response.headers.get("retry-after"));
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
+    return Math.min(retryAfterSeconds * 1_000, maxRetryDelayMs);
+  }
+
+  return Math.min(defaultRetryDelayMs * 2 ** (attempt - 1), maxRetryDelayMs);
+}
+
+function wait(milliseconds: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function requestGmailJson<T>(url: URL, accessToken: string, description: string) {
+  for (let attempt = 1; attempt <= maxGmailRequestAttempts; attempt += 1) {
+    let response: Response;
+
+    try {
+      response = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+    } catch (error) {
+      if (attempt === maxGmailRequestAttempts) {
+        throw new Error(`${description} failed after retries.`, { cause: error });
+      }
+
+      await wait(defaultRetryDelayMs * 2 ** (attempt - 1));
+      continue;
+    }
+
+    if (response.ok) return (await response.json()) as T;
+
+    if (!retryableGmailStatuses.has(response.status) || attempt === maxGmailRequestAttempts) {
+      throw new Error(`${description} failed with status ${response.status}.`);
+    }
+
+    await wait(getRetryDelayMs(response, attempt));
+  }
+
+  throw new Error(`${description} failed.`);
+}
+
 type ListMessagesOptions = {
   refreshToken: string;
   pageToken?: string;
@@ -82,15 +129,11 @@ export async function listGmailMessages({
   if (pageToken) url.searchParams.set("pageToken", pageToken);
   if (q) url.searchParams.set("q", q);
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken.token}` },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Gmail message listing failed with status ${response.status}.`);
-  }
-
-  const body = (await response.json()) as GmailMessageListResponse;
+  const body = await requestGmailJson<GmailMessageListResponse>(
+    url,
+    accessToken.token,
+    "Gmail message listing",
+  );
 
   return {
     messages: body.messages ?? [],
@@ -130,15 +173,11 @@ export async function getGmailMessageMetadata({
   url.searchParams.append("metadataHeaders", "Subject");
   url.searchParams.append("metadataHeaders", "Date");
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken.token}` },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Gmail message metadata retrieval failed with status ${response.status}.`);
-  }
-
-  const body = (await response.json()) as GmailMessageMetadataResponse;
+  const body = await requestGmailJson<GmailMessageMetadataResponse>(
+    url,
+    accessToken.token,
+    "Gmail message metadata retrieval",
+  );
   const headers = new Map(
     (body.payload?.headers ?? []).map((header) => [header.name.toLowerCase(), header.value]),
   );
@@ -180,15 +219,11 @@ export async function getGmailMessageContent({
   );
   url.searchParams.set("format", "full");
 
-  const response = await fetch(url, {
-    headers: { Authorization: `Bearer ${accessToken.token}` },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Gmail message content retrieval failed with status ${response.status}.`);
-  }
-
-  const body = (await response.json()) as GmailMessageContentResponse;
+  const body = await requestGmailJson<GmailMessageContentResponse>(
+    url,
+    accessToken.token,
+    "Gmail message content retrieval",
+  );
   const headers = new Map(
     (body.payload.headers ?? []).map((header) => [header.name.toLowerCase(), header.value]),
   );
