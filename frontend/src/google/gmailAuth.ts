@@ -71,6 +71,23 @@ export type GmailImportJob = {
   errorMessage: string | null;
 };
 
+export type ImportedTransaction = {
+  id: string;
+  sourceMessageId: string;
+  transactionDate: string | null;
+  direction: "debit" | "credit" | null;
+  amount: string | null;
+  currency: string | null;
+  counterparty: string | null;
+  description: string | null;
+  channel: string | null;
+  confidence: "high" | "medium" | "low";
+  reviewReasons: string[];
+  reviewStatus: "ready" | "needs-review";
+  createdAt: string;
+  updatedAt: string;
+};
+
 export function startGmailAuthorization() {
   window.location.assign(`${backendOrigin}/auth/google/start`);
 }
@@ -168,4 +185,12 @@ export async function getGmailImportJob(jobId: string): Promise<GmailImportJob> 
 
   const body = (await response.json()) as { job: GmailImportJob };
   return body.job;
+}
+
+export async function listImportedTransactions(bankId: string): Promise<ImportedTransaction[]> {
+  const response = await apiClient.get<{ transactions: ImportedTransaction[] }>(
+    "/imports/gmail/transactions",
+    { params: { bankId } },
+  );
+  return response.data.transactions;
 }

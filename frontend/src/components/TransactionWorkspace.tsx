@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
 import { GmailSearchForm } from "./GmailSearchForm";
+import { ImportedTransactionReview } from "./ImportedTransactionReview";
 import { TransactionTable } from "./TransactionTable";
 import { TransactionTabs } from "./TransactionTabs";
 import type { Transaction } from "../types/transaction";
@@ -17,13 +18,19 @@ export function TransactionWorkspace({
   onExportCsv,
 }: TransactionWorkspaceProps) {
   const [activeTab, setActiveTab] = useState("Overview");
+  const [selectedBankId, setSelectedBankId] = useState("");
+  const [importRefreshKey, setImportRefreshKey] = useState(0);
   const visibleTransactions = transactions.filter(
     (item) => activeTab === "Overview" || item.status === "Review",
   );
 
   return (
     <section className="border-line bg-card overflow-hidden rounded-[24px] border">
-      <GmailSearchForm />
+      <GmailSearchForm
+        onSelectedBankChange={setSelectedBankId}
+        onImportCompleted={() => setImportRefreshKey((current) => current + 1)}
+      />
+      <ImportedTransactionReview bankId={selectedBankId} refreshKey={importRefreshKey} />
       <div className="border-line flex flex-col justify-between gap-5 border-b px-5 py-5 sm:flex-row sm:items-center sm:px-7">
         <div>
           <h2 className="font-display text-[20px] font-extrabold tracking-[-0.04em]">

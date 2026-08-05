@@ -21,7 +21,12 @@ type SearchForm = {
   keyword: string;
 };
 
-export function GmailSearchForm() {
+type GmailSearchFormProps = {
+  onSelectedBankChange?: (bankId: string) => void;
+  onImportCompleted?: () => void;
+};
+
+export function GmailSearchForm({ onSelectedBankChange, onImportCompleted }: GmailSearchFormProps) {
   const [searchForm, setSearchForm] = useState<SearchForm>({
     bankId: "",
     senderEmail: "",
@@ -55,6 +60,10 @@ export function GmailSearchForm() {
             ? current.bankId
             : (entries[0]?.id ?? ""),
         }));
+        const selectedBankId = entries.some((bank) => bank.id === searchForm.bankId)
+          ? searchForm.bankId
+          : (entries[0]?.id ?? "");
+        if (selectedBankId) onSelectedBankChange?.(selectedBankId);
       })
       .catch((bankError: unknown) => {
         if (!cancelled) {
@@ -88,6 +97,8 @@ export function GmailSearchForm() {
         setJob(nextJob);
         if (nextJob.status === "queued" || nextJob.status === "running") {
           timeoutId = window.setTimeout(() => void poll(), 1000);
+        } else if (nextJob.status === "completed") {
+          onImportCompleted?.();
         } else if (nextJob.status === "failed") {
           setError(nextJob.errorMessage ?? "The Gmail import failed.");
         }
@@ -108,7 +119,7 @@ export function GmailSearchForm() {
       cancelled = true;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
     };
-  }, [job]);
+  }, [job, onImportCompleted]);
 
   useEffect(() => {
     let cancelled = false;
@@ -213,7 +224,11 @@ export function GmailSearchForm() {
             value={searchForm.bankId}
             disabled={banksLoading || banks.length === 0}
             onChange={(event) =>
-              setSearchForm((current) => ({ ...current, bankId: event.target.value }))
+              (() => {
+                const bankId = event.target.value;
+                setSearchForm((current) => ({ ...current, bankId }));
+                onSelectedBankChange?.(bankId);
+              })()
             }
             className={inputClassName}
           >
