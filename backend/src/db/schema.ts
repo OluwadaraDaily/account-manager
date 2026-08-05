@@ -51,6 +51,25 @@ const importJobSchema = `
   )
 `;
 
+const normalizedTransactionSchema = `
+  CREATE TABLE IF NOT EXISTS normalized_transactions (
+    transaction_id TEXT PRIMARY KEY,
+    google_subject TEXT NOT NULL,
+    bank_id TEXT NOT NULL,
+    source_message_id TEXT NOT NULL,
+    transaction_date TEXT,
+    direction TEXT CHECK (direction IN ('debit', 'credit') OR direction IS NULL),
+    amount TEXT,
+    currency TEXT,
+    counterparty TEXT,
+    description TEXT,
+    channel TEXT,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    UNIQUE (google_subject, bank_id, source_message_id)
+  )
+`;
+
 const bankDirectorySchema = `
   CREATE TABLE IF NOT EXISTS bank_directory (
     bank_id TEXT PRIMARY KEY,
@@ -77,6 +96,7 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(sessionSchema);
     await connection.pool.query(refreshTokenSchema);
     await connection.pool.query(importJobSchema);
+    await connection.pool.query(normalizedTransactionSchema);
     await connection.pool.query(bankDirectorySchema);
     await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
@@ -90,6 +110,7 @@ export async function initializeDatabase(connection: DatabaseConnection) {
   connection.database.exec(sessionSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(refreshTokenSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(importJobSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
+  connection.database.exec(normalizedTransactionSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(bankDirectorySchema.replaceAll("TIMESTAMPTZ", "TEXT"));
 
   const columns = connection.database
