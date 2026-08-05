@@ -130,3 +130,30 @@ test("handles an incomplete Union Bank fixture without throwing", async () => {
     },
   );
 });
+
+test("marks an explicit refund as needing review", async () => {
+  const body = await readFile(
+    new URL("./fixtures/union-bank-refund-redacted.txt", import.meta.url),
+    "utf8",
+  );
+
+  const transaction = parseUnionBankTransaction({
+    id: "fixture-refund",
+    threadId: "thread-refund",
+    internalDate: null,
+    headers: {
+      from: "alerts@unionbankng.com",
+      subject: "Union Bank refund alert",
+      date: null,
+    },
+    body: {
+      text: body,
+      source: "plain",
+    },
+  });
+
+  assert.ok(transaction);
+  assert.equal(transaction.confidence, "high");
+  assert.deepEqual(transaction.reviewReasons, ["possible_reversal_or_refund"]);
+  assert.equal(transaction.reviewStatus, "needs-review");
+});

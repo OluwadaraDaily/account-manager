@@ -1,0 +1,5 @@
+Transaction Date: 04/02/2026
+Credit Amount: NGN 12345.67
+Transaction Type: CreditAlert
+Description: Refund
+Channel: POS

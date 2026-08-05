@@ -141,6 +141,8 @@ export function parseUnionBankTransaction(
       searchableText,
     );
   if (hasObviousNonTransactionSignal && !amount) return null;
+  const hasReversalOrRefundSignal =
+    /\b(reversal|reversed|reverted|refund(?:ed)?|chargeback|returned)\b/i.test(searchableText);
 
   const hasDebitSignal = /\b(debit(?:ed)?|withdrawn|purchase|payment)\b/i.test(searchableText);
   const hasCreditSignal = /\b(credit(?:ed)?|deposit|received)\b/i.test(searchableText);
@@ -167,6 +169,7 @@ export function parseUnionBankTransaction(
   if (!parsedTransactionDate) {
     reviewReasons.push(transactionDate ? "date_fallback_used" : "date_missing");
   }
+  if (hasReversalOrRefundSignal) reviewReasons.push("possible_reversal_or_refund");
 
   const confidence =
     amount && direction && parsedTransactionDate
@@ -174,7 +177,8 @@ export function parseUnionBankTransaction(
       : amount && direction && transactionDate
         ? "medium"
         : "low";
-  const reviewStatus = confidence === "high" ? "ready" : "needs-review";
+  const reviewStatus =
+    confidence === "high" && reviewReasons.length === 0 ? "ready" : "needs-review";
 
   return {
     sourceMessageId: message.id,
