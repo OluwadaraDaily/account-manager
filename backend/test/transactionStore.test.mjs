@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-const [{ createSqliteDatabase }, { initializeDatabase }, { SqliteTransactionStore }] =
-  await Promise.all([
-    import("../dist/db/sqlite.js"),
-    import("../dist/db/schema.js"),
-    import("../dist/db/repositories/transactionStore.js"),
-  ]);
+const [
+  { createSqliteDatabase },
+  { initializeDatabase },
+  { SqliteTransactionStore },
+  { buildTransactionFingerprint },
+] = await Promise.all([
+  import("../dist/db/sqlite.js"),
+  import("../dist/db/schema.js"),
+  import("../dist/db/repositories/transactionStore.js"),
+  import("../dist/import/transactionFingerprint.js"),
+]);
 
 test("stores normalized fields and updates an existing Gmail message idempotently", async () => {
   const database = createSqliteDatabase(":memory:");
@@ -43,6 +48,19 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
   assert.equal(updated.reviewStatus, "ready");
   assert.equal((await store.list("google-subject", "union-bank")).length, 1);
   assert.equal(await store.get("google-subject", "other-bank", "message-1"), null);
+  const fingerprint = buildTransactionFingerprint({ ...input.transaction, amount: "20000.00" });
+  assert.equal(
+    (await store.findByFingerprint("google-subject", "union-bank", fingerprint))?.id,
+    inserted.id,
+  );
+  assert.equal(
+    await store.findByFingerprint(
+      "google-subject",
+      "union-bank",
+      buildTransactionFingerprint({ ...input.transaction, amount: "different" }),
+    ),
+    null,
+  );
   assert.deepEqual(Object.keys(updated).sort(), [
     "amount",
     "bankId",

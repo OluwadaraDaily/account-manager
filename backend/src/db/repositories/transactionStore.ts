@@ -3,6 +3,7 @@ import type { NormalizedTransaction } from "@account-manager/shared";
 import { createDatabaseConnection, type DatabaseConnection } from "../database.js";
 import { createSqliteDatabase, type SqliteDatabase } from "../sqlite.js";
 import type { PostgresPool } from "../postgres.js";
+import { buildTransactionFingerprint } from "../../import/transactionFingerprint.js";
 
 export type NormalizedTransactionWrite = {
   googleSubject: string;
@@ -25,6 +26,11 @@ export interface TransactionStore {
     bankId: string,
     sourceMessageId: string,
   ): Promise<StoredNormalizedTransaction | null>;
+  findByFingerprint(
+    googleSubject: string,
+    bankId: string,
+    fingerprint: string,
+  ): Promise<StoredNormalizedTransaction | null>;
   list(googleSubject: string, bankId: string): Promise<StoredNormalizedTransaction[]>;
   close(): Promise<void>;
 }
@@ -34,6 +40,7 @@ type TransactionRow = {
   google_subject: string;
   bank_id: string;
   source_message_id: string;
+  fingerprint: string;
   transaction_date: string | null;
   direction: "debit" | "credit" | null;
   amount: string | null;
@@ -76,6 +83,7 @@ function toStoredTransaction(row: TransactionRow): StoredNormalizedTransaction {
 function getColumns() {
   return `
     transaction_id, google_subject, bank_id, source_message_id,
+    fingerprint,
     transaction_date, direction, amount, currency, counterparty, description, channel,
     confidence, review_reasons_json, review_status,
     created_at, updated_at`;
@@ -87,6 +95,7 @@ function getValues(input: NormalizedTransactionWrite, transactionId: string, tim
     input.googleSubject,
     input.bankId,
     input.transaction.sourceMessageId,
+    buildTransactionFingerprint(input.transaction),
     input.transaction.transactionDate,
     input.transaction.direction,
     input.transaction.amount,
@@ -123,7 +132,7 @@ export class SqliteTransactionStore implements TransactionStore {
       .prepare(
         `INSERT INTO normalized_transactions
           (${getColumns()})
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(google_subject, bank_id, source_message_id) DO UPDATE SET
            transaction_date = excluded.transaction_date,
            direction = excluded.direction,
@@ -135,6 +144,7 @@ export class SqliteTransactionStore implements TransactionStore {
            confidence = excluded.confidence,
            review_reasons_json = excluded.review_reasons_json,
            review_status = excluded.review_status,
+           fingerprint = excluded.fingerprint,
            updated_at = excluded.updated_at`,
       )
       .run(...getValues(input, transactionId, now));
@@ -158,6 +168,24 @@ export class SqliteTransactionStore implements TransactionStore {
          WHERE google_subject = ? AND bank_id = ? AND source_message_id = ?`,
       )
       .get(googleSubject, bankId, sourceMessageId) as TransactionRow | undefined;
+
+    return row ? toStoredTransaction(row) : null;
+  }
+
+  async findByFingerprint(googleSubject: string, bankId: string, fingerprint: string) {
+    assertIdentifier(googleSubject, "googleSubject");
+    assertIdentifier(bankId, "bankId");
+    assertIdentifier(fingerprint, "fingerprint");
+
+    const row = this.database
+      .prepare(
+        `SELECT ${getColumns()}
+         FROM normalized_transactions
+         WHERE google_subject = ? AND bank_id = ? AND fingerprint = ?
+         ORDER BY transaction_id
+         LIMIT 1`,
+      )
+      .get(googleSubject, bankId, fingerprint) as TransactionRow | undefined;
 
     return row ? toStoredTransaction(row) : null;
   }
@@ -196,7 +224,7 @@ export class PostgresTransactionStore implements TransactionStore {
     const result = await this.pool.query<TransactionRow>(
       `INSERT INTO normalized_transactions
         (${getColumns()})
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
        ON CONFLICT (google_subject, bank_id, source_message_id) DO UPDATE SET
          transaction_date = EXCLUDED.transaction_date,
          direction = EXCLUDED.direction,
@@ -208,6 +236,7 @@ export class PostgresTransactionStore implements TransactionStore {
          confidence = EXCLUDED.confidence,
          review_reasons_json = EXCLUDED.review_reasons_json,
          review_status = EXCLUDED.review_status,
+         fingerprint = EXCLUDED.fingerprint,
          updated_at = EXCLUDED.updated_at
        RETURNING ${getColumns()}`,
       getValues(input, transactionId, now),
@@ -226,6 +255,23 @@ export class PostgresTransactionStore implements TransactionStore {
        FROM normalized_transactions
        WHERE google_subject = $1 AND bank_id = $2 AND source_message_id = $3`,
       [googleSubject, bankId, sourceMessageId],
+    );
+
+    return result.rows[0] ? toStoredTransaction(result.rows[0]) : null;
+  }
+
+  async findByFingerprint(googleSubject: string, bankId: string, fingerprint: string) {
+    assertIdentifier(googleSubject, "googleSubject");
+    assertIdentifier(bankId, "bankId");
+    assertIdentifier(fingerprint, "fingerprint");
+
+    const result = await this.pool.query<TransactionRow>(
+      `SELECT ${getColumns()}
+       FROM normalized_transactions
+       WHERE google_subject = $1 AND bank_id = $2 AND fingerprint = $3
+       ORDER BY transaction_id
+       LIMIT 1`,
+      [googleSubject, bankId, fingerprint],
     );
 
     return result.rows[0] ? toStoredTransaction(result.rows[0]) : null;

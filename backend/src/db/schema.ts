@@ -57,6 +57,7 @@ const normalizedTransactionSchema = `
     google_subject TEXT NOT NULL,
     bank_id TEXT NOT NULL,
     source_message_id TEXT NOT NULL,
+    fingerprint TEXT NOT NULL,
     transaction_date TEXT,
     direction TEXT CHECK (direction IN ('debit', 'credit') OR direction IS NULL),
     amount TEXT,
@@ -109,6 +110,12 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(
       "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS review_status TEXT NOT NULL DEFAULT 'needs-review'",
     );
+    await connection.pool.query(
+      "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS fingerprint TEXT NOT NULL DEFAULT ''",
+    );
+    await connection.pool.query(
+      "CREATE INDEX IF NOT EXISTS normalized_transactions_fingerprint_idx ON normalized_transactions (google_subject, bank_id, fingerprint)",
+    );
     await connection.pool.query(bankDirectorySchema);
     await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
@@ -141,6 +148,14 @@ export async function initializeDatabase(connection: DatabaseConnection) {
       "ALTER TABLE normalized_transactions ADD COLUMN review_status TEXT NOT NULL DEFAULT 'needs-review'",
     );
   }
+  if (!transactionColumns.some((column) => column.name === "fingerprint")) {
+    connection.database.exec(
+      "ALTER TABLE normalized_transactions ADD COLUMN fingerprint TEXT NOT NULL DEFAULT ''",
+    );
+  }
+  connection.database.exec(
+    "CREATE INDEX IF NOT EXISTS normalized_transactions_fingerprint_idx ON normalized_transactions (google_subject, bank_id, fingerprint)",
+  );
   connection.database.exec(bankDirectorySchema.replaceAll("TIMESTAMPTZ", "TEXT"));
 
   const columns = connection.database
