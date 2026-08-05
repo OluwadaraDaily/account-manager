@@ -52,3 +52,27 @@ for (const [fixtureName, expectedDirection] of fixtures) {
     );
   });
 }
+
+test("skips an obvious non-transaction Union Bank fixture", async () => {
+  const body = await readFile(
+    new URL("./fixtures/union-bank-non-transaction-redacted.txt", import.meta.url),
+    "utf8",
+  );
+
+  const transaction = parseUnionBankTransaction({
+    id: "fixture-non-transaction",
+    threadId: "thread-non-transaction",
+    internalDate: null,
+    headers: {
+      from: "alerts@unionbankng.com",
+      subject: "Union Bank transaction summary available",
+      date: null,
+    },
+    body: {
+      text: body,
+      source: "plain",
+    },
+  });
+
+  assert.equal(transaction, null);
+});

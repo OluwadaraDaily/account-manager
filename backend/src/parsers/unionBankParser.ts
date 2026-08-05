@@ -118,6 +118,13 @@ export function parseUnionBankTransaction(
     /\b(transaction|debit(?:ed)?|credit(?:ed)?|amount|narration|balance)\b/i.test(bodyText);
   if (!isUnionBankMessage || !hasTransactionSignal) return null;
 
+  const amount = parseAmount(bodyText);
+  const hasObviousNonTransactionSignal =
+    /\b(newsletter|promotion(?:al)?|special offer|campaign|survey|feedback|banking tips|transaction summary|service update)\b/i.test(
+      searchableText,
+    );
+  if (hasObviousNonTransactionSignal && !amount) return null;
+
   const hasDebitSignal = /\b(debit(?:ed)?|withdrawn|purchase|payment)\b/i.test(searchableText);
   const hasCreditSignal = /\b(credit(?:ed)?|deposit|received)\b/i.test(searchableText);
   const transactionType =
@@ -127,7 +134,6 @@ export function parseUnionBankTransaction(
   const debitSignal = hasDebitSignal || hasDebitAlertSignal;
   const creditSignal = hasCreditSignal || hasCreditAlertSignal;
   const direction = debitSignal === creditSignal ? null : debitSignal ? "debit" : "credit";
-  const amount = parseAmount(bodyText);
   const transactionDate =
     parseDateValue(
       captureField(bodyText, fieldLabels.date) ?? captureAdjacentField(bodyText, fieldLabels.date),
