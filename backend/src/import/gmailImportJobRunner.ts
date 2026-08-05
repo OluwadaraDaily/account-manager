@@ -11,6 +11,7 @@ import type { TransactionStore } from "../db/repositories/transactionStore.js";
 import { parseUnionBankTransaction } from "../parsers/unionBankParser.js";
 import { decryptToken } from "../security/encryption.js";
 import { buildGmailSearchQuery } from "./gmailSearch.js";
+import { buildTransactionFingerprint } from "./transactionFingerprint.js";
 
 function messageBelongsToSelectedBank(
   messageSender: string | null,
@@ -153,12 +154,25 @@ export function createGmailImportJobRunner({
               const transaction = parseUnionBankTransaction(messageContent);
 
               if (transaction) {
-                await transactionStore.upsert({
+                const existingTransaction = await transactionStore.findByFingerprint(
                   googleSubject,
                   bankId,
-                  transaction,
-                });
-                transactionsExtracted += 1;
+                  buildTransactionFingerprint(transaction),
+                );
+
+                if (
+                  existingTransaction &&
+                  existingTransaction.sourceMessageId !== transaction.sourceMessageId
+                ) {
+                  messagesSkipped += 1;
+                } else {
+                  await transactionStore.upsert({
+                    googleSubject,
+                    bankId,
+                    transaction,
+                  });
+                  transactionsExtracted += 1;
+                }
               } else {
                 messagesSkipped += 1;
               }

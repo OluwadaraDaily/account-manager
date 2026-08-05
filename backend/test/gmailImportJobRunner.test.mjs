@@ -72,6 +72,9 @@ test("processes Gmail messages sequentially and updates extraction progress", as
       },
     }),
     transactionStorePromise: Promise.resolve({
+      async findByFingerprint() {
+        return savedTransactions.length > 0 ? { sourceMessageId: "transaction-message" } : null;
+      },
       async upsert(input) {
         savedTransactions.push(input);
         return input.transaction;
@@ -81,6 +84,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
       return {
         messages: [
           { id: "transaction-message", threadId: "thread-1" },
+          { id: "duplicate-message", threadId: "thread-duplicate" },
           { id: "skipped-message", threadId: "thread-2" },
         ],
       };
@@ -88,7 +92,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
     async getMessageContent({ messageId }) {
       messageIds.push(messageId);
 
-      if (messageId === "transaction-message") {
+      if (messageId === "transaction-message" || messageId === "duplicate-message") {
         return {
           id: messageId,
           threadId: "thread-1",
@@ -124,7 +128,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
 
   await runner("job-1", "google-subject");
 
-  assert.deepEqual(messageIds, ["transaction-message", "skipped-message"]);
+  assert.deepEqual(messageIds, ["transaction-message", "duplicate-message", "skipped-message"]);
   assert.deepEqual(savedSenders, [{ bankId: "union-bank", senderEmail: "alerts@unionbankng.com" }]);
   assert.deepEqual(savedTransactions, [
     {
@@ -146,10 +150,10 @@ test("processes Gmail messages sequentially and updates extraction progress", as
     },
   ]);
   const progressUpdate = updates.at(-2);
-  assert.equal(progressUpdate.messagesDiscovered, 2);
-  assert.equal(progressUpdate.messagesProcessed, 2);
+  assert.equal(progressUpdate.messagesDiscovered, 3);
+  assert.equal(progressUpdate.messagesProcessed, 3);
   assert.equal(progressUpdate.transactionsExtracted, 1);
-  assert.equal(progressUpdate.messagesSkipped, 1);
+  assert.equal(progressUpdate.messagesSkipped, 2);
 
   const finalUpdate = updates.at(-1);
   assert.equal(finalUpdate.status, "completed");
