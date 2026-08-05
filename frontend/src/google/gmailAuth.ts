@@ -30,6 +30,13 @@ export type BankDirectoryRecord = {
   transactionNotificationSenderEmail: string | null;
 };
 
+export type BankDirectoryListEntry = {
+  id: string;
+  displayName: string;
+  status: string;
+  verificationStatus: string;
+};
+
 export type GmailMessageSearchResult = {
   messages: Array<{ id: string; threadId: string }>;
   nextPageToken?: string;
@@ -82,6 +89,11 @@ export async function getBankDirectoryRecord(bankId: string): Promise<BankDirect
     `/banks/${encodeURIComponent(bankId)}`,
   );
   return response.data.bank;
+}
+
+export async function listBankDirectory(): Promise<BankDirectoryListEntry[]> {
+  const response = await apiClient.get<{ banks: BankDirectoryListEntry[] }>("/banks");
+  return response.data.banks;
 }
 
 export async function searchGmailMessages(

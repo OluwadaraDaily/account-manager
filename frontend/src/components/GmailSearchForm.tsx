@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { bankDirectoryEntries } from "../data/bankDirectory";
 import {
   createGmailImportJob,
   getBankDirectoryRecord,
   getGmailImportJob,
+  listBankDirectory,
+  type BankDirectoryListEntry,
   type GmailImportJob,
 } from "../google/gmailAuth";
 import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
@@ -22,13 +23,15 @@ type SearchForm = {
 
 export function GmailSearchForm() {
   const [searchForm, setSearchForm] = useState<SearchForm>({
-    bankId: "union-bank",
+    bankId: "",
     senderEmail: "",
     fromDate: "",
     toDate: "",
     subject: "",
     keyword: "",
   });
+  const [banks, setBanks] = useState<BankDirectoryListEntry[]>([]);
+  const [banksLoading, setBanksLoading] = useState(true);
   const [searching, setSearching] = useState(false);
   const [job, setJob] = useState<GmailImportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +40,39 @@ export function GmailSearchForm() {
   );
   const importActive = job !== null && ["queued", "running"].includes(job.status);
   const noMatches = job?.status === "completed" && job.progress.messagesDiscovered === 0;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void listBankDirectory()
+      .then((entries) => {
+        if (cancelled) return;
+
+        setBanks(entries);
+        setSearchForm((current) => ({
+          ...current,
+          bankId: entries.some((bank) => bank.id === current.bankId)
+            ? current.bankId
+            : (entries[0]?.id ?? ""),
+        }));
+      })
+      .catch((bankError: unknown) => {
+        if (!cancelled) {
+          setError(
+            bankError instanceof Error
+              ? bankError.message
+              : "The bank directory could not be loaded.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setBanksLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (!job || !["queued", "running"].includes(job.status)) return;
@@ -78,6 +114,8 @@ export function GmailSearchForm() {
     let cancelled = false;
 
     setSearchForm((current) => ({ ...current, senderEmail: "" }));
+    if (!searchForm.bankId) return;
+
     void getBankDirectoryRecord(searchForm.bankId)
       .then((bank) => {
         if (!cancelled) {
@@ -102,6 +140,11 @@ export function GmailSearchForm() {
 
     if (dateRangeError) {
       setError("The start date must be on or before the end date.");
+      return;
+    }
+
+    if (!searchForm.bankId) {
+      setError("Select a bank before starting an import.");
       return;
     }
 
@@ -168,12 +211,15 @@ export function GmailSearchForm() {
             id="gmail-bank"
             required
             value={searchForm.bankId}
+            disabled={banksLoading || banks.length === 0}
             onChange={(event) =>
               setSearchForm((current) => ({ ...current, bankId: event.target.value }))
             }
             className={inputClassName}
           >
-            {bankDirectoryEntries.map((bank) => (
+            {banksLoading && <option value="">Loading banks…</option>}
+            {!banksLoading && banks.length === 0 && <option value="">No banks available</option>}
+            {banks.map((bank) => (
               <option key={bank.id} value={bank.id}>
                 {bank.displayName}
               </option>
@@ -267,7 +313,7 @@ export function GmailSearchForm() {
         <div className="flex flex-col justify-end md:col-span-2 lg:col-span-6">
           <button
             type="submit"
-            disabled={searching || importActive}
+            disabled={searching || importActive || banksLoading || !searchForm.bankId}
             className="bg-ink hover:bg-moss-dark focus-visible:ring-moss focus-visible:ring-offset-paper w-full rounded-[12px] px-4 py-2.5 text-[12px] font-bold text-white transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
           >
             {searching
