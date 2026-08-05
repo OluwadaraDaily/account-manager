@@ -151,10 +151,29 @@ export function parseUnionBankTransaction(
   const debitSignal = hasDebitSignal || hasDebitAlertSignal;
   const creditSignal = hasCreditSignal || hasCreditAlertSignal;
   const direction = debitSignal === creditSignal ? null : debitSignal ? "debit" : "credit";
-  const transactionDate =
-    parseDateValue(
-      captureField(bodyText, fieldLabels.date) ?? captureAdjacentField(bodyText, fieldLabels.date),
-    ) ?? fallbackMessageDate(message);
+  const transactionDateValue =
+    captureField(bodyText, fieldLabels.date) ?? captureAdjacentField(bodyText, fieldLabels.date);
+  const parsedTransactionDate = parseDateValue(transactionDateValue);
+  const fallbackDate = fallbackMessageDate(message);
+  const transactionDate = parsedTransactionDate ?? fallbackDate;
+  const reviewReasons: string[] = [];
+
+  if (!amount) reviewReasons.push("amount_missing");
+  if (!direction) {
+    reviewReasons.push(
+      hasDebitSignal && hasCreditSignal ? "conflicting_direction_signals" : "direction_ambiguous",
+    );
+  }
+  if (!parsedTransactionDate) {
+    reviewReasons.push(transactionDate ? "date_fallback_used" : "date_missing");
+  }
+
+  const confidence =
+    amount && direction && parsedTransactionDate
+      ? "high"
+      : amount && direction && transactionDate
+        ? "medium"
+        : "low";
 
   return {
     sourceMessageId: message.id,
@@ -174,5 +193,7 @@ export function parseUnionBankTransaction(
       captureAdjacentField(bodyText, fieldLabels.channel) ??
       bodyText.match(/\b(POS|ATM|USSD|mobile|internet)\b/i)?.[1]?.toUpperCase() ??
       null,
+    confidence,
+    reviewReasons,
   };
 }

@@ -64,6 +64,8 @@ const normalizedTransactionSchema = `
     counterparty TEXT,
     description TEXT,
     channel TEXT,
+    confidence TEXT NOT NULL CHECK (confidence IN ('high', 'medium', 'low')),
+    review_reasons_json TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
     UNIQUE (google_subject, bank_id, source_message_id)
@@ -97,6 +99,12 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(refreshTokenSchema);
     await connection.pool.query(importJobSchema);
     await connection.pool.query(normalizedTransactionSchema);
+    await connection.pool.query(
+      "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS confidence TEXT NOT NULL DEFAULT 'low'",
+    );
+    await connection.pool.query(
+      "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS review_reasons_json TEXT NOT NULL DEFAULT '[]'",
+    );
     await connection.pool.query(bankDirectorySchema);
     await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
@@ -111,6 +119,19 @@ export async function initializeDatabase(connection: DatabaseConnection) {
   connection.database.exec(refreshTokenSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(importJobSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
   connection.database.exec(normalizedTransactionSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
+  const transactionColumns = connection.database
+    .prepare("PRAGMA table_info(normalized_transactions)")
+    .all() as Array<{ name: string }>;
+  if (!transactionColumns.some((column) => column.name === "confidence")) {
+    connection.database.exec(
+      "ALTER TABLE normalized_transactions ADD COLUMN confidence TEXT NOT NULL DEFAULT 'low'",
+    );
+  }
+  if (!transactionColumns.some((column) => column.name === "review_reasons_json")) {
+    connection.database.exec(
+      "ALTER TABLE normalized_transactions ADD COLUMN review_reasons_json TEXT NOT NULL DEFAULT '[]'",
+    );
+  }
   connection.database.exec(bankDirectorySchema.replaceAll("TIMESTAMPTZ", "TEXT"));
 
   const columns = connection.database

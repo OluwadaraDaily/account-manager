@@ -40,6 +40,8 @@ for (const [fixtureName, expectedDirection] of fixtures) {
         transactionDate: transaction.transactionDate,
         description: transaction.description,
         channel: transaction.channel,
+        confidence: transaction.confidence,
+        reviewReasons: transaction.reviewReasons,
       },
       {
         direction: expectedDirection,
@@ -48,6 +50,8 @@ for (const [fixtureName, expectedDirection] of fixtures) {
         transactionDate: "2026-02-01",
         description: "POS example transaction",
         channel: "POS",
+        confidence: "high",
+        reviewReasons: [],
       },
     );
   });
@@ -107,6 +111,8 @@ test("handles an incomplete Union Bank fixture without throwing", async () => {
       transactionDate: transaction.transactionDate,
       counterparty: transaction.counterparty,
       channel: transaction.channel,
+      confidence: transaction.confidence,
+      reviewReasons: transaction.reviewReasons,
     },
     {
       direction: "debit",
@@ -115,6 +121,8 @@ test("handles an incomplete Union Bank fixture without throwing", async () => {
       transactionDate: "2026-02-03",
       counterparty: null,
       channel: "ATM",
+      confidence: "low",
+      reviewReasons: ["amount_missing", "date_fallback_used"],
     },
   );
 });

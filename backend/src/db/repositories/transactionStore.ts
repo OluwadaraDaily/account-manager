@@ -41,6 +41,8 @@ type TransactionRow = {
   counterparty: string | null;
   description: string | null;
   channel: string | null;
+  confidence: "high" | "medium" | "low";
+  review_reasons_json: string;
   created_at: string;
   updated_at: string;
 };
@@ -62,6 +64,8 @@ function toStoredTransaction(row: TransactionRow): StoredNormalizedTransaction {
     counterparty: row.counterparty,
     description: row.description,
     channel: row.channel,
+    confidence: row.confidence,
+    reviewReasons: JSON.parse(row.review_reasons_json) as string[],
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -71,6 +75,7 @@ function getColumns() {
   return `
     transaction_id, google_subject, bank_id, source_message_id,
     transaction_date, direction, amount, currency, counterparty, description, channel,
+    confidence, review_reasons_json,
     created_at, updated_at`;
 }
 
@@ -87,6 +92,8 @@ function getValues(input: NormalizedTransactionWrite, transactionId: string, tim
     input.transaction.counterparty,
     input.transaction.description,
     input.transaction.channel,
+    input.transaction.confidence,
+    JSON.stringify(input.transaction.reviewReasons),
     timestamp,
     timestamp,
   ];
@@ -113,7 +120,7 @@ export class SqliteTransactionStore implements TransactionStore {
       .prepare(
         `INSERT INTO normalized_transactions
           (${getColumns()})
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(google_subject, bank_id, source_message_id) DO UPDATE SET
            transaction_date = excluded.transaction_date,
            direction = excluded.direction,
@@ -122,6 +129,8 @@ export class SqliteTransactionStore implements TransactionStore {
            counterparty = excluded.counterparty,
            description = excluded.description,
            channel = excluded.channel,
+           confidence = excluded.confidence,
+           review_reasons_json = excluded.review_reasons_json,
            updated_at = excluded.updated_at`,
       )
       .run(...getValues(input, transactionId, now));
@@ -183,7 +192,7 @@ export class PostgresTransactionStore implements TransactionStore {
     const result = await this.pool.query<TransactionRow>(
       `INSERT INTO normalized_transactions
         (${getColumns()})
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        ON CONFLICT (google_subject, bank_id, source_message_id) DO UPDATE SET
          transaction_date = EXCLUDED.transaction_date,
          direction = EXCLUDED.direction,
@@ -192,6 +201,8 @@ export class PostgresTransactionStore implements TransactionStore {
          counterparty = EXCLUDED.counterparty,
          description = EXCLUDED.description,
          channel = EXCLUDED.channel,
+         confidence = EXCLUDED.confidence,
+         review_reasons_json = EXCLUDED.review_reasons_json,
          updated_at = EXCLUDED.updated_at
        RETURNING ${getColumns()}`,
       getValues(input, transactionId, now),

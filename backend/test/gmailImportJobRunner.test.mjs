@@ -139,6 +139,8 @@ test("processes Gmail messages sequentially and updates extraction progress", as
         counterparty: null,
         description: "Union Bank transaction alert",
         channel: null,
+        confidence: "high",
+        reviewReasons: [],
       },
     },
   ]);
