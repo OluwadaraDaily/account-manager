@@ -26,6 +26,7 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
       channel: "POS",
       confidence: "high",
       reviewReasons: [],
+      reviewStatus: "ready",
     },
   };
 
@@ -39,6 +40,7 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
   assert.equal(updated.amount, "20000.00");
   assert.equal(updated.confidence, "high");
   assert.deepEqual(updated.reviewReasons, []);
+  assert.equal(updated.reviewStatus, "ready");
   assert.equal((await store.list("google-subject", "union-bank")).length, 1);
   assert.equal(await store.get("google-subject", "other-bank", "message-1"), null);
   assert.deepEqual(Object.keys(updated).sort(), [
@@ -54,6 +56,7 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
     "googleSubject",
     "id",
     "reviewReasons",
+    "reviewStatus",
     "sourceMessageId",
     "transactionDate",
     "updatedAt",
@@ -77,6 +80,7 @@ test("requires account, bank, and source message identifiers", async () => {
     channel: null,
     confidence: "low",
     reviewReasons: ["amount_missing"],
+    reviewStatus: "needs-review",
   };
 
   await assert.rejects(

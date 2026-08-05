@@ -141,6 +141,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
         channel: null,
         confidence: "high",
         reviewReasons: [],
+        reviewStatus: "ready",
       },
     },
   ]);

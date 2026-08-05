@@ -66,6 +66,7 @@ const normalizedTransactionSchema = `
     channel TEXT,
     confidence TEXT NOT NULL CHECK (confidence IN ('high', 'medium', 'low')),
     review_reasons_json TEXT NOT NULL,
+    review_status TEXT NOT NULL CHECK (review_status IN ('ready', 'needs-review')),
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
     UNIQUE (google_subject, bank_id, source_message_id)
@@ -105,6 +106,9 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(
       "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS review_reasons_json TEXT NOT NULL DEFAULT '[]'",
     );
+    await connection.pool.query(
+      "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS review_status TEXT NOT NULL DEFAULT 'needs-review'",
+    );
     await connection.pool.query(bankDirectorySchema);
     await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
@@ -130,6 +134,11 @@ export async function initializeDatabase(connection: DatabaseConnection) {
   if (!transactionColumns.some((column) => column.name === "review_reasons_json")) {
     connection.database.exec(
       "ALTER TABLE normalized_transactions ADD COLUMN review_reasons_json TEXT NOT NULL DEFAULT '[]'",
+    );
+  }
+  if (!transactionColumns.some((column) => column.name === "review_status")) {
+    connection.database.exec(
+      "ALTER TABLE normalized_transactions ADD COLUMN review_status TEXT NOT NULL DEFAULT 'needs-review'",
     );
   }
   connection.database.exec(bankDirectorySchema.replaceAll("TIMESTAMPTZ", "TEXT"));

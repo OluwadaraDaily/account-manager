@@ -174,6 +174,7 @@ export function parseUnionBankTransaction(
       : amount && direction && transactionDate
         ? "medium"
         : "low";
+  const reviewStatus = confidence === "high" ? "ready" : "needs-review";
 
   return {
     sourceMessageId: message.id,
@@ -195,5 +196,6 @@ export function parseUnionBankTransaction(
       null,
     confidence,
     reviewReasons,
+    reviewStatus,
   };
 }

@@ -4,6 +4,7 @@ export type HealthResponse = {
 };
 
 export type TransactionConfidence = "high" | "medium" | "low";
+export type TransactionReviewStatus = "ready" | "needs-review";
 
 export type NormalizedTransaction = {
   sourceMessageId: string;
@@ -16,4 +17,5 @@ export type NormalizedTransaction = {
   channel: string | null;
   confidence: TransactionConfidence;
   reviewReasons: string[];
+  reviewStatus: TransactionReviewStatus;
 };
