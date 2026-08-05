@@ -52,6 +52,15 @@ test("processes Gmail messages sequentially and updates extraction progress", as
       },
     }),
     bankDirectoryStorePromise: Promise.resolve({
+      async get() {
+        return {
+          id: "union-bank",
+          status: "active",
+          verificationStatus: "verified",
+          officialDomains: ["unionbankng.com"],
+          transactionNotificationSenderEmail: "alerts@unionbankng.com",
+        };
+      },
       async setTransactionNotificationSender(bankId, senderEmail) {
         savedSenders.push({ bankId, senderEmail });
         return { id: bankId };
@@ -101,11 +110,14 @@ test("processes Gmail messages sequentially and updates extraction progress", as
         threadId: "thread-2",
         internalDate: null,
         headers: {
-          from: "news@example.com",
-          subject: "Newsletter",
+          from: "alerts@otherbank.example",
+          subject: "Union Bank transaction alert",
           date: null,
         },
-        body: { source: "plain", text: "Monthly updates" },
+        body: {
+          source: "plain",
+          text: "Transaction Date: 02/02/2026\nDebit Amount: NGN 999.00",
+        },
       };
     },
   });
@@ -180,6 +192,11 @@ test("fails before reading Gmail when the import has no selected bank", async ()
     refreshTokenStorePromise: Promise.resolve({
       async get() {
         return encryptToken("refresh-token");
+      },
+    }),
+    bankDirectoryStorePromise: Promise.resolve({
+      async get() {
+        return null;
       },
     }),
     transactionStorePromise: Promise.resolve({

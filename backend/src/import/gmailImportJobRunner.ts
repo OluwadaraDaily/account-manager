@@ -12,9 +12,26 @@ import { parseUnionBankTransaction } from "../parsers/unionBankParser.js";
 import { decryptToken } from "../security/encryption.js";
 import { buildGmailSearchQuery } from "./gmailSearch.js";
 
+function messageBelongsToSelectedBank(
+  messageSender: string | null,
+  expectedSenderEmail: string | null,
+  officialDomains: string[],
+) {
+  if (!messageSender) return false;
+  if (expectedSenderEmail) return messageSender === expectedSenderEmail;
+
+  const senderDomain = messageSender.split("@").at(-1)?.toLowerCase();
+  if (!senderDomain) return false;
+
+  return officialDomains.some((officialDomain) => {
+    const normalizedDomain = officialDomain.toLowerCase();
+    return senderDomain === normalizedDomain || senderDomain.endsWith(`.${normalizedDomain}`);
+  });
+}
+
 type GmailImportJobRunnerDependencies = {
   importJobStorePromise: Promise<ImportJobStore>;
-  bankDirectoryStorePromise?: Promise<BankDirectoryStore>;
+  bankDirectoryStorePromise: Promise<BankDirectoryStore>;
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
   transactionStorePromise: Promise<TransactionStore>;
   listMessages?: typeof listGmailMessages;
@@ -48,11 +65,18 @@ export function createGmailImportJobRunner({
 
       if (!encryptedToken) throw new Error("Gmail is no longer connected.");
 
-      const bankDirectoryStore = bankDirectoryStorePromise ? await bankDirectoryStorePromise : null;
-      const fallbackBank =
-        job.criteria.searchMode === "bank-fallback" && bankDirectoryStore && job.criteria.bankId
-          ? await bankDirectoryStore.get(job.criteria.bankId)
-          : null;
+      const bankId = job.criteria.bankId;
+      if (!bankId) {
+        throw new Error("A selected bank is required before transactions can be persisted.");
+      }
+
+      const bankDirectoryStore = await bankDirectoryStorePromise;
+      const selectedBank = await bankDirectoryStore.get(bankId);
+      if (!selectedBank || selectedBank.status === "inactive") {
+        throw new Error("The selected bank is not available for import.");
+      }
+
+      const fallbackBank = job.criteria.searchMode === "bank-fallback" ? selectedBank : null;
 
       if (
         job.criteria.searchMode === "bank-fallback" &&
@@ -61,11 +85,6 @@ export function createGmailImportJobRunner({
           fallbackBank.verificationStatus !== "verified")
       ) {
         throw new Error("The selected bank is not verified for fallback search.");
-      }
-
-      const bankId = job.criteria.bankId;
-      if (!bankId) {
-        throw new Error("A selected bank is required before transactions can be persisted.");
       }
 
       const transactionStore = await transactionStorePromise;
@@ -90,6 +109,10 @@ export function createGmailImportJobRunner({
       let messagesSkipped = job.progress.messagesSkipped;
       let senderConfirmed = false;
       const senderEmail = job.criteria.senderEmail?.toLowerCase() ?? null;
+      const expectedSenderEmail =
+        job.criteria.searchMode === "sender"
+          ? (senderEmail ?? selectedBank.transactionNotificationSenderEmail?.toLowerCase() ?? null)
+          : null;
 
       do {
         const result: GmailMessageList = await listMessages({ refreshToken, pageToken, q: query });
@@ -104,35 +127,41 @@ export function createGmailImportJobRunner({
               messageId: messageReference.id,
             });
 
-            const messageSender = messageContent.headers.from
-              ?.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]
-              ?.toLowerCase();
-            if (
-              !senderConfirmed &&
-              bankDirectoryStore &&
-              job.criteria.bankId &&
-              senderEmail &&
-              messageSender === senderEmail
-            ) {
-              const savedBank = await bankDirectoryStore.setTransactionNotificationSender(
-                job.criteria.bankId,
-                senderEmail,
-              );
-              if (savedBank) senderConfirmed = true;
-            }
+            const messageSender =
+              messageContent.headers.from
+                ?.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0]
+                ?.toLowerCase() ?? null;
+            const belongsToSelectedBank = messageBelongsToSelectedBank(
+              messageSender,
+              expectedSenderEmail,
+              selectedBank.officialDomains,
+            );
 
-            const transaction = parseUnionBankTransaction(messageContent);
             messagesProcessed += 1;
 
-            if (transaction) {
-              await transactionStore.upsert({
-                googleSubject,
-                bankId,
-                transaction,
-              });
-              transactionsExtracted += 1;
-            } else {
+            if (!belongsToSelectedBank) {
               messagesSkipped += 1;
+            } else {
+              if (!senderConfirmed && senderEmail && messageSender === senderEmail) {
+                const savedBank = await bankDirectoryStore.setTransactionNotificationSender(
+                  bankId,
+                  senderEmail,
+                );
+                if (savedBank) senderConfirmed = true;
+              }
+
+              const transaction = parseUnionBankTransaction(messageContent);
+
+              if (transaction) {
+                await transactionStore.upsert({
+                  googleSubject,
+                  bankId,
+                  transaction,
+                });
+                transactionsExtracted += 1;
+              } else {
+                messagesSkipped += 1;
+              }
             }
           } finally {
             messageContent = null;
