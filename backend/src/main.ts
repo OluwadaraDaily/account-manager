@@ -49,6 +49,7 @@ app.use(
     refreshTokenStorePromise,
     sessionStorePromise,
     importJobStorePromise,
+    transactionStorePromise,
     runGmailImportJob,
   }),
 );
