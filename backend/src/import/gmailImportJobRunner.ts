@@ -7,6 +7,7 @@ import {
 import type { ImportJobStore } from "../db/repositories/importJobStore.js";
 import type { BankDirectoryStore } from "../db/repositories/bankDirectoryStore.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
+import type { TransactionStore } from "../db/repositories/transactionStore.js";
 import { parseUnionBankTransaction } from "../parsers/unionBankParser.js";
 import { decryptToken } from "../security/encryption.js";
 import { buildGmailSearchQuery } from "./gmailSearch.js";
@@ -15,6 +16,7 @@ type GmailImportJobRunnerDependencies = {
   importJobStorePromise: Promise<ImportJobStore>;
   bankDirectoryStorePromise?: Promise<BankDirectoryStore>;
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
+  transactionStorePromise: Promise<TransactionStore>;
   listMessages?: typeof listGmailMessages;
   getMessageContent?: typeof getGmailMessageContent;
 };
@@ -23,6 +25,7 @@ export function createGmailImportJobRunner({
   importJobStorePromise,
   bankDirectoryStorePromise,
   refreshTokenStorePromise,
+  transactionStorePromise,
   listMessages = listGmailMessages,
   getMessageContent = getGmailMessageContent,
 }: GmailImportJobRunnerDependencies) {
@@ -59,6 +62,13 @@ export function createGmailImportJobRunner({
       ) {
         throw new Error("The selected bank is not verified for fallback search.");
       }
+
+      const bankId = job.criteria.bankId;
+      if (!bankId) {
+        throw new Error("A selected bank is required before transactions can be persisted.");
+      }
+
+      const transactionStore = await transactionStorePromise;
 
       const query = buildGmailSearchQuery({
         senderEmail:
@@ -115,6 +125,11 @@ export function createGmailImportJobRunner({
             messagesProcessed += 1;
 
             if (transaction) {
+              await transactionStore.upsert({
+                googleSubject,
+                bankId,
+                transaction,
+              });
               transactionsExtracted += 1;
             } else {
               messagesSkipped += 1;

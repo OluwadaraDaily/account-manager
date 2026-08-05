@@ -7,6 +7,7 @@ import { createImportJobStore } from "./db/repositories/importJobStore.js";
 import { initializeDatabase } from "./db/schema.js";
 import { createRefreshTokenStore } from "./db/repositories/refreshTokenStore.js";
 import { createSessionStore } from "./db/repositories/sessionStore.js";
+import { createTransactionStore } from "./db/repositories/transactionStore.js";
 import { createGmailImportJobRunner } from "./import/gmailImportJobRunner.js";
 import { createAuthRouter } from "./routes/authRoutes.js";
 import { createBankRouter } from "./routes/bankRoutes.js";
@@ -24,10 +25,14 @@ const importJobStorePromise = databaseReady.then(() => createImportJobStore(data
 const bankDirectoryStorePromise = databaseReady.then(() =>
   createBankDirectoryStore(databaseConnection),
 );
+const transactionStorePromise = databaseReady.then(() =>
+  createTransactionStore(databaseConnection),
+);
 const runGmailImportJob = createGmailImportJobRunner({
   bankDirectoryStorePromise,
   importJobStorePromise,
   refreshTokenStorePromise,
+  transactionStorePromise,
 });
 
 app.use(createHealthRouter());
