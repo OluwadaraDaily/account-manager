@@ -1,0 +1,6 @@
+Transaction Date: not-a-real-date
+Debit Amount: unavailable
+Transaction Type: DebitAlert
+Counterparty:
+Narration:
+Channel: ATM

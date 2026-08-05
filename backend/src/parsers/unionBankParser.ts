@@ -11,18 +11,35 @@ const fieldLabels = {
 };
 
 function captureField(text: string, labels: string[]) {
-  const pattern = new RegExp(`(?:^|\\n)\\s*(?:${labels.join("|")})\\s*[:=-]\\s*([^\\n]+)`, "i");
+  const pattern = new RegExp(
+    `(?:^|\\n)[ \\t]*(?:${labels.join("|")})[ \\t]*[:=-][ \\t]*([^\\n]+)`,
+    "i",
+  );
   return text.match(pattern)?.[1]?.trim() || null;
 }
 
 function captureAdjacentField(text: string, labels: string[]) {
   const normalizedLabels = labels.map((label) => label.toLowerCase());
+  const allFieldLabels = Object.values(fieldLabels)
+    .flat()
+    .map((label) => label.toLowerCase());
   const lines = text.split(/\r?\n/);
 
   for (let index = 0; index < lines.length; index += 1) {
     if (!normalizedLabels.includes(lines[index].trim().toLowerCase())) continue;
-    const nextValue = lines.slice(index + 1).find((line) => line.trim());
-    if (nextValue) return nextValue.trim();
+
+    for (let nextIndex = index + 1; nextIndex < lines.length; nextIndex += 1) {
+      const nextLine = lines[nextIndex].trim();
+      if (!nextLine) continue;
+
+      const nextLabel = nextLine
+        .match(/^([^:=-]+)\s*[:=-]/)?.[1]
+        ?.trim()
+        .toLowerCase();
+      if (nextLabel && allFieldLabels.includes(nextLabel)) return null;
+
+      return nextLine;
+    }
   }
 
   return null;
