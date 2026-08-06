@@ -22,11 +22,10 @@ type SearchForm = {
 };
 
 type GmailSearchFormProps = {
-  onSelectedBankChange?: (bankId: string) => void;
   onImportCompleted?: () => void;
 };
 
-export function GmailSearchForm({ onSelectedBankChange, onImportCompleted }: GmailSearchFormProps) {
+export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
   const [searchForm, setSearchForm] = useState<SearchForm>({
     bankId: "",
     senderEmail: "",
@@ -60,10 +59,6 @@ export function GmailSearchForm({ onSelectedBankChange, onImportCompleted }: Gma
             ? current.bankId
             : (entries[0]?.id ?? ""),
         }));
-        const selectedBankId = entries.some((bank) => bank.id === searchForm.bankId)
-          ? searchForm.bankId
-          : (entries[0]?.id ?? "");
-        if (selectedBankId) onSelectedBankChange?.(selectedBankId);
       })
       .catch((bankError: unknown) => {
         if (!cancelled) {
@@ -227,7 +222,6 @@ export function GmailSearchForm({ onSelectedBankChange, onImportCompleted }: Gma
               (() => {
                 const bankId = event.target.value;
                 setSearchForm((current) => ({ ...current, bankId }));
-                onSelectedBankChange?.(bankId);
               })()
             }
             className={inputClassName}

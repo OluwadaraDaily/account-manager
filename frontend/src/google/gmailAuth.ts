@@ -104,6 +104,13 @@ export type GmailImportHistoryPage = {
   };
 };
 
+export type ImportedBankSummary = {
+  bankId: string;
+  displayName: string;
+  importCount: number;
+  latestImportAt: string;
+};
+
 export type ImportedTransaction = {
   id: string;
   sourceMessageId: string;
@@ -238,6 +245,11 @@ export async function listGmailImportHistory(
     params: { bankId, page, pageSize },
   });
   return response.data;
+}
+
+export async function listImportedBanks(): Promise<ImportedBankSummary[]> {
+  const response = await apiClient.get<{ banks: ImportedBankSummary[] }>("/imports/gmail/banks");
+  return response.data.banks;
 }
 
 export async function listImportedTransactions(bankId: string): Promise<ImportedTransaction[]> {
