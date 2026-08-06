@@ -122,6 +122,9 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(
       "CREATE INDEX IF NOT EXISTS normalized_transactions_fingerprint_idx ON normalized_transactions (google_subject, bank_id, fingerprint)",
     );
+    await connection.pool.query(
+      "CREATE INDEX IF NOT EXISTS normalized_transactions_review_status_idx ON normalized_transactions (google_subject, bank_id, review_status)",
+    );
     await connection.pool.query(bankDirectorySchema);
     await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
@@ -196,6 +199,9 @@ export async function initializeDatabase(connection: DatabaseConnection) {
   }
   connection.database.exec(
     "CREATE INDEX IF NOT EXISTS normalized_transactions_fingerprint_idx ON normalized_transactions (google_subject, bank_id, fingerprint)",
+  );
+  connection.database.exec(
+    "CREATE INDEX IF NOT EXISTS normalized_transactions_review_status_idx ON normalized_transactions (google_subject, bank_id, review_status)",
   );
   connection.database.exec(bankDirectorySchema.replaceAll("TIMESTAMPTZ", "TEXT"));
 
