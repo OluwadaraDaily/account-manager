@@ -28,6 +28,9 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
   const [transactions, setTransactions] = useState<ImportedTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const needsReviewCount = transactions.filter(
+    (transaction) => transaction.reviewStatus === "needs-review",
+  ).length;
 
   useEffect(() => {
     let cancelled = false;
@@ -76,6 +79,11 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
         <p className="text-muted mt-1 text-[12px]">
           Read-only results from the selected bank, including items that need review.
         </p>
+        {!loading && !error && (
+          <p className="text-muted mt-2 text-[12px]" aria-live="polite">
+            {needsReviewCount} transaction{needsReviewCount === 1 ? "" : "s"} need review.
+          </p>
+        )}
       </div>
 
       {loading && <p className="text-muted text-[12px]">Loading imported transactions…</p>}
