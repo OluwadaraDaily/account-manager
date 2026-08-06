@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import {
+  listImportedTransactionsForImport,
   listImportedTransactions,
   updateImportedTransaction,
   type ImportedTransaction,
@@ -11,6 +12,7 @@ import {
 
 type ImportedTransactionReviewProps = {
   bankId: string;
+  importJobId: string | null;
   refreshKey: number;
 };
 
@@ -55,7 +57,11 @@ function hasDraftChanges(transaction: ImportedTransaction, draft: EditableTransa
   );
 }
 
-export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransactionReviewProps) {
+export function ImportedTransactionReview({
+  bankId,
+  importJobId,
+  refreshKey,
+}: ImportedTransactionReviewProps) {
   const [transactions, setTransactions] = useState<ImportedTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingTransactionId, setSavingTransactionId] = useState<string | null>(null);
@@ -84,7 +90,10 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
     }
 
     setLoading(true);
-    void listImportedTransactions(bankId)
+    const loadTransactions = importJobId
+      ? listImportedTransactionsForImport(bankId, importJobId)
+      : listImportedTransactions(bankId);
+    void loadTransactions
       .then((nextTransactions) => {
         if (!cancelled) {
           setTransactions(nextTransactions);
@@ -111,7 +120,7 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
     return () => {
       cancelled = true;
     };
-  }, [bankId, refreshKey]);
+  }, [bankId, importJobId, refreshKey]);
 
   const saveTransaction = async (transactionId: string) => {
     const draft = draftTransactions[transactionId];

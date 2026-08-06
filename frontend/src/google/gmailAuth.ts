@@ -248,6 +248,17 @@ export async function listImportedTransactions(bankId: string): Promise<Imported
   return response.data.transactions;
 }
 
+export async function listImportedTransactionsForImport(
+  bankId: string,
+  jobId: string,
+): Promise<ImportedTransaction[]> {
+  const response = await apiClient.get<{ transactions: ImportedTransaction[] }>(
+    `/imports/gmail/jobs/${encodeURIComponent(jobId)}/transactions`,
+    { params: { bankId } },
+  );
+  return response.data.transactions;
+}
+
 export async function updateImportedTransaction(
   bankId: string,
   transactionId: string,

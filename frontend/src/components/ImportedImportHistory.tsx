@@ -8,6 +8,8 @@ import {
 type ImportedImportHistoryProps = {
   bankId: string;
   refreshKey: number;
+  selectedJobId: string | null;
+  onSelect: (jobId: string) => void;
 };
 
 const pageSize = 10;
@@ -38,7 +40,12 @@ function statusLabel(status: GmailImportHistoryItem["status"]) {
           : "Queued";
 }
 
-export function ImportedImportHistory({ bankId, refreshKey }: ImportedImportHistoryProps) {
+export function ImportedImportHistory({
+  bankId,
+  refreshKey,
+  selectedJobId,
+  onSelect,
+}: ImportedImportHistoryProps) {
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<GmailImportHistoryPage | null>(null);
   const [loading, setLoading] = useState(false);
@@ -116,33 +123,39 @@ export function ImportedImportHistory({ bankId, refreshKey }: ImportedImportHist
       {!loading && !error && history && history.jobs.length > 0 && (
         <ol className="border-line divide-line divide-y rounded-[12px] border">
           {history.jobs.map((item) => (
-            <li
-              key={item.id}
-              className="flex flex-col gap-2 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="text-ink text-[12px] font-semibold">
-                  {item.completedAt
-                    ? formatDateTime(item.completedAt)
-                    : formatDateTime(item.createdAt)}
-                </p>
-                <p className="text-muted mt-1 text-[11px]">
-                  {formatDateRange(item)} · {item.progress.transactionsExtracted} transaction
-                  {item.progress.transactionsExtracted === 1 ? "" : "s"} extracted ·{" "}
-                  {item.progress.messagesSkipped} skipped
-                </p>
-              </div>
-              <span
-                className={`text-[11px] font-semibold ${
-                  item.status === "completed"
-                    ? "text-moss"
-                    : item.status === "failed"
-                      ? "text-[#b34f42]"
-                      : "text-[#c18b47]"
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(item.id)}
+                aria-pressed={selectedJobId === item.id}
+                className={`flex w-full flex-col gap-2 px-3 py-3 text-left transition sm:flex-row sm:items-center sm:justify-between ${
+                  selectedJobId === item.id ? "bg-[#edf5ee]" : "hover:bg-[#f3f7f3]"
                 }`}
               >
-                {statusLabel(item.status)}
-              </span>
+                <div>
+                  <p className="text-ink text-[12px] font-semibold">
+                    {item.completedAt
+                      ? formatDateTime(item.completedAt)
+                      : formatDateTime(item.createdAt)}
+                  </p>
+                  <p className="text-muted mt-1 text-[11px]">
+                    {formatDateRange(item)} · {item.progress.transactionsExtracted} transaction
+                    {item.progress.transactionsExtracted === 1 ? "" : "s"} extracted ·{" "}
+                    {item.progress.messagesSkipped} skipped
+                  </p>
+                </div>
+                <span
+                  className={`text-[11px] font-semibold ${
+                    item.status === "completed"
+                      ? "text-moss"
+                      : item.status === "failed"
+                        ? "text-[#b34f42]"
+                        : "text-[#c18b47]"
+                  }`}
+                >
+                  {statusLabel(item.status)}
+                </span>
+              </button>
             </li>
           ))}
         </ol>

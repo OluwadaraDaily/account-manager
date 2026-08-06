@@ -20,6 +20,7 @@ export function TransactionWorkspace({
 }: TransactionWorkspaceProps) {
   const [activeTab, setActiveTab] = useState("Overview");
   const [selectedBankId, setSelectedBankId] = useState("");
+  const [selectedImportJobId, setSelectedImportJobId] = useState<string | null>(null);
   const [importRefreshKey, setImportRefreshKey] = useState(0);
   const visibleTransactions = transactions.filter(
     (item) => activeTab === "Overview" || item.status === "Review",
@@ -39,11 +40,23 @@ export function TransactionWorkspace({
   return (
     <section className="border-line bg-card overflow-hidden rounded-[24px] border">
       <GmailSearchForm
-        onSelectedBankChange={setSelectedBankId}
+        onSelectedBankChange={(bankId) => {
+          setSelectedBankId(bankId);
+          setSelectedImportJobId(null);
+        }}
         onImportCompleted={() => setImportRefreshKey((current) => current + 1)}
       />
-      <ImportedImportHistory bankId={selectedBankId} refreshKey={importRefreshKey} />
-      <ImportedTransactionReview bankId={selectedBankId} refreshKey={importRefreshKey} />
+      <ImportedImportHistory
+        bankId={selectedBankId}
+        refreshKey={importRefreshKey}
+        selectedJobId={selectedImportJobId}
+        onSelect={setSelectedImportJobId}
+      />
+      <ImportedTransactionReview
+        bankId={selectedBankId}
+        importJobId={selectedImportJobId}
+        refreshKey={importRefreshKey}
+      />
       <div className="border-line flex flex-col justify-between gap-5 border-b px-5 py-5 sm:flex-row sm:items-center sm:px-7">
         <div>
           <h2 className="font-display text-[20px] font-extrabold tracking-[-0.04em]">
