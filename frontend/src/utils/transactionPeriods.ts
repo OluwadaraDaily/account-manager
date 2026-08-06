@@ -103,6 +103,29 @@ export function groupTransactionsByMonth(transactions: Transaction[]) {
     }));
 }
 
+export function groupTransactionsByCounterparty(transactions: Transaction[]) {
+  const groups = new Map<string, { counterparty: string; inflow: number; outflow: number }>();
+
+  for (const transaction of transactions) {
+    const counterparty = transaction.counterparty.trim() || "Unknown counterparty";
+    const group = groups.get(counterparty) ?? { counterparty, inflow: 0, outflow: 0 };
+    const amount = amountValue(transaction.amount);
+
+    if (transaction.type === "Credit") group.inflow += amount;
+    else group.outflow += amount;
+
+    groups.set(counterparty, group);
+  }
+
+  return [...groups.values()]
+    .sort((first, second) => {
+      const firstMovement = first.inflow + first.outflow;
+      const secondMovement = second.inflow + second.outflow;
+      return secondMovement - firstMovement;
+    })
+    .map((group) => ({ ...group, net: group.inflow - group.outflow }));
+}
+
 export function formatNaira(value: number) {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",

@@ -2,6 +2,7 @@ import { Icon } from "./Icon";
 import { StatCard } from "./StatCard";
 import {
   formatNaira,
+  groupTransactionsByCounterparty,
   groupTransactionsByMonth,
   summarizeTransactions,
 } from "../utils/transactionPeriods";
@@ -16,6 +17,7 @@ type AccountSnapshotProps = {
 export function AccountSnapshot({ period, onPeriodChange, transactions }: AccountSnapshotProps) {
   const summary = summarizeTransactions(transactions);
   const monthlySummaries = groupTransactionsByMonth(transactions);
+  const counterpartySummaries = groupTransactionsByCounterparty(transactions);
 
   return (
     <section className="py-10">
@@ -100,6 +102,47 @@ export function AccountSnapshot({ period, onPeriodChange, transactions }: Accoun
                   </td>
                   <td className="text-ink px-2 py-3 text-right font-semibold">
                     {formatNaira(monthlySummary.net)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {counterpartySummaries.length > 0 && (
+        <div className="border-line bg-card mt-4 overflow-x-auto rounded-[20px] border p-5">
+          <div className="mb-4">
+            <h3 className="text-ink text-[13px] font-bold">By counterparty</h3>
+            <p className="text-muted mt-1 text-[11px]">
+              Totals grouped by the selected transaction counterparties.
+            </p>
+          </div>
+          <table className="w-full min-w-[560px] text-left text-[11px]">
+            <thead className="text-muted border-line border-b font-semibold">
+              <tr>
+                <th className="px-2 py-2">Counterparty</th>
+                <th className="px-2 py-2 text-right">Inflow</th>
+                <th className="px-2 py-2 text-right">Outflow</th>
+                <th className="px-2 py-2 text-right">Net movement</th>
+              </tr>
+            </thead>
+            <tbody>
+              {counterpartySummaries.map((counterpartySummary) => (
+                <tr
+                  key={counterpartySummary.counterparty}
+                  className="border-line/70 border-b last:border-0"
+                >
+                  <td className="text-ink px-2 py-3 font-semibold">
+                    {counterpartySummary.counterparty}
+                  </td>
+                  <td className="text-moss px-2 py-3 text-right font-semibold">
+                    {formatNaira(counterpartySummary.inflow)}
+                  </td>
+                  <td className="px-2 py-3 text-right font-semibold text-[#c66b61]">
+                    {formatNaira(counterpartySummary.outflow)}
+                  </td>
+                  <td className="text-ink px-2 py-3 text-right font-semibold">
+                    {formatNaira(counterpartySummary.net)}
                   </td>
                 </tr>
               ))}
