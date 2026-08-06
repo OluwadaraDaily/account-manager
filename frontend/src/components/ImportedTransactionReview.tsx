@@ -62,6 +62,12 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
   const needsReviewCount = transactions.filter(
     (transaction) => transaction.reviewStatus === "needs-review",
   ).length;
+  const readyCount = transactions.filter(
+    (transaction) => transaction.reviewStatus === "ready",
+  ).length;
+  const dismissedCount = transactions.filter(
+    (transaction) => transaction.reviewStatus === "dismissed",
+  ).length;
 
   useEffect(() => {
     let cancelled = false;
@@ -194,6 +200,35 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
       )}
       {!loading && !error && transactions.length === 0 && (
         <p className="text-muted text-[12px]">No imported transactions for this bank yet.</p>
+      )}
+      {!loading && !error && transactions.length > 0 && (
+        <div
+          className="border-line mb-4 rounded-[12px] border px-3 py-3"
+          role="status"
+          aria-live="polite"
+        >
+          <p className="text-ink text-[12px] font-semibold">
+            {needsReviewCount === 0 ? "Review complete." : "Review in progress."}
+          </p>
+          <dl className="text-muted mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] sm:grid-cols-4">
+            <div>
+              <dt>Total</dt>
+              <dd className="text-ink font-semibold">{transactions.length}</dd>
+            </div>
+            <div>
+              <dt>Ready</dt>
+              <dd className="text-ink font-semibold">{readyCount}</dd>
+            </div>
+            <div>
+              <dt>Needs review</dt>
+              <dd className="text-ink font-semibold">{needsReviewCount}</dd>
+            </div>
+            <div>
+              <dt>Dismissed</dt>
+              <dd className="text-ink font-semibold">{dismissedCount}</dd>
+            </div>
+          </dl>
+        </div>
       )}
       {!loading && !error && transactions.length > 0 && (
         <div className="overflow-x-auto">
