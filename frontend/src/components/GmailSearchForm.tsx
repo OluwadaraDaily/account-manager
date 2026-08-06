@@ -349,14 +349,14 @@ export function GmailSearchForm({ onSelectedBankChange, onImportCompleted }: Gma
         </p>
       )}
       {job && (
-        <p
+        <div
           className="text-muted mt-3 text-[12px]"
           role="status"
           aria-live="polite"
           aria-atomic="true"
         >
           {noMatches ? (
-            <>
+            <p>
               No matching messages found. Adjust the sender, dates, subject, or keyword, or try a
               broader search for this bank.
               <button
@@ -367,15 +367,41 @@ export function GmailSearchForm({ onSelectedBankChange, onImportCompleted }: Gma
               >
                 Try broader bank search
               </button>
-            </>
+            </p>
           ) : (
-            <>
+            <p>
               Import {job.status}: {job.progress.messagesDiscovered} message
               {job.progress.messagesDiscovered === 1 ? "" : "s"} discovered.
               {job.status === "completed" && " Message discovery is complete."}
-            </>
+            </p>
           )}
-        </p>
+          <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
+            <div className="border-line rounded-[10px] border px-2 py-2">
+              <dt className="text-[10px] font-semibold tracking-[0.08em] uppercase">
+                Messages imported
+              </dt>
+              <dd className="text-ink mt-1 text-[16px] font-bold">
+                {job.progress.messagesProcessed}
+              </dd>
+            </div>
+            <div className="border-line rounded-[10px] border px-2 py-2">
+              <dt className="text-[10px] font-semibold tracking-[0.08em] uppercase">
+                Transactions extracted
+              </dt>
+              <dd className="text-ink mt-1 text-[16px] font-bold">
+                {job.progress.transactionsExtracted}
+              </dd>
+            </div>
+            <div className="border-line rounded-[10px] border px-2 py-2">
+              <dt className="text-[10px] font-semibold tracking-[0.08em] uppercase">
+                Messages skipped
+              </dt>
+              <dd className="text-ink mt-1 text-[16px] font-bold">
+                {job.progress.messagesSkipped}
+              </dd>
+            </div>
+          </dl>
+        </div>
       )}
     </section>
   );
