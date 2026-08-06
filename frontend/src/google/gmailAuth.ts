@@ -94,6 +94,7 @@ export type ImportedTransactionUpdate = {
   amount?: string | null;
   counterparty?: string | null;
   description?: string | null;
+  reviewStatus?: "dismissed";
 };
 
 export function startGmailAuthorization() {

@@ -137,6 +137,33 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
     }
   };
 
+  const dismissTransaction = async (transactionId: string) => {
+    setError(null);
+    setSavingTransactionId(transactionId);
+    try {
+      const updatedTransaction = await updateImportedTransaction(bankId, transactionId, {
+        reviewStatus: "dismissed",
+      });
+      setTransactions((currentTransactions) =>
+        currentTransactions.map((transaction) =>
+          transaction.id === transactionId ? updatedTransaction : transaction,
+        ),
+      );
+      setDraftTransactions((currentDrafts) => ({
+        ...currentDrafts,
+        [transactionId]: toEditableDraft(updatedTransaction),
+      }));
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "The transaction could not be dismissed.",
+      );
+    } finally {
+      setSavingTransactionId(null);
+    }
+  };
+
   return (
     <section
       aria-labelledby="imported-review-heading"
@@ -305,6 +332,16 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
                         >
                           {savingTransactionId === transaction.id ? "Saving…" : "Save"}
                         </button>
+                        {transaction.reviewStatus !== "dismissed" && (
+                          <button
+                            type="button"
+                            onClick={() => void dismissTransaction(transaction.id)}
+                            disabled={savingTransactionId !== null}
+                            className="text-muted font-semibold underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            Dismiss
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
