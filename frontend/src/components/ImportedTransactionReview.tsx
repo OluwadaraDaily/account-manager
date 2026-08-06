@@ -10,6 +10,14 @@ type ImportedTransactionReviewProps = {
   refreshKey: number;
 };
 
+type EditableTransactionDraft = {
+  direction: "debit" | "credit" | "";
+  transactionDate: string;
+  amount: string;
+  counterparty: string;
+  description: string;
+};
+
 const reviewReasonLabels: Record<string, string> = {
   amount_missing: "Amount is missing",
   conflicting_direction_signals: "Debit and credit signals conflict",
@@ -23,18 +31,33 @@ function formatReviewReason(reason: string) {
   return reviewReasonLabels[reason] ?? reason.replaceAll("_", " ");
 }
 
-function formatAmount(transaction: ImportedTransaction) {
-  if (!transaction.amount) return "—";
-  return `${transaction.currency ?? ""} ${transaction.amount}`.trim();
+function toEditableDraft(transaction: ImportedTransaction): EditableTransactionDraft {
+  return {
+    direction: transaction.direction ?? "",
+    transactionDate: transaction.transactionDate ?? "",
+    amount: transaction.amount ?? "",
+    counterparty: transaction.counterparty ?? "",
+    description: transaction.description ?? "",
+  };
+}
+
+function hasDraftChanges(transaction: ImportedTransaction, draft: EditableTransactionDraft) {
+  return (
+    draft.direction !== (transaction.direction ?? "") ||
+    draft.transactionDate !== (transaction.transactionDate ?? "") ||
+    draft.amount !== (transaction.amount ?? "") ||
+    draft.counterparty !== (transaction.counterparty ?? "") ||
+    draft.description !== (transaction.description ?? "")
+  );
 }
 
 export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransactionReviewProps) {
   const [transactions, setTransactions] = useState<ImportedTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingTransactionId, setSavingTransactionId] = useState<string | null>(null);
-  const [draftDirections, setDraftDirections] = useState<Record<string, "debit" | "credit" | "">>(
-    {},
-  );
+  const [draftTransactions, setDraftTransactions] = useState<
+    Record<string, EditableTransactionDraft>
+  >({});
   const [error, setError] = useState<string | null>(null);
   const needsReviewCount = transactions.filter(
     (transaction) => transaction.reviewStatus === "needs-review",
@@ -45,6 +68,7 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
 
     if (!bankId) {
       setTransactions([]);
+      setDraftTransactions({});
       setError(null);
       return;
     }
@@ -54,7 +78,11 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
       .then((nextTransactions) => {
         if (!cancelled) {
           setTransactions(nextTransactions);
-          setDraftDirections({});
+          setDraftTransactions(
+            Object.fromEntries(
+              nextTransactions.map((transaction) => [transaction.id, toEditableDraft(transaction)]),
+            ),
+          );
         }
       })
       .catch((requestError: unknown) => {
@@ -75,31 +103,34 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
     };
   }, [bankId, refreshKey]);
 
-  const saveDirection = async (transactionId: string) => {
-    const direction = draftDirections[transactionId];
-    if (!direction) return;
+  const saveTransaction = async (transactionId: string) => {
+    const draft = draftTransactions[transactionId];
+    if (!draft) return;
 
     setError(null);
     setSavingTransactionId(transactionId);
     try {
       const updatedTransaction = await updateImportedTransaction(bankId, transactionId, {
-        direction,
+        direction: draft.direction || undefined,
+        transactionDate: draft.transactionDate || null,
+        amount: draft.amount || null,
+        counterparty: draft.counterparty.trim() || null,
+        description: draft.description.trim() || null,
       });
       setTransactions((currentTransactions) =>
         currentTransactions.map((transaction) =>
           transaction.id === transactionId ? updatedTransaction : transaction,
         ),
       );
-      setDraftDirections((currentDirections) => {
-        const nextDirections = { ...currentDirections };
-        delete nextDirections[transactionId];
-        return nextDirections;
-      });
+      setDraftTransactions((currentDrafts) => ({
+        ...currentDrafts,
+        [transactionId]: toEditableDraft(updatedTransaction),
+      }));
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "The transaction type could not be updated.",
+          : "The transaction could not be updated.",
       );
     } finally {
       setSavingTransactionId(null);
@@ -119,7 +150,7 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
           Imported transactions
         </h2>
         <p className="text-muted mt-1 text-[12px]">
-          Read-only results from the selected bank, including items that need review.
+          Normalized results from the selected bank. Review and correct any uncertain items.
         </p>
         {!loading && !error && (
           <p className="text-muted mt-2 text-[12px]" aria-live="polite">
@@ -139,34 +170,81 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
       )}
       {!loading && !error && transactions.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] text-left">
+          <table className="w-full min-w-[1180px] text-left">
             <thead>
               <tr className="border-line text-muted border-b text-[10px] font-bold tracking-[0.13em] uppercase">
                 <th className="px-2 py-3 font-semibold">Date</th>
                 <th className="px-2 py-3 font-semibold">Description</th>
+                <th className="px-2 py-3 font-semibold">Counterparty</th>
                 <th className="px-2 py-3 font-semibold">Transaction type</th>
                 <th className="px-2 py-3 text-right font-semibold">Amount</th>
                 <th className="px-2 py-3 font-semibold">Review</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.map((transaction) => (
-                <tr key={transaction.id} className="border-line/70 border-b last:border-0">
-                  <td className="text-muted px-2 py-4 text-[12px]">
-                    {transaction.transactionDate ?? "—"}
-                  </td>
-                  <td className="px-2 py-4 text-[12px] font-semibold">
-                    {transaction.description ?? "—"}
-                  </td>
-                  <td className="px-2 py-4 text-[12px]">
-                    <div className="flex items-center gap-2">
-                      <select
-                        aria-label={`Transaction type for ${transaction.description ?? transaction.id}`}
-                        value={draftDirections[transaction.id] ?? transaction.direction ?? ""}
+              {transactions.map((transaction) => {
+                const draft = draftTransactions[transaction.id] ?? toEditableDraft(transaction);
+                const changed = hasDraftChanges(transaction, draft);
+                const label = transaction.description ?? transaction.id;
+
+                return (
+                  <tr key={transaction.id} className="border-line/70 border-b last:border-0">
+                    <td className="px-2 py-4 text-[12px]">
+                      <input
+                        aria-label={`Transaction date for ${label}`}
+                        type="date"
+                        value={draft.transactionDate}
                         onChange={(event) =>
-                          setDraftDirections((currentDirections) => ({
-                            ...currentDirections,
-                            [transaction.id]: event.target.value as "debit" | "credit" | "",
+                          setDraftTransactions((currentDrafts) => ({
+                            ...currentDrafts,
+                            [transaction.id]: { ...draft, transactionDate: event.target.value },
+                          }))
+                        }
+                        disabled={savingTransactionId !== null}
+                        className="border-line bg-card text-ink rounded-[8px] border px-2 py-1 text-[11px]"
+                      />
+                    </td>
+                    <td className="px-2 py-4 text-[12px] font-semibold">
+                      <input
+                        aria-label={`Description for ${label}`}
+                        type="text"
+                        value={draft.description}
+                        onChange={(event) =>
+                          setDraftTransactions((currentDrafts) => ({
+                            ...currentDrafts,
+                            [transaction.id]: { ...draft, description: event.target.value },
+                          }))
+                        }
+                        disabled={savingTransactionId !== null}
+                        className="border-line bg-card text-ink w-full min-w-[180px] rounded-[8px] border px-2 py-1 text-[11px]"
+                      />
+                    </td>
+                    <td className="px-2 py-4 text-[12px]">
+                      <input
+                        aria-label={`Counterparty for ${label}`}
+                        type="text"
+                        value={draft.counterparty}
+                        onChange={(event) =>
+                          setDraftTransactions((currentDrafts) => ({
+                            ...currentDrafts,
+                            [transaction.id]: { ...draft, counterparty: event.target.value },
+                          }))
+                        }
+                        disabled={savingTransactionId !== null}
+                        className="border-line bg-card text-ink w-full min-w-[150px] rounded-[8px] border px-2 py-1 text-[11px]"
+                      />
+                    </td>
+                    <td className="px-2 py-4 text-[12px]">
+                      <select
+                        aria-label={`Transaction type for ${label}`}
+                        value={draft.direction}
+                        onChange={(event) =>
+                          setDraftTransactions((currentDrafts) => ({
+                            ...currentDrafts,
+                            [transaction.id]: {
+                              ...draft,
+                              direction: event.target.value as "debit" | "credit" | "",
+                            },
                           }))
                         }
                         disabled={savingTransactionId !== null}
@@ -176,43 +254,56 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
                         <option value="debit">Debit</option>
                         <option value="credit">Credit</option>
                       </select>
-                      <button
-                        type="button"
-                        onClick={() => void saveDirection(transaction.id)}
-                        disabled={
-                          savingTransactionId !== null ||
-                          !draftDirections[transaction.id] ||
-                          draftDirections[transaction.id] === transaction.direction
+                    </td>
+                    <td className="px-2 py-4 text-right text-[12px] font-bold">
+                      <input
+                        aria-label={`Amount for ${label}`}
+                        type="text"
+                        inputMode="decimal"
+                        value={draft.amount}
+                        onChange={(event) =>
+                          setDraftTransactions((currentDrafts) => ({
+                            ...currentDrafts,
+                            [transaction.id]: { ...draft, amount: event.target.value },
+                          }))
                         }
-                        className="text-moss-dark font-semibold underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
-                      >
-                        {savingTransactionId === transaction.id ? "Saving…" : "Save"}
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-2 py-4 text-right text-[12px] font-bold">
-                    {formatAmount(transaction)}
-                  </td>
-                  <td className="px-2 py-4 text-[12px]">
-                    <span
-                      className={
-                        transaction.reviewStatus === "needs-review"
-                          ? "font-semibold text-[#c18b47]"
-                          : "text-moss font-semibold"
-                      }
-                    >
-                      {transaction.reviewStatus === "needs-review" ? "Needs review" : "Ready"}
-                    </span>
-                    {transaction.reviewReasons.length > 0 && (
-                      <ul className="text-muted mt-1 space-y-0.5 text-[11px]">
-                        {transaction.reviewReasons.map((reason) => (
-                          <li key={reason}>{formatReviewReason(reason)}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                        disabled={savingTransactionId !== null}
+                        className="border-line bg-card text-ink w-full min-w-[110px] rounded-[8px] border px-2 py-1 text-right text-[11px]"
+                      />
+                    </td>
+                    <td className="px-2 py-4 text-[12px]">
+                      <div className="flex items-start gap-2">
+                        <div>
+                          <span
+                            className={
+                              transaction.reviewStatus === "needs-review"
+                                ? "font-semibold text-[#c18b47]"
+                                : "text-moss font-semibold"
+                            }
+                          >
+                            {transaction.reviewStatus === "needs-review" ? "Needs review" : "Ready"}
+                          </span>
+                          {transaction.reviewReasons.length > 0 && (
+                            <ul className="text-muted mt-1 space-y-0.5 text-[11px]">
+                              {transaction.reviewReasons.map((reason) => (
+                                <li key={reason}>{formatReviewReason(reason)}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void saveTransaction(transaction.id)}
+                          disabled={savingTransactionId !== null || !changed}
+                          className="text-moss-dark font-semibold underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {savingTransactionId === transaction.id ? "Saving…" : "Save"}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

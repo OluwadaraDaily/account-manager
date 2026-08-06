@@ -44,7 +44,7 @@ test("returns review metadata without account identity or raw Gmail content", ()
   });
 });
 
-test("updates a transaction through the authenticated bank-scoped endpoint", async (context) => {
+test("updates a transaction through the authenticated bank-scoped endpoint", async () => {
   const updates = [];
   const router = createImportRouter({
     bankDirectoryStorePromise: Promise.resolve({}),
@@ -63,12 +63,12 @@ test("updates a transaction through the authenticated bank-scoped endpoint", asy
           googleSubject,
           bankId,
           sourceMessageId: "message-1",
-          transactionDate: "2026-02-01",
+          transactionDate: changes.transactionDate,
           direction: changes.direction,
-          amount: "12345.67",
+          amount: changes.amount,
           currency: "NGN",
-          counterparty: "Example Merchant",
-          description: "POS example transaction",
+          counterparty: changes.counterparty,
+          description: changes.description,
           channel: "POS",
           confidence: "high",
           reviewReasons: [],
@@ -107,7 +107,14 @@ test("updates a transaction through the authenticated bank-scoped endpoint", asy
       method: "PATCH",
       url: "/imports/gmail/transactions/transaction-1",
       headers: { cookie: `${appConfig.sessionCookieName}=session-1` },
-      body: { bankId: "union-bank", direction: "credit" },
+      body: {
+        bankId: "union-bank",
+        direction: "credit",
+        transactionDate: "2026-02-02",
+        amount: "543.21",
+        counterparty: "Updated Merchant",
+        description: "Updated description",
+      },
     },
     response,
     (error) => (error ? rejectResponse(error) : resolveResponse()),
@@ -120,19 +127,25 @@ test("updates a transaction through the authenticated bank-scoped endpoint", asy
       googleSubject: "google-subject",
       bankId: "union-bank",
       transactionId: "transaction-1",
-      changes: { direction: "credit" },
+      changes: {
+        direction: "credit",
+        transactionDate: "2026-02-02",
+        amount: "543.21",
+        counterparty: "Updated Merchant",
+        description: "Updated description",
+      },
     },
   ]);
   assert.deepEqual(response.body, {
     transaction: {
       id: "transaction-1",
       sourceMessageId: "message-1",
-      transactionDate: "2026-02-01",
+      transactionDate: "2026-02-02",
       direction: "credit",
-      amount: "12345.67",
+      amount: "543.21",
       currency: "NGN",
-      counterparty: "Example Merchant",
-      description: "POS example transaction",
+      counterparty: "Updated Merchant",
+      description: "Updated description",
       channel: "POS",
       confidence: "high",
       reviewReasons: [],

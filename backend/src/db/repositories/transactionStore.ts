@@ -13,6 +13,10 @@ export type NormalizedTransactionWrite = {
 
 export type NormalizedTransactionUpdate = {
   direction?: NormalizedTransaction["direction"];
+  transactionDate?: NormalizedTransaction["transactionDate"];
+  amount?: NormalizedTransaction["amount"];
+  counterparty?: NormalizedTransaction["counterparty"];
+  description?: NormalizedTransaction["description"];
 };
 
 export type StoredNormalizedTransaction = NormalizedTransaction & {
@@ -136,8 +140,14 @@ function assertValidTransactionUpdate(
   assertIdentifier(googleSubject, "googleSubject");
   assertIdentifier(bankId, "bankId");
   assertIdentifier(transactionId, "transactionId");
-  if (changes.direction === undefined) {
-    throw new Error("Please provide the direction field to update the transaction.");
+  if (
+    changes.direction === undefined &&
+    changes.transactionDate === undefined &&
+    changes.amount === undefined &&
+    changes.counterparty === undefined &&
+    changes.description === undefined
+  ) {
+    throw new Error("At least one transaction field must be provided.");
   }
 }
 
@@ -148,6 +158,12 @@ function applyUpdate(
   return {
     ...transaction,
     direction: changes.direction !== undefined ? changes.direction : transaction.direction,
+    transactionDate:
+      changes.transactionDate !== undefined ? changes.transactionDate : transaction.transactionDate,
+    amount: changes.amount !== undefined ? changes.amount : transaction.amount,
+    counterparty:
+      changes.counterparty !== undefined ? changes.counterparty : transaction.counterparty,
+    description: changes.description !== undefined ? changes.description : transaction.description,
   };
 }
 
@@ -216,10 +232,22 @@ export class SqliteTransactionStore implements TransactionStore {
     this.database
       .prepare(
         `UPDATE normalized_transactions
-         SET direction = ?, fingerprint = ?, updated_at = ?
+         SET transaction_date = ?, direction = ?, amount = ?, counterparty = ?, description = ?,
+             fingerprint = ?, updated_at = ?
          WHERE transaction_id = ? AND google_subject = ? AND bank_id = ?`,
       )
-      .run(updated.direction, fingerprint, now, transactionId, googleSubject, bankId);
+      .run(
+        updated.transactionDate,
+        updated.direction,
+        updated.amount,
+        updated.counterparty,
+        updated.description,
+        fingerprint,
+        now,
+        transactionId,
+        googleSubject,
+        bankId,
+      );
 
     return { ...updated, updatedAt: now };
   }
@@ -336,10 +364,22 @@ export class PostgresTransactionStore implements TransactionStore {
     const fingerprint = buildTransactionFingerprint(updated);
     const result = await this.pool.query<TransactionRow>(
       `UPDATE normalized_transactions
-       SET direction = $1, fingerprint = $2, updated_at = $3
-       WHERE transaction_id = $4 AND google_subject = $5 AND bank_id = $6
+       SET transaction_date = $1, direction = $2, amount = $3, counterparty = $4, description = $5,
+           fingerprint = $6, updated_at = $7
+       WHERE transaction_id = $8 AND google_subject = $9 AND bank_id = $10
        RETURNING ${getColumns()}`,
-      [updated.direction, fingerprint, now, transactionId, googleSubject, bankId],
+      [
+        updated.transactionDate,
+        updated.direction,
+        updated.amount,
+        updated.counterparty,
+        updated.description,
+        fingerprint,
+        now,
+        transactionId,
+        googleSubject,
+        bankId,
+      ],
     );
 
     return result.rows[0] ? toStoredTransaction(result.rows[0]) : null;

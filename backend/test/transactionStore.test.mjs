@@ -63,9 +63,17 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
   );
   const directionUpdated = await store.update("google-subject", "union-bank", inserted.id, {
     direction: "credit",
+    transactionDate: "2026-02-02",
+    amount: "543.21",
+    counterparty: "Updated Merchant",
+    description: "Updated description",
   });
   assert.equal(directionUpdated?.id, inserted.id);
   assert.equal(directionUpdated?.direction, "credit");
+  assert.equal(directionUpdated?.transactionDate, "2026-02-02");
+  assert.equal(directionUpdated?.amount, "543.21");
+  assert.equal(directionUpdated?.counterparty, "Updated Merchant");
+  assert.equal(directionUpdated?.description, "Updated description");
   assert.equal(
     (
       await store.findByFingerprint(
@@ -73,8 +81,11 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
         "union-bank",
         buildTransactionFingerprint({
           ...input.transaction,
-          amount: "20000.00",
+          transactionDate: "2026-02-02",
+          amount: "543.21",
           direction: "credit",
+          counterparty: "Updated Merchant",
+          description: "Updated description",
         }),
       )
     )?.id,

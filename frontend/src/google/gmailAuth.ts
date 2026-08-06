@@ -89,7 +89,11 @@ export type ImportedTransaction = {
 };
 
 export type ImportedTransactionUpdate = {
-  direction: "debit" | "credit";
+  direction?: "debit" | "credit";
+  transactionDate?: string | null;
+  amount?: string | null;
+  counterparty?: string | null;
+  description?: string | null;
 };
 
 export function startGmailAuthorization() {

@@ -190,7 +190,7 @@ export function createImportRouter({
       request,
       response: Response<unknown, ValidatedLocals<typeof updateImportedTransactionBodySchema>>,
     ) => {
-      const { bankId, direction } = response.locals.validatedBody;
+      const { bankId, ...changes } = response.locals.validatedBody;
       const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
       const sessionStore = await sessionStorePromise;
       const account = sessionId ? await sessionStore.get(sessionId) : null;
@@ -211,7 +211,7 @@ export function createImportRouter({
         account.googleSubject,
         bankId,
         transactionId,
-        { direction },
+        changes,
       );
 
       if (!transaction) {
