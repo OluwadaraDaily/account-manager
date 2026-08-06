@@ -97,6 +97,11 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
     await store.update("google-subject", "other-bank", inserted.id, { direction: "debit" }),
     null,
   );
+  assert.equal(
+    await store.update("other-user", "union-bank", inserted.id, { direction: "debit" }),
+    null,
+  );
+  assert.deepEqual(await store.list("other-user", "union-bank"), []);
   assert.deepEqual(Object.keys(updated).sort(), [
     "amount",
     "bankId",

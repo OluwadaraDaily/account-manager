@@ -156,6 +156,73 @@ test("updates a transaction through the authenticated bank-scoped endpoint", asy
   });
 });
 
+test("rejects an authenticated user's attempt to update another user's transaction", async () => {
+  const calls = [];
+  const router = createImportRouter({
+    bankDirectoryStorePromise: Promise.resolve({}),
+    refreshTokenStorePromise: Promise.resolve({}),
+    sessionStorePromise: Promise.resolve({
+      async get(sessionId) {
+        return sessionId === "other-session" ? { googleSubject: "other-google-subject" } : null;
+      },
+    }),
+    importJobStorePromise: Promise.resolve({}),
+    transactionStorePromise: Promise.resolve({
+      async update(googleSubject, bankId, transactionId, changes) {
+        calls.push({ googleSubject, bankId, transactionId, changes });
+        return null;
+      },
+    }),
+    runGmailImportJob: async () => {},
+  });
+
+  let resolveResponse;
+  let rejectResponse;
+  const responseCompleted = new Promise((resolve, reject) => {
+    resolveResponse = resolve;
+    rejectResponse = reject;
+  });
+  const response = {
+    locals: {},
+    statusCode: 200,
+    body: null,
+    status(statusCode) {
+      this.statusCode = statusCode;
+      return this;
+    },
+    json(body) {
+      this.body = body;
+      resolveResponse();
+      return this;
+    },
+  };
+
+  router.handle(
+    {
+      method: "PATCH",
+      url: "/imports/gmail/transactions/transaction-1",
+      headers: { cookie: `${appConfig.sessionCookieName}=other-session` },
+      body: {
+        bankId: "union-bank",
+        reviewStatus: "dismissed",
+      },
+    },
+    response,
+    (error) => (error ? rejectResponse(error) : resolveResponse()),
+  );
+  await responseCompleted;
+
+  assert.equal(response.statusCode, 404);
+  assert.deepEqual(calls, [
+    {
+      googleSubject: "other-google-subject",
+      bankId: "union-bank",
+      transactionId: "transaction-1",
+      changes: { reviewStatus: "dismissed" },
+    },
+  ]);
+});
+
 test("lists historical import summaries for the authenticated user and bank", async () => {
   const calls = [];
   const router = createImportRouter({
@@ -434,7 +501,9 @@ test("lists transactions for an authenticated import job and enforces bank scope
     }),
     sessionStorePromise: Promise.resolve({
       async get(sessionId) {
-        return sessionId === "session-1" ? { googleSubject: "google-subject" } : null;
+        if (sessionId === "session-1") return { googleSubject: "google-subject" };
+        if (sessionId === "other-session") return { googleSubject: "other-google-subject" };
+        return null;
       },
     }),
     importJobStorePromise: Promise.resolve({
@@ -557,5 +626,5 @@ test("lists transactions for an authenticated import job and enforces bank scope
     "/imports/gmail/jobs/job-1/transactions?bankId=union-bank",
     "other-session",
   );
-  assert.equal(otherUserResponse.statusCode, 401);
+  assert.equal(otherUserResponse.statusCode, 404);
 });
