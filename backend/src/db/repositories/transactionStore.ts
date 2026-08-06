@@ -11,6 +11,10 @@ export type NormalizedTransactionWrite = {
   transaction: NormalizedTransaction;
 };
 
+export type NormalizedTransactionUpdate = {
+  direction?: NormalizedTransaction["direction"];
+};
+
 export type StoredNormalizedTransaction = NormalizedTransaction & {
   id: string;
   googleSubject: string;
@@ -21,6 +25,12 @@ export type StoredNormalizedTransaction = NormalizedTransaction & {
 
 export interface TransactionStore {
   upsert(input: NormalizedTransactionWrite): Promise<StoredNormalizedTransaction>;
+  update(
+    googleSubject: string,
+    bankId: string,
+    transactionId: string,
+    changes: NormalizedTransactionUpdate,
+  ): Promise<StoredNormalizedTransaction | null>;
   get(
     googleSubject: string,
     bankId: string,
@@ -117,6 +127,30 @@ function validateInput(input: NormalizedTransactionWrite) {
   assertIdentifier(input.transaction.sourceMessageId, "sourceMessageId");
 }
 
+function assertValidTransactionUpdate(
+  googleSubject: string,
+  bankId: string,
+  transactionId: string,
+  changes: NormalizedTransactionUpdate,
+) {
+  assertIdentifier(googleSubject, "googleSubject");
+  assertIdentifier(bankId, "bankId");
+  assertIdentifier(transactionId, "transactionId");
+  if (changes.direction === undefined) {
+    throw new Error("Please provide the direction field to update the transaction.");
+  }
+}
+
+function applyUpdate(
+  transaction: StoredNormalizedTransaction,
+  changes: NormalizedTransactionUpdate,
+) {
+  return {
+    ...transaction,
+    direction: changes.direction !== undefined ? changes.direction : transaction.direction,
+  };
+}
+
 export class SqliteTransactionStore implements TransactionStore {
   constructor(
     private readonly database: SqliteDatabase = createSqliteDatabase(),
@@ -154,6 +188,40 @@ export class SqliteTransactionStore implements TransactionStore {
       input.bankId,
       input.transaction.sourceMessageId,
     )) as StoredNormalizedTransaction;
+  }
+
+  async update(
+    googleSubject: string,
+    bankId: string,
+    transactionId: string,
+    changes: NormalizedTransactionUpdate,
+  ) {
+    assertValidTransactionUpdate(googleSubject, bankId, transactionId, changes);
+
+    const row = this.database
+      .prepare(
+        `SELECT ${getColumns()}
+         FROM normalized_transactions
+         WHERE transaction_id = ? AND google_subject = ? AND bank_id = ?`,
+      )
+      .get(transactionId, googleSubject, bankId) as TransactionRow | undefined;
+
+    if (!row) return null;
+
+    const current = toStoredTransaction(row);
+    const updated = applyUpdate(current, changes);
+    const now = new Date().toISOString();
+    const fingerprint = buildTransactionFingerprint(updated);
+
+    this.database
+      .prepare(
+        `UPDATE normalized_transactions
+         SET direction = ?, fingerprint = ?, updated_at = ?
+         WHERE transaction_id = ? AND google_subject = ? AND bank_id = ?`,
+      )
+      .run(updated.direction, fingerprint, now, transactionId, googleSubject, bankId);
+
+    return { ...updated, updatedAt: now };
   }
 
   async get(googleSubject: string, bankId: string, sourceMessageId: string) {
@@ -243,6 +311,38 @@ export class PostgresTransactionStore implements TransactionStore {
     );
 
     return toStoredTransaction(result.rows[0]);
+  }
+
+  async update(
+    googleSubject: string,
+    bankId: string,
+    transactionId: string,
+    changes: NormalizedTransactionUpdate,
+  ) {
+    assertValidTransactionUpdate(googleSubject, bankId, transactionId, changes);
+
+    const currentResult = await this.pool.query<TransactionRow>(
+      `SELECT ${getColumns()}
+       FROM normalized_transactions
+       WHERE transaction_id = $1 AND google_subject = $2 AND bank_id = $3`,
+      [transactionId, googleSubject, bankId],
+    );
+
+    if (!currentResult.rows[0]) return null;
+
+    const current = toStoredTransaction(currentResult.rows[0]);
+    const updated = applyUpdate(current, changes);
+    const now = new Date().toISOString();
+    const fingerprint = buildTransactionFingerprint(updated);
+    const result = await this.pool.query<TransactionRow>(
+      `UPDATE normalized_transactions
+       SET direction = $1, fingerprint = $2, updated_at = $3
+       WHERE transaction_id = $4 AND google_subject = $5 AND bank_id = $6
+       RETURNING ${getColumns()}`,
+      [updated.direction, fingerprint, now, transactionId, googleSubject, bankId],
+    );
+
+    return result.rows[0] ? toStoredTransaction(result.rows[0]) : null;
   }
 
   async get(googleSubject: string, bankId: string, sourceMessageId: string) {

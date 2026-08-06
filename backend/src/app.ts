@@ -10,7 +10,7 @@ export function createApp() {
     response.setHeader("Access-Control-Allow-Origin", appConfig.frontendOrigin);
     response.setHeader("Access-Control-Allow-Credentials", "true");
     response.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    response.setHeader("Access-Control-Allow-Methods", "GET, PATCH, POST, OPTIONS");
     response.setHeader("Vary", "Origin");
 
     if (request.method === "OPTIONS") {

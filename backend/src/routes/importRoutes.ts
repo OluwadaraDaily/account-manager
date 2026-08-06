@@ -24,6 +24,7 @@ import {
   importMessageMetadataBodySchema,
   importMessagesQuerySchema,
   importTransactionsQuerySchema,
+  updateImportedTransactionBodySchema,
 } from "../validators/importValidators.js";
 
 type ImportRouterDependencies = {
@@ -179,6 +180,46 @@ export function createImportRouter({
       const transactionStore = await transactionStorePromise;
       const transactions = await transactionStore.list(account.googleSubject, bankId);
       response.json({ transactions: transactions.map(toTransactionResponse) });
+    },
+  );
+
+  router.patch(
+    "/imports/gmail/transactions/:transactionId",
+    validateBody(updateImportedTransactionBodySchema),
+    async (
+      request,
+      response: Response<unknown, ValidatedLocals<typeof updateImportedTransactionBodySchema>>,
+    ) => {
+      const { bankId, direction } = response.locals.validatedBody;
+      const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
+      const sessionStore = await sessionStorePromise;
+      const account = sessionId ? await sessionStore.get(sessionId) : null;
+
+      if (!account) {
+        response.status(401).json({ error: "Gmail authentication is required." });
+        return;
+      }
+
+      const transactionId = request.params.transactionId;
+      if (typeof transactionId !== "string") {
+        response.status(400).json({ error: "Invalid transaction identifier." });
+        return;
+      }
+
+      const transactionStore = await transactionStorePromise;
+      const transaction = await transactionStore.update(
+        account.googleSubject,
+        bankId,
+        transactionId,
+        { direction },
+      );
+
+      if (!transaction) {
+        response.status(404).json({ error: "Transaction was not found." });
+        return;
+      }
+
+      response.json({ transaction: toTransactionResponse(transaction) });
     },
   );
 

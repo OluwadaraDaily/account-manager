@@ -30,6 +30,17 @@ export const importTransactionsQuerySchema = z.object({
 
 export type ImportTransactionsQuery = z.infer<typeof importTransactionsQuerySchema>;
 
+export const updateImportedTransactionBodySchema = z
+  .object({
+    bankId: z.string().trim().min(1).max(100),
+    direction: z.enum(["debit", "credit"]).optional(),
+  })
+  .refine((body) => body.direction !== undefined, {
+    message: "At least one transaction field must be provided.",
+  });
+
+export type UpdateImportedTransactionBody = z.infer<typeof updateImportedTransactionBodySchema>;
+
 export const createImportJobBodySchema = gmailSearchCriteriaObjectSchema
   .extend({
     bankId: z.string().trim().min(1).max(100),
