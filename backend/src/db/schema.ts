@@ -67,7 +67,7 @@ const normalizedTransactionSchema = `
     channel TEXT,
     confidence TEXT NOT NULL CHECK (confidence IN ('high', 'medium', 'low')),
     review_reasons_json TEXT NOT NULL,
-    review_status TEXT NOT NULL CHECK (review_status IN ('ready', 'needs-review')),
+    review_status TEXT NOT NULL CHECK (review_status IN ('ready', 'needs-review', 'dismissed')),
     created_at TIMESTAMPTZ NOT NULL,
     updated_at TIMESTAMPTZ NOT NULL,
     UNIQUE (google_subject, bank_id, source_message_id)
@@ -111,6 +111,12 @@ export async function initializeDatabase(connection: DatabaseConnection) {
       "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS review_status TEXT NOT NULL DEFAULT 'needs-review'",
     );
     await connection.pool.query(
+      "ALTER TABLE normalized_transactions DROP CONSTRAINT IF EXISTS normalized_transactions_review_status_check",
+    );
+    await connection.pool.query(
+      "ALTER TABLE normalized_transactions ADD CONSTRAINT normalized_transactions_review_status_check CHECK (review_status IN ('ready', 'needs-review', 'dismissed'))",
+    );
+    await connection.pool.query(
       "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS fingerprint TEXT NOT NULL DEFAULT ''",
     );
     await connection.pool.query(
@@ -152,6 +158,41 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     connection.database.exec(
       "ALTER TABLE normalized_transactions ADD COLUMN fingerprint TEXT NOT NULL DEFAULT ''",
     );
+  }
+  const transactionTable = connection.database
+    .prepare(
+      "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'normalized_transactions'",
+    )
+    .get() as { sql?: string } | undefined;
+  if (!transactionTable?.sql?.includes("'dismissed'")) {
+    const migratedTransactionSchema = normalizedTransactionSchema
+      .replace("normalized_transactions", "normalized_transactions_migrated")
+      .replaceAll("TIMESTAMPTZ", "TEXT");
+
+    connection.database.exec("BEGIN IMMEDIATE");
+    try {
+      connection.database.exec(migratedTransactionSchema);
+      connection.database.exec(
+        `INSERT INTO normalized_transactions_migrated (
+          transaction_id, google_subject, bank_id, source_message_id, fingerprint,
+          transaction_date, direction, amount, currency, counterparty, description, channel,
+          confidence, review_reasons_json, review_status, created_at, updated_at
+        )
+        SELECT
+          transaction_id, google_subject, bank_id, source_message_id, fingerprint,
+          transaction_date, direction, amount, currency, counterparty, description, channel,
+          confidence, review_reasons_json, review_status, created_at, updated_at
+        FROM normalized_transactions`,
+      );
+      connection.database.exec("DROP TABLE normalized_transactions");
+      connection.database.exec(
+        "ALTER TABLE normalized_transactions_migrated RENAME TO normalized_transactions",
+      );
+      connection.database.exec("COMMIT");
+    } catch (error) {
+      connection.database.exec("ROLLBACK");
+      throw error;
+    }
   }
   connection.database.exec(
     "CREATE INDEX IF NOT EXISTS normalized_transactions_fingerprint_idx ON normalized_transactions (google_subject, bank_id, fingerprint)",

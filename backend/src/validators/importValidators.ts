@@ -46,6 +46,7 @@ export const updateImportedTransactionBodySchema = z
       .optional(),
     counterparty: z.string().trim().max(200).nullable().optional(),
     description: z.string().trim().max(500).nullable().optional(),
+    reviewStatus: z.literal("dismissed").optional(),
   })
   .refine(
     (body) =>
@@ -53,7 +54,8 @@ export const updateImportedTransactionBodySchema = z
       body.transactionDate !== undefined ||
       body.amount !== undefined ||
       body.counterparty !== undefined ||
-      body.description !== undefined,
+      body.description !== undefined ||
+      body.reviewStatus !== undefined,
     { message: "At least one transaction field must be provided." },
   );
 

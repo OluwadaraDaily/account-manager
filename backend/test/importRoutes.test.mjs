@@ -72,7 +72,7 @@ test("updates a transaction through the authenticated bank-scoped endpoint", asy
           channel: "POS",
           confidence: "high",
           reviewReasons: [],
-          reviewStatus: "ready",
+          reviewStatus: changes.reviewStatus ?? "ready",
           createdAt: "2026-02-01T00:00:00.000Z",
           updatedAt: "2026-02-02T00:00:00.000Z",
         };
@@ -114,6 +114,7 @@ test("updates a transaction through the authenticated bank-scoped endpoint", asy
         amount: "543.21",
         counterparty: "Updated Merchant",
         description: "Updated description",
+        reviewStatus: "dismissed",
       },
     },
     response,
@@ -133,6 +134,7 @@ test("updates a transaction through the authenticated bank-scoped endpoint", asy
         amount: "543.21",
         counterparty: "Updated Merchant",
         description: "Updated description",
+        reviewStatus: "dismissed",
       },
     },
   ]);
@@ -149,7 +151,7 @@ test("updates a transaction through the authenticated bank-scoped endpoint", asy
       channel: "POS",
       confidence: "high",
       reviewReasons: [],
-      reviewStatus: "ready",
+      reviewStatus: "dismissed",
       createdAt: "2026-02-01T00:00:00.000Z",
       updatedAt: "2026-02-02T00:00:00.000Z",
     },

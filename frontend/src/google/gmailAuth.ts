@@ -83,7 +83,7 @@ export type ImportedTransaction = {
   channel: string | null;
   confidence: "high" | "medium" | "low";
   reviewReasons: string[];
-  reviewStatus: "ready" | "needs-review";
+  reviewStatus: "ready" | "needs-review" | "dismissed";
   createdAt: string;
   updatedAt: string;
 };

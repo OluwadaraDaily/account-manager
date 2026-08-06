@@ -17,6 +17,7 @@ export type NormalizedTransactionUpdate = {
   amount?: NormalizedTransaction["amount"];
   counterparty?: NormalizedTransaction["counterparty"];
   description?: NormalizedTransaction["description"];
+  reviewStatus?: NormalizedTransaction["reviewStatus"];
 };
 
 export type StoredNormalizedTransaction = NormalizedTransaction & {
@@ -64,7 +65,7 @@ type TransactionRow = {
   channel: string | null;
   confidence: "high" | "medium" | "low";
   review_reasons_json: string;
-  review_status: "ready" | "needs-review";
+  review_status: "ready" | "needs-review" | "dismissed";
   created_at: string;
   updated_at: string;
 };
@@ -145,7 +146,8 @@ function assertValidTransactionUpdate(
     changes.transactionDate === undefined &&
     changes.amount === undefined &&
     changes.counterparty === undefined &&
-    changes.description === undefined
+    changes.description === undefined &&
+    changes.reviewStatus === undefined
   ) {
     throw new Error("At least one transaction field must be provided.");
   }
@@ -164,6 +166,8 @@ function applyUpdate(
     counterparty:
       changes.counterparty !== undefined ? changes.counterparty : transaction.counterparty,
     description: changes.description !== undefined ? changes.description : transaction.description,
+    reviewStatus:
+      changes.reviewStatus !== undefined ? changes.reviewStatus : transaction.reviewStatus,
   };
 }
 
@@ -233,7 +237,7 @@ export class SqliteTransactionStore implements TransactionStore {
       .prepare(
         `UPDATE normalized_transactions
          SET transaction_date = ?, direction = ?, amount = ?, counterparty = ?, description = ?,
-             fingerprint = ?, updated_at = ?
+             review_status = ?, fingerprint = ?, updated_at = ?
          WHERE transaction_id = ? AND google_subject = ? AND bank_id = ?`,
       )
       .run(
@@ -242,6 +246,7 @@ export class SqliteTransactionStore implements TransactionStore {
         updated.amount,
         updated.counterparty,
         updated.description,
+        updated.reviewStatus,
         fingerprint,
         now,
         transactionId,
@@ -365,8 +370,8 @@ export class PostgresTransactionStore implements TransactionStore {
     const result = await this.pool.query<TransactionRow>(
       `UPDATE normalized_transactions
        SET transaction_date = $1, direction = $2, amount = $3, counterparty = $4, description = $5,
-           fingerprint = $6, updated_at = $7
-       WHERE transaction_id = $8 AND google_subject = $9 AND bank_id = $10
+           review_status = $6, fingerprint = $7, updated_at = $8
+       WHERE transaction_id = $9 AND google_subject = $10 AND bank_id = $11
        RETURNING ${getColumns()}`,
       [
         updated.transactionDate,
@@ -374,6 +379,7 @@ export class PostgresTransactionStore implements TransactionStore {
         updated.amount,
         updated.counterparty,
         updated.description,
+        updated.reviewStatus,
         fingerprint,
         now,
         transactionId,

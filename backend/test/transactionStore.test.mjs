@@ -67,6 +67,7 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
     amount: "543.21",
     counterparty: "Updated Merchant",
     description: "Updated description",
+    reviewStatus: "dismissed",
   });
   assert.equal(directionUpdated?.id, inserted.id);
   assert.equal(directionUpdated?.direction, "credit");
@@ -74,6 +75,7 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
   assert.equal(directionUpdated?.amount, "543.21");
   assert.equal(directionUpdated?.counterparty, "Updated Merchant");
   assert.equal(directionUpdated?.description, "Updated description");
+  assert.equal(directionUpdated?.reviewStatus, "dismissed");
   assert.equal(
     (
       await store.findByFingerprint(

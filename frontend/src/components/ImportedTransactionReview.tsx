@@ -278,10 +278,16 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
                             className={
                               transaction.reviewStatus === "needs-review"
                                 ? "font-semibold text-[#c18b47]"
-                                : "text-moss font-semibold"
+                                : transaction.reviewStatus === "dismissed"
+                                  ? "text-muted font-semibold"
+                                  : "text-moss font-semibold"
                             }
                           >
-                            {transaction.reviewStatus === "needs-review" ? "Needs review" : "Ready"}
+                            {transaction.reviewStatus === "needs-review"
+                              ? "Needs review"
+                              : transaction.reviewStatus === "dismissed"
+                                ? "Dismissed"
+                                : "Ready"}
                           </span>
                           {transaction.reviewReasons.length > 0 && (
                             <ul className="text-muted mt-1 space-y-0.5 text-[11px]">
