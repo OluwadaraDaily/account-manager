@@ -23,6 +23,17 @@ export function TransactionWorkspace({
   const visibleTransactions = transactions.filter(
     (item) => activeTab === "Overview" || item.status === "Review",
   );
+  const exportTransactions = () => {
+    const hasUnreviewedTransactions = transactions.some((item) => item.status === "Review");
+    if (
+      hasUnreviewedTransactions &&
+      !window.confirm("Some transactions need review. Export them anyway?")
+    ) {
+      return;
+    }
+
+    onExportCsv();
+  };
 
   return (
     <section className="border-line bg-card overflow-hidden rounded-[24px] border">
@@ -45,7 +56,7 @@ export function TransactionWorkspace({
             <Icon name="filter" size={15} /> Filter
           </button>
           <button
-            onClick={onExportCsv}
+            onClick={exportTransactions}
             className="border-line text-ink hover:border-ink flex items-center gap-2 rounded-full border px-4 py-2.5 text-[12px] font-semibold transition"
           >
             <Icon name="download" size={15} /> CSV
