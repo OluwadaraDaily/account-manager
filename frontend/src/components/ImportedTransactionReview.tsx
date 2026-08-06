@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { listImportedTransactions, type ImportedTransaction } from "../google/gmailAuth";
+import {
+  listImportedTransactions,
+  updateImportedTransaction,
+  type ImportedTransaction,
+} from "../google/gmailAuth";
 
 type ImportedTransactionReviewProps = {
   bankId: string;
@@ -27,6 +31,10 @@ function formatAmount(transaction: ImportedTransaction) {
 export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransactionReviewProps) {
   const [transactions, setTransactions] = useState<ImportedTransaction[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savingTransactionId, setSavingTransactionId] = useState<string | null>(null);
+  const [draftDirections, setDraftDirections] = useState<Record<string, "debit" | "credit" | "">>(
+    {},
+  );
   const [error, setError] = useState<string | null>(null);
   const needsReviewCount = transactions.filter(
     (transaction) => transaction.reviewStatus === "needs-review",
@@ -44,7 +52,10 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
     setLoading(true);
     void listImportedTransactions(bankId)
       .then((nextTransactions) => {
-        if (!cancelled) setTransactions(nextTransactions);
+        if (!cancelled) {
+          setTransactions(nextTransactions);
+          setDraftDirections({});
+        }
       })
       .catch((requestError: unknown) => {
         if (!cancelled) {
@@ -63,6 +74,37 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
       cancelled = true;
     };
   }, [bankId, refreshKey]);
+
+  const saveDirection = async (transactionId: string) => {
+    const direction = draftDirections[transactionId];
+    if (!direction) return;
+
+    setError(null);
+    setSavingTransactionId(transactionId);
+    try {
+      const updatedTransaction = await updateImportedTransaction(bankId, transactionId, {
+        direction,
+      });
+      setTransactions((currentTransactions) =>
+        currentTransactions.map((transaction) =>
+          transaction.id === transactionId ? updatedTransaction : transaction,
+        ),
+      );
+      setDraftDirections((currentDirections) => {
+        const nextDirections = { ...currentDirections };
+        delete nextDirections[transactionId];
+        return nextDirections;
+      });
+    } catch (requestError: unknown) {
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "The transaction type could not be updated.",
+      );
+    } finally {
+      setSavingTransactionId(null);
+    }
+  };
 
   return (
     <section
@@ -102,7 +144,7 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
               <tr className="border-line text-muted border-b text-[10px] font-bold tracking-[0.13em] uppercase">
                 <th className="px-2 py-3 font-semibold">Date</th>
                 <th className="px-2 py-3 font-semibold">Description</th>
-                <th className="px-2 py-3 font-semibold">Direction</th>
+                <th className="px-2 py-3 font-semibold">Transaction type</th>
                 <th className="px-2 py-3 text-right font-semibold">Amount</th>
                 <th className="px-2 py-3 font-semibold">Review</th>
               </tr>
@@ -116,8 +158,37 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
                   <td className="px-2 py-4 text-[12px] font-semibold">
                     {transaction.description ?? "—"}
                   </td>
-                  <td className="text-muted px-2 py-4 text-[12px]">
-                    {transaction.direction ?? "—"}
+                  <td className="px-2 py-4 text-[12px]">
+                    <div className="flex items-center gap-2">
+                      <select
+                        aria-label={`Transaction type for ${transaction.description ?? transaction.id}`}
+                        value={draftDirections[transaction.id] ?? transaction.direction ?? ""}
+                        onChange={(event) =>
+                          setDraftDirections((currentDirections) => ({
+                            ...currentDirections,
+                            [transaction.id]: event.target.value as "debit" | "credit" | "",
+                          }))
+                        }
+                        disabled={savingTransactionId !== null}
+                        className="border-line bg-card text-ink rounded-[8px] border px-2 py-1 text-[11px]"
+                      >
+                        <option value="">Select type</option>
+                        <option value="debit">Debit</option>
+                        <option value="credit">Credit</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => void saveDirection(transaction.id)}
+                        disabled={
+                          savingTransactionId !== null ||
+                          !draftDirections[transaction.id] ||
+                          draftDirections[transaction.id] === transaction.direction
+                        }
+                        className="text-moss-dark font-semibold underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        {savingTransactionId === transaction.id ? "Saving…" : "Save"}
+                      </button>
+                    </div>
                   </td>
                   <td className="px-2 py-4 text-right text-[12px] font-bold">
                     {formatAmount(transaction)}

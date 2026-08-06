@@ -88,6 +88,10 @@ export type ImportedTransaction = {
   updatedAt: string;
 };
 
+export type ImportedTransactionUpdate = {
+  direction: "debit" | "credit";
+};
+
 export function startGmailAuthorization() {
   window.location.assign(`${backendOrigin}/auth/google/start`);
 }
@@ -193,4 +197,16 @@ export async function listImportedTransactions(bankId: string): Promise<Imported
     { params: { bankId } },
   );
   return response.data.transactions;
+}
+
+export async function updateImportedTransaction(
+  bankId: string,
+  transactionId: string,
+  changes: ImportedTransactionUpdate,
+): Promise<ImportedTransaction> {
+  const response = await apiClient.patch<{ transaction: ImportedTransaction }>(
+    `/imports/gmail/transactions/${encodeURIComponent(transactionId)}`,
+    { bankId, ...changes },
+  );
+  return response.data.transaction;
 }
