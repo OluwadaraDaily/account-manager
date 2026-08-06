@@ -1,0 +1,2 @@
+Transaction Date: 01/02/2026
+Debit Amount: NGN 123.45

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { randomBytes } from "node:crypto";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 process.env.TOKEN_ENCRYPTION_KEY = randomBytes(32).toString("base64");
@@ -8,6 +9,10 @@ const [{ createGmailImportJobRunner }, { encryptToken }] = await Promise.all([
   import("../dist/import/gmailImportJobRunner.js"),
   import("../dist/security/encryption.js"),
 ]);
+const duplicateFixture = await readFile(
+  new URL("./fixtures/union-bank-duplicate-redacted.txt", import.meta.url),
+  "utf8",
+);
 
 test("processes Gmail messages sequentially and updates extraction progress", async () => {
   const job = {
@@ -104,7 +109,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
           },
           body: {
             source: "plain",
-            text: "Transaction Date: 01/02/2026\nDebit Amount: NGN 123.45",
+            text: duplicateFixture,
           },
         };
       }
