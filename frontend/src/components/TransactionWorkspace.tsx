@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Icon } from "./Icon";
 import { GmailSearchForm } from "./GmailSearchForm";
+import { ImportedImportHistory } from "./ImportedImportHistory";
 import { ImportedTransactionReview } from "./ImportedTransactionReview";
 import { TransactionTable } from "./TransactionTable";
 import { TransactionTabs } from "./TransactionTabs";
@@ -41,6 +42,7 @@ export function TransactionWorkspace({
         onSelectedBankChange={setSelectedBankId}
         onImportCompleted={() => setImportRefreshKey((current) => current + 1)}
       />
+      <ImportedImportHistory bankId={selectedBankId} refreshKey={importRefreshKey} />
       <ImportedTransactionReview bankId={selectedBankId} refreshKey={importRefreshKey} />
       <div className="border-line flex flex-col justify-between gap-5 border-b px-5 py-5 sm:flex-row sm:items-center sm:px-7">
         <div>

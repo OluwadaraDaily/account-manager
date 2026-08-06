@@ -71,6 +71,39 @@ export type GmailImportJob = {
   errorMessage: string | null;
 };
 
+export type GmailImportHistoryCriteria = {
+  bankId: string | null;
+  searchMode: "sender" | "bank-fallback";
+  senderEmail: string | null;
+  after: number | null;
+  before: number | null;
+  subject: string | null;
+  keyword: string | null;
+};
+
+export type GmailImportHistoryItem = {
+  id: string;
+  status: GmailImportJobStatus;
+  criteria: GmailImportHistoryCriteria;
+  progress: GmailImportJob["progress"];
+  createdAt: string;
+  updatedAt: string;
+  startedAt: string | null;
+  completedAt: string | null;
+};
+
+export type GmailImportHistoryPage = {
+  jobs: GmailImportHistoryItem[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+  };
+};
+
 export type ImportedTransaction = {
   id: string;
   sourceMessageId: string;
@@ -194,6 +227,17 @@ export async function getGmailImportJob(jobId: string): Promise<GmailImportJob> 
 
   const body = (await response.json()) as { job: GmailImportJob };
   return body.job;
+}
+
+export async function listGmailImportHistory(
+  bankId: string,
+  page: number,
+  pageSize: number,
+): Promise<GmailImportHistoryPage> {
+  const response = await apiClient.get<GmailImportHistoryPage>("/imports/gmail/jobs", {
+    params: { bankId, page, pageSize },
+  });
+  return response.data;
 }
 
 export async function listImportedTransactions(bankId: string): Promise<ImportedTransaction[]> {
