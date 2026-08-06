@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   listImportedTransactionsForImport,
   listImportedTransactions,
@@ -205,8 +206,8 @@ export function ImportedTransactionReview({
             </p>
           )}
         </div>
-        <div className="flex gap-2">
-          <button
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button
             type="button"
             onClick={() => downloadImportedTransactionsAsCsv(transactions)}
             disabled={
@@ -214,11 +215,13 @@ export function ImportedTransactionReview({
               Boolean(error) ||
               transactions.every((transaction) => transaction.reviewStatus === "dismissed")
             }
-            className="border-line text-ink hover:border-ink rounded-full border px-4 py-2 text-[12px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+            variant="outline"
+            size="sm"
+            className="h-9 rounded-full px-3 text-xs whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40"
           >
             Export CSV
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             onClick={() => void downloadImportedTransactionsAsXlsx(transactions)}
             disabled={
@@ -226,10 +229,11 @@ export function ImportedTransactionReview({
               Boolean(error) ||
               transactions.every((transaction) => transaction.reviewStatus === "dismissed")
             }
-            className="rounded-full bg-white px-4 py-2 text-[12px] font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
+            size="sm"
+            className="h-9 rounded-full bg-white px-3 text-xs whitespace-nowrap text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Export XLSX
-          </button>
+          </Button>
         </div>
       </div>
 
