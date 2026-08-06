@@ -57,9 +57,16 @@ export type ImportJobListPage = {
   total: number;
 };
 
+export type ImportedBankSummary = {
+  bankId: string;
+  importCount: number;
+  latestImportAt: string;
+};
+
 export interface ImportJobStore {
   create(googleSubject: string, criteria: ImportJobCriteria): Promise<ImportJob>;
   get(jobId: string, googleSubject: string): Promise<ImportJob | null>;
+  listImportedBanks(googleSubject: string): Promise<ImportedBankSummary[]>;
   list(
     googleSubject: string,
     bankId: string,
@@ -184,6 +191,28 @@ export class SqliteImportJobStore implements ImportJobStore {
     return row ? toImportJob(row) : null;
   }
 
+  async listImportedBanks(googleSubject: string) {
+    const rows = this.database
+      .prepare(
+        `SELECT bank_id, COUNT(*) AS import_count, MAX(created_at) AS latest_import_at
+         FROM gmail_import_jobs
+         WHERE google_subject = ? AND bank_id IS NOT NULL
+         GROUP BY bank_id
+         ORDER BY latest_import_at DESC, bank_id ASC`,
+      )
+      .all(googleSubject) as Array<{
+      bank_id: string;
+      import_count: number;
+      latest_import_at: string;
+    }>;
+
+    return rows.map((row) => ({
+      bankId: row.bank_id,
+      importCount: row.import_count,
+      latestImportAt: row.latest_import_at,
+    }));
+  }
+
   async list(googleSubject: string, bankId: string, options: ImportJobListOptions) {
     const totalRow = this.database
       .prepare(
@@ -295,6 +324,27 @@ export class PostgresImportJobStore implements ImportJobStore {
     );
 
     return result.rows[0] ? toImportJob(result.rows[0]) : null;
+  }
+
+  async listImportedBanks(googleSubject: string) {
+    const result = await this.pool.query<{
+      bank_id: string;
+      import_count: number;
+      latest_import_at: string;
+    }>(
+      `SELECT bank_id, COUNT(*)::int AS import_count, MAX(created_at) AS latest_import_at
+       FROM gmail_import_jobs
+       WHERE google_subject = $1 AND bank_id IS NOT NULL
+       GROUP BY bank_id
+       ORDER BY latest_import_at DESC, bank_id ASC`,
+      [googleSubject],
+    );
+
+    return result.rows.map((row) => ({
+      bankId: row.bank_id,
+      importCount: row.import_count,
+      latestImportAt: row.latest_import_at,
+    }));
   }
 
   async list(googleSubject: string, bankId: string, options: ImportJobListOptions) {

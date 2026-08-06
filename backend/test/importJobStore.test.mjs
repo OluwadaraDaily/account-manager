@@ -55,3 +55,46 @@ test("lists import jobs only for the requested user and bank", async () => {
   assert.notEqual(firstPage.jobs[0].id, secondPage.jobs[0].id);
   database.close();
 });
+
+test("lists imported banks only for the requested user with import counts", async () => {
+  const database = createSqliteDatabase(":memory:");
+  await initializeDatabase({ dialect: "sqlite", database, close: async () => database.close() });
+  const store = new SqliteImportJobStore(database, false);
+
+  const criteria = {
+    bankId: "union-bank",
+    searchMode: "sender",
+    senderEmail: "alerts@example.com",
+    after: null,
+    before: null,
+    subject: null,
+    keyword: null,
+  };
+  await store.create("google-subject", criteria);
+  const latestUnionJob = await store.create("google-subject", criteria);
+  await store.create("google-subject", { ...criteria, bankId: "access-bank" });
+  await store.create("other-user", { ...criteria, bankId: "other-bank" });
+
+  const banks = await store.listImportedBanks("google-subject");
+
+  assert.deepEqual(
+    banks.map(({ bankId, importCount }) => ({ bankId, importCount })),
+    [
+      { bankId: "access-bank", importCount: 1 },
+      { bankId: "union-bank", importCount: 2 },
+    ],
+  );
+  assert.equal(
+    banks.find((bank) => bank.bankId === "union-bank")?.latestImportAt,
+    latestUnionJob.createdAt,
+  );
+  assert.deepEqual(await store.listImportedBanks("other-user"), [
+    {
+      bankId: "other-bank",
+      importCount: 1,
+      latestImportAt: (await store.list("other-user", "other-bank", { page: 1, pageSize: 1 }))
+        .jobs[0].createdAt,
+    },
+  ]);
+  database.close();
+});

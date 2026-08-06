@@ -335,6 +335,94 @@ test("lists historical import summaries for the authenticated user and bank", as
   );
 });
 
+test("lists imported banks for the authenticated user", async () => {
+  const directoryLookups = [];
+  const router = createImportRouter({
+    bankDirectoryStorePromise: Promise.resolve({
+      async get(bankId) {
+        directoryLookups.push(bankId);
+        return bankId === "union-bank" ? { displayName: "Union Bank" } : null;
+      },
+    }),
+    refreshTokenStorePromise: Promise.resolve({}),
+    sessionStorePromise: Promise.resolve({
+      async get(sessionId) {
+        return sessionId === "session-1" ? { googleSubject: "google-subject" } : null;
+      },
+    }),
+    importJobStorePromise: Promise.resolve({
+      async listImportedBanks(googleSubject) {
+        assert.equal(googleSubject, "google-subject");
+        return [
+          {
+            bankId: "union-bank",
+            importCount: 2,
+            latestImportAt: "2026-02-02T00:00:00.000Z",
+          },
+          {
+            bankId: "retired-bank",
+            importCount: 1,
+            latestImportAt: "2026-01-02T00:00:00.000Z",
+          },
+        ];
+      },
+    }),
+    transactionStorePromise: Promise.resolve({}),
+    runGmailImportJob: async () => {},
+  });
+
+  let resolveResponse;
+  let rejectResponse;
+  const responseCompleted = new Promise((resolve, reject) => {
+    resolveResponse = resolve;
+    rejectResponse = reject;
+  });
+  const response = {
+    locals: {},
+    statusCode: 200,
+    body: null,
+    status(statusCode) {
+      this.statusCode = statusCode;
+      return this;
+    },
+    json(body) {
+      this.body = body;
+      resolveResponse();
+      return this;
+    },
+  };
+
+  router.handle(
+    {
+      method: "GET",
+      url: "/imports/gmail/banks",
+      headers: { cookie: `${appConfig.sessionCookieName}=session-1` },
+    },
+    response,
+    (error) => (error ? rejectResponse(error) : resolveResponse()),
+  );
+  await responseCompleted;
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(directoryLookups, ["union-bank", "retired-bank"]);
+  assert.deepEqual(response.body, {
+    banks: [
+      {
+        bankId: "union-bank",
+        displayName: "Union Bank",
+        importCount: 2,
+        latestImportAt: "2026-02-02T00:00:00.000Z",
+      },
+      {
+        bankId: "retired-bank",
+        displayName: "retired-bank",
+        importCount: 1,
+        latestImportAt: "2026-01-02T00:00:00.000Z",
+      },
+    ],
+  });
+});
+
 test("lists transactions for an authenticated import job and enforces bank scope", async () => {
   const calls = [];
   const router = createImportRouter({
