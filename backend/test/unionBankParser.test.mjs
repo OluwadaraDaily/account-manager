@@ -131,6 +131,54 @@ test("handles an incomplete Union Bank fixture without throwing", async () => {
   );
 });
 
+test("parses a native plain-text Union Bank debit fixture", async () => {
+  const body = await readFile(
+    new URL("./fixtures/union-bank-debit-plain-redacted.txt", import.meta.url),
+    "utf8",
+  );
+
+  const transaction = parseUnionBankTransaction({
+    id: "fixture-debit-plain",
+    threadId: "thread-debit-plain",
+    internalDate: null,
+    headers: {
+      from: "alerts@unionbankng.com",
+      subject: "Union Bank transaction alert",
+      date: null,
+    },
+    body: {
+      text: body,
+      source: "plain",
+    },
+  });
+
+  assert.ok(transaction);
+  assert.deepEqual(
+    {
+      direction: transaction.direction,
+      amount: transaction.amount,
+      currency: transaction.currency,
+      transactionDate: transaction.transactionDate,
+      description: transaction.description,
+      channel: transaction.channel,
+      confidence: transaction.confidence,
+      reviewReasons: transaction.reviewReasons,
+      reviewStatus: transaction.reviewStatus,
+    },
+    {
+      direction: "debit",
+      amount: "2500.00",
+      currency: "NGN",
+      transactionDate: "2026-02-05",
+      description: "Plain text example transaction",
+      channel: "USSD",
+      confidence: "high",
+      reviewReasons: [],
+      reviewStatus: "ready",
+    },
+  );
+});
+
 test("marks an explicit refund as needing review", async () => {
   const body = await readFile(
     new URL("./fixtures/union-bank-refund-redacted.txt", import.meta.url),

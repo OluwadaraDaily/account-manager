@@ -1,0 +1,11 @@
+Hello Customer,
+
+Union Bank transaction alert
+
+Transaction Type: DebitAlert
+Transaction Date: 05/02/2026
+Transaction Amount: NGN 2,500.00
+Transaction Description: Plain text example transaction
+Channel: USSD
+
+Thank you for banking with Union Bank.
