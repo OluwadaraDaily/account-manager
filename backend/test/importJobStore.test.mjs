@@ -98,3 +98,16 @@ test("lists imported banks only for the requested user with import counts", asyn
   ]);
   database.close();
 });
+
+test("returns empty history for a user with no imports", async () => {
+  const database = createSqliteDatabase(":memory:");
+  await initializeDatabase({ dialect: "sqlite", database, close: async () => database.close() });
+  const store = new SqliteImportJobStore(database, false);
+
+  assert.deepEqual(await store.listImportedBanks("google-subject"), []);
+  assert.deepEqual(await store.list("google-subject", "union-bank", { page: 1, pageSize: 10 }), {
+    jobs: [],
+    total: 0,
+  });
+  database.close();
+});

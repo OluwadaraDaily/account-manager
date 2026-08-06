@@ -30,6 +30,15 @@ test("links each import job to its normalized transactions idempotently and scop
     subject: null,
     keyword: null,
   });
+  const duplicateImportJob = await jobs.create("google-subject", {
+    bankId: "union-bank",
+    searchMode: "sender",
+    senderEmail: "alerts@example.com",
+    after: null,
+    before: null,
+    subject: null,
+    keyword: null,
+  });
   const transaction = await transactions.upsert({
     googleSubject: "google-subject",
     bankId: "union-bank",
@@ -50,10 +59,15 @@ test("links each import job to its normalized transactions idempotently and scop
 
   await links.link("google-subject", "union-bank", job.id, transaction.id);
   await links.link("google-subject", "union-bank", job.id, transaction.id);
+  await links.link("google-subject", "union-bank", duplicateImportJob.id, transaction.id);
 
   assert.deepEqual(await links.listTransactionIds("google-subject", "union-bank", job.id), [
     transaction.id,
   ]);
+  assert.deepEqual(
+    await transactions.listForImportJob("google-subject", "union-bank", duplicateImportJob.id),
+    [await transactions.get("google-subject", "union-bank", transaction.sourceMessageId)],
+  );
   assert.deepEqual(
     (await transactions.listForImportJob("google-subject", "union-bank", job.id)).map(
       (item) => item.id,
