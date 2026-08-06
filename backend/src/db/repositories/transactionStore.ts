@@ -47,6 +47,11 @@ export interface TransactionStore {
     fingerprint: string,
   ): Promise<StoredNormalizedTransaction | null>;
   list(googleSubject: string, bankId: string): Promise<StoredNormalizedTransaction[]>;
+  listForImportJob(
+    googleSubject: string,
+    bankId: string,
+    jobId: string,
+  ): Promise<StoredNormalizedTransaction[]>;
   close(): Promise<void>;
 }
 
@@ -95,13 +100,14 @@ function toStoredTransaction(row: TransactionRow): StoredNormalizedTransaction {
   };
 }
 
-function getColumns() {
+function getColumns(tableAlias?: string) {
+  const prefix = tableAlias ? `${tableAlias}.` : "";
   return `
-    transaction_id, google_subject, bank_id, source_message_id,
-    fingerprint,
-    transaction_date, direction, amount, currency, counterparty, description, channel,
-    confidence, review_reasons_json, review_status,
-    created_at, updated_at`;
+    ${prefix}transaction_id, ${prefix}google_subject, ${prefix}bank_id, ${prefix}source_message_id,
+    ${prefix}fingerprint,
+    ${prefix}transaction_date, ${prefix}direction, ${prefix}amount, ${prefix}currency, ${prefix}counterparty, ${prefix}description, ${prefix}channel,
+    ${prefix}confidence, ${prefix}review_reasons_json, ${prefix}review_status,
+    ${prefix}created_at, ${prefix}updated_at`;
 }
 
 function getValues(input: NormalizedTransactionWrite, transactionId: string, timestamp: string) {
@@ -307,6 +313,27 @@ export class SqliteTransactionStore implements TransactionStore {
     return rows.map(toStoredTransaction);
   }
 
+  async listForImportJob(googleSubject: string, bankId: string, jobId: string) {
+    assertIdentifier(googleSubject, "googleSubject");
+    assertIdentifier(bankId, "bankId");
+    assertIdentifier(jobId, "jobId");
+
+    const rows = this.database
+      .prepare(
+        `SELECT ${getColumns("transactions")}
+         FROM normalized_transactions AS transactions
+         INNER JOIN gmail_import_job_transactions AS links
+           ON links.transaction_id = transactions.transaction_id
+          AND links.google_subject = transactions.google_subject
+          AND links.bank_id = transactions.bank_id
+         WHERE links.google_subject = ? AND links.bank_id = ? AND links.job_id = ?
+         ORDER BY transactions.transaction_date, transactions.transaction_id`,
+      )
+      .all(googleSubject, bankId, jobId) as TransactionRow[];
+
+    return rows.map(toStoredTransaction);
+  }
+
   async close() {
     if (this.ownsDatabase) this.database.close();
   }
@@ -433,6 +460,26 @@ export class PostgresTransactionStore implements TransactionStore {
        WHERE google_subject = $1 AND bank_id = $2
        ORDER BY transaction_date, transaction_id`,
       [googleSubject, bankId],
+    );
+
+    return result.rows.map(toStoredTransaction);
+  }
+
+  async listForImportJob(googleSubject: string, bankId: string, jobId: string) {
+    assertIdentifier(googleSubject, "googleSubject");
+    assertIdentifier(bankId, "bankId");
+    assertIdentifier(jobId, "jobId");
+
+    const result = await this.pool.query<TransactionRow>(
+      `SELECT ${getColumns("transactions")}
+       FROM normalized_transactions AS transactions
+       INNER JOIN gmail_import_job_transactions AS links
+         ON links.transaction_id = transactions.transaction_id
+        AND links.google_subject = transactions.google_subject
+        AND links.bank_id = transactions.bank_id
+       WHERE links.google_subject = $1 AND links.bank_id = $2 AND links.job_id = $3
+       ORDER BY transactions.transaction_date, transactions.transaction_id`,
+      [googleSubject, bankId, jobId],
     );
 
     return result.rows.map(toStoredTransaction);

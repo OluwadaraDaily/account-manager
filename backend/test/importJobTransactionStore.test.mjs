@@ -54,6 +54,12 @@ test("links each import job to its normalized transactions idempotently and scop
   assert.deepEqual(await links.listTransactionIds("google-subject", "union-bank", job.id), [
     transaction.id,
   ]);
+  assert.deepEqual(
+    (await transactions.listForImportJob("google-subject", "union-bank", job.id)).map(
+      (item) => item.id,
+    ),
+    [transaction.id],
+  );
   assert.deepEqual(await links.listTransactionIds("other-user", "union-bank", job.id), []);
   assert.deepEqual(await links.listTransactionIds("google-subject", "other-bank", job.id), []);
   database.close();

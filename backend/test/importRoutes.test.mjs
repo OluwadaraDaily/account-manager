@@ -334,3 +334,140 @@ test("lists historical import summaries for the authenticated user and bank", as
     },
   );
 });
+
+test("lists transactions for an authenticated import job and enforces bank scope", async () => {
+  const calls = [];
+  const router = createImportRouter({
+    bankDirectoryStorePromise: Promise.resolve({}),
+    refreshTokenStorePromise: Promise.resolve({
+      async get() {
+        return null;
+      },
+    }),
+    sessionStorePromise: Promise.resolve({
+      async get(sessionId) {
+        return sessionId === "session-1" ? { googleSubject: "google-subject" } : null;
+      },
+    }),
+    importJobStorePromise: Promise.resolve({
+      async get(jobId, googleSubject) {
+        return jobId === "job-1" && googleSubject === "google-subject"
+          ? {
+              id: "job-1",
+              googleSubject,
+              status: "completed",
+              criteria: {
+                bankId: "union-bank",
+                searchMode: "sender",
+                senderEmail: "alerts@example.com",
+                after: null,
+                before: null,
+                subject: null,
+                keyword: null,
+              },
+              pageToken: null,
+              progress: {
+                messagesDiscovered: 1,
+                messagesProcessed: 1,
+                transactionsExtracted: 1,
+                messagesSkipped: 0,
+              },
+              errorMessage: null,
+              createdAt: "2026-02-01T00:00:00.000Z",
+              updatedAt: "2026-02-01T00:00:00.000Z",
+              startedAt: "2026-02-01T00:00:00.000Z",
+              completedAt: "2026-02-01T00:00:00.000Z",
+            }
+          : null;
+      },
+    }),
+    transactionStorePromise: Promise.resolve({
+      async listForImportJob(googleSubject, bankId, jobId) {
+        calls.push({ googleSubject, bankId, jobId });
+        return [
+          {
+            id: "transaction-1",
+            googleSubject,
+            bankId,
+            sourceMessageId: "message-1",
+            transactionDate: "2026-02-01",
+            direction: "debit",
+            amount: "123.45",
+            currency: "NGN",
+            counterparty: "Example Merchant",
+            description: "Example transaction",
+            channel: "POS",
+            confidence: "high",
+            reviewReasons: [],
+            reviewStatus: "ready",
+            createdAt: "2026-02-01T00:00:00.000Z",
+            updatedAt: "2026-02-01T00:00:00.000Z",
+          },
+        ];
+      },
+    }),
+    runGmailImportJob: async () => {},
+  });
+
+  const runRequest = (url, sessionId = "session-1") =>
+    new Promise((resolve, reject) => {
+      const response = {
+        locals: {},
+        statusCode: 200,
+        body: null,
+        status(statusCode) {
+          this.statusCode = statusCode;
+          return this;
+        },
+        json(body) {
+          this.body = body;
+          resolve(this);
+          return this;
+        },
+      };
+      router.handle(
+        {
+          method: "GET",
+          url,
+          query: Object.fromEntries(new URL(`http://localhost${url}`).searchParams),
+          headers: { cookie: `${appConfig.sessionCookieName}=${sessionId}` },
+        },
+        response,
+        (error) => (error ? reject(error) : resolve(response)),
+      );
+    });
+
+  const response = await runRequest("/imports/gmail/jobs/job-1/transactions?bankId=union-bank");
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(calls, [
+    { googleSubject: "google-subject", bankId: "union-bank", jobId: "job-1" },
+  ]);
+  assert.deepEqual(response.body.transactions, [
+    {
+      id: "transaction-1",
+      sourceMessageId: "message-1",
+      transactionDate: "2026-02-01",
+      direction: "debit",
+      amount: "123.45",
+      currency: "NGN",
+      counterparty: "Example Merchant",
+      description: "Example transaction",
+      channel: "POS",
+      confidence: "high",
+      reviewReasons: [],
+      reviewStatus: "ready",
+      createdAt: "2026-02-01T00:00:00.000Z",
+      updatedAt: "2026-02-01T00:00:00.000Z",
+    },
+  ]);
+
+  const wrongBankResponse = await runRequest(
+    "/imports/gmail/jobs/job-1/transactions?bankId=other-bank",
+  );
+  assert.equal(wrongBankResponse.statusCode, 404);
+  const otherUserResponse = await runRequest(
+    "/imports/gmail/jobs/job-1/transactions?bankId=union-bank",
+    "other-session",
+  );
+  assert.equal(otherUserResponse.statusCode, 401);
+});

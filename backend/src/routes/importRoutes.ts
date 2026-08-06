@@ -184,6 +184,46 @@ export function createImportRouter({
     },
   );
 
+  router.get(
+    "/imports/gmail/jobs/:jobId/transactions",
+    validateQuery(importTransactionsQuerySchema),
+    async (
+      request,
+      response: Response<unknown, ValidatedLocals<typeof importTransactionsQuerySchema>>,
+    ) => {
+      const { bankId } = response.locals.validatedQuery;
+      const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
+      const sessionStore = await sessionStorePromise;
+      const account = sessionId ? await sessionStore.get(sessionId) : null;
+
+      if (!account) {
+        response.status(401).json({ error: "Gmail authentication is required." });
+        return;
+      }
+
+      const jobId = request.params.jobId;
+      if (typeof jobId !== "string") {
+        response.status(400).json({ error: "Invalid import job identifier." });
+        return;
+      }
+
+      const importJobStore = await importJobStorePromise;
+      const job = await importJobStore.get(jobId, account.googleSubject);
+      if (!job || job.criteria.bankId !== bankId) {
+        response.status(404).json({ error: "Import job was not found." });
+        return;
+      }
+
+      const transactionStore = await transactionStorePromise;
+      const transactions = await transactionStore.listForImportJob(
+        account.googleSubject,
+        bankId,
+        job.id,
+      );
+      response.json({ transactions: transactions.map(toTransactionResponse) });
+    },
+  );
+
   router.get("/imports/gmail/jobs/:jobId", async (request, response) => {
     const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
     const sessionStore = await sessionStorePromise;
