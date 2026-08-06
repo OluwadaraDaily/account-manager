@@ -1,33 +1,37 @@
-import { useState } from "react";
-import { AccountSnapshot } from "./components/AccountSnapshot";
-import { AppHeader } from "./components/AppHeader";
-import { HeroSection } from "./components/HeroSection";
-import { PrivacyNotice } from "./components/PrivacyNotice";
-import { TransactionWorkspace } from "./components/TransactionWorkspace";
-import { mockTransactions } from "./data/mockTransactions";
-import { downloadTransactionsAsCsv } from "./utils/exportTransactions";
-import { filterTransactionsByPeriod } from "./utils/transactionPeriods";
+import { useEffect, useState } from "react";
+import { AppHeader, type AppPage } from "./components/AppHeader";
+import { LandingPage } from "./pages/LandingPage";
+import { WorkspacePage } from "./pages/WorkspacePage";
+
+function getPageFromLocation() {
+  return window.location.pathname.replace(/\/+$/, "") === "/workspace"
+    ? ("workspace" as const)
+    : ("home" as const);
+}
 
 function App() {
-  const [period, setPeriod] = useState("Last 30 days");
-  const periodTransactions = filterTransactionsByPeriod(mockTransactions, period);
+  const [page, setPage] = useState<AppPage>(getPageFromLocation);
+
+  useEffect(() => {
+    const handlePopState = () => setPage(getPageFromLocation());
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const navigate = (nextPage: AppPage) => {
+    const nextPath = nextPage === "workspace" ? "/workspace" : "/";
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, "", nextPath);
+    }
+    setPage(nextPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="bg-paper text-ink min-h-screen">
-      <AppHeader />
+      <AppHeader page={page} onNavigate={navigate} />
       <main className="mx-auto max-w-[1440px] px-6 pb-16 lg:px-10">
-        <HeroSection />
-        <AccountSnapshot
-          period={period}
-          onPeriodChange={setPeriod}
-          transactions={periodTransactions}
-        />
-        <TransactionWorkspace
-          period={period}
-          transactions={periodTransactions}
-          onExportCsv={() => downloadTransactionsAsCsv(periodTransactions)}
-        />
-        <PrivacyNotice />
+        {page === "workspace" ? <WorkspacePage /> : <LandingPage />}
       </main>
     </div>
   );

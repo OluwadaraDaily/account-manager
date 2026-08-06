@@ -10,7 +10,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Icon } from "./Icon";
 
-export function AppHeader() {
+export type AppPage = "home" | "workspace";
+
+type AppHeaderProps = {
+  page: AppPage;
+  onNavigate: (page: AppPage) => void;
+};
+
+export function AppHeader({ page, onNavigate }: AppHeaderProps) {
   const [helpOpen, setHelpOpen] = useState(false);
 
   return (
@@ -29,6 +36,15 @@ export function AppHeader() {
             <span className="h-2 w-2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.12)]" />
             Local-only mode
           </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => onNavigate(page === "home" ? "workspace" : "home")}
+            className="border-line bg-card text-ink hover:border-ink rounded-full px-4 font-semibold shadow-none"
+          >
+            {page === "home" ? "Workspace" : "Home"}
+          </Button>
           <Button
             type="button"
             variant="outline"
