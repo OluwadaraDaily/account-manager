@@ -132,6 +132,9 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS search_mode TEXT NOT NULL DEFAULT 'sender'",
     );
+    await connection.pool.query(
+      "CREATE INDEX IF NOT EXISTS gmail_import_jobs_user_bank_created_idx ON gmail_import_jobs (google_subject, bank_id, created_at DESC, job_id DESC)",
+    );
     return;
   }
 
@@ -216,4 +219,7 @@ export async function initializeDatabase(connection: DatabaseConnection) {
       "ALTER TABLE gmail_import_jobs ADD COLUMN search_mode TEXT NOT NULL DEFAULT 'sender'",
     );
   }
+  connection.database.exec(
+    "CREATE INDEX IF NOT EXISTS gmail_import_jobs_user_bank_created_idx ON gmail_import_jobs (google_subject, bank_id, created_at DESC, job_id DESC)",
+  );
 }

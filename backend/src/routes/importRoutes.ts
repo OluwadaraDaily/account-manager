@@ -157,7 +157,7 @@ export function createImportRouter({
     "/imports/gmail/jobs",
     validateQuery(importJobsQuerySchema),
     async (request, response: Response<unknown, ValidatedLocals<typeof importJobsQuerySchema>>) => {
-      const { bankId } = response.locals.validatedQuery;
+      const { bankId, page, pageSize } = response.locals.validatedQuery;
       const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
       const sessionStore = await sessionStorePromise;
       const account = sessionId ? await sessionStore.get(sessionId) : null;
@@ -168,8 +168,19 @@ export function createImportRouter({
       }
 
       const importJobStore = await importJobStorePromise;
-      const jobs = await importJobStore.list(account.googleSubject, bankId);
-      response.json({ jobs: jobs.map(toImportJobSummary) });
+      const result = await importJobStore.list(account.googleSubject, bankId, { page, pageSize });
+      const totalPages = result.total === 0 ? 0 : Math.ceil(result.total / pageSize);
+      response.json({
+        jobs: result.jobs.map(toImportJobSummary),
+        pagination: {
+          page,
+          pageSize,
+          total: result.total,
+          totalPages,
+          hasNext: totalPages > 0 && page < totalPages,
+          hasPrevious: page > 1 && totalPages > 0,
+        },
+      });
     },
   );
 

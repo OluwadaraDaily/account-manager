@@ -47,10 +47,24 @@ export type ImportJobUpdate = {
   completedAt?: string | null;
 };
 
+export type ImportJobListOptions = {
+  page: number;
+  pageSize: number;
+};
+
+export type ImportJobListPage = {
+  jobs: ImportJob[];
+  total: number;
+};
+
 export interface ImportJobStore {
   create(googleSubject: string, criteria: ImportJobCriteria): Promise<ImportJob>;
   get(jobId: string, googleSubject: string): Promise<ImportJob | null>;
-  list(googleSubject: string, bankId: string): Promise<ImportJob[]>;
+  list(
+    googleSubject: string,
+    bankId: string,
+    options: ImportJobListOptions,
+  ): Promise<ImportJobListPage>;
   update(jobId: string, googleSubject: string, changes: ImportJobUpdate): Promise<ImportJob | null>;
   close(): Promise<void>;
 }
@@ -170,17 +184,26 @@ export class SqliteImportJobStore implements ImportJobStore {
     return row ? toImportJob(row) : null;
   }
 
-  async list(googleSubject: string, bankId: string) {
+  async list(googleSubject: string, bankId: string, options: ImportJobListOptions) {
+    const totalRow = this.database
+      .prepare(
+        `SELECT COUNT(*) AS total
+         FROM gmail_import_jobs
+         WHERE google_subject = ? AND bank_id = ?`,
+      )
+      .get(googleSubject, bankId) as { total: number };
+    const offset = (options.page - 1) * options.pageSize;
     const rows = this.database
       .prepare(
         `SELECT ${getColumns()}
          FROM gmail_import_jobs
          WHERE google_subject = ? AND bank_id = ?
-         ORDER BY created_at DESC, job_id DESC`,
+         ORDER BY created_at DESC, job_id DESC
+         LIMIT ? OFFSET ?`,
       )
-      .all(googleSubject, bankId) as ImportJobRow[];
+      .all(googleSubject, bankId, options.pageSize, offset) as ImportJobRow[];
 
-    return rows.map(toImportJob);
+    return { jobs: rows.map(toImportJob), total: totalRow.total };
   }
 
   async update(jobId: string, googleSubject: string, changes: ImportJobUpdate) {
@@ -274,16 +297,28 @@ export class PostgresImportJobStore implements ImportJobStore {
     return result.rows[0] ? toImportJob(result.rows[0]) : null;
   }
 
-  async list(googleSubject: string, bankId: string) {
-    const result = await this.pool.query<ImportJobRow>(
-      `SELECT ${getColumns()}
+  async list(googleSubject: string, bankId: string, options: ImportJobListOptions) {
+    const [countResult, jobsResult] = await Promise.all([
+      this.pool.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total
+         FROM gmail_import_jobs
+         WHERE google_subject = $1 AND bank_id = $2`,
+        [googleSubject, bankId],
+      ),
+      this.pool.query<ImportJobRow>(
+        `SELECT ${getColumns()}
        FROM gmail_import_jobs
        WHERE google_subject = $1 AND bank_id = $2
-       ORDER BY created_at DESC, job_id DESC`,
-      [googleSubject, bankId],
-    );
+       ORDER BY created_at DESC, job_id DESC
+       LIMIT $3 OFFSET $4`,
+        [googleSubject, bankId, options.pageSize, (options.page - 1) * options.pageSize],
+      ),
+    ]);
 
-    return result.rows.map(toImportJob);
+    return {
+      jobs: jobsResult.rows.map(toImportJob),
+      total: Number(countResult.rows[0]?.total ?? 0),
+    };
   }
 
   async update(jobId: string, googleSubject: string, changes: ImportJobUpdate) {

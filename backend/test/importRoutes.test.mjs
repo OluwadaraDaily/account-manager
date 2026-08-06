@@ -167,36 +167,39 @@ test("lists historical import summaries for the authenticated user and bank", as
       },
     }),
     importJobStorePromise: Promise.resolve({
-      async list(googleSubject, bankId) {
-        calls.push({ googleSubject, bankId });
-        return [
-          {
-            id: "job-1",
-            googleSubject,
-            status: "completed",
-            criteria: {
-              bankId,
-              searchMode: "sender",
-              senderEmail: "alerts@example.com",
-              after: 1769904000,
-              before: 1772582400,
-              subject: "Transaction alert",
-              keyword: null,
+      async list(googleSubject, bankId, options) {
+        calls.push({ googleSubject, bankId, options });
+        return {
+          total: 1,
+          jobs: [
+            {
+              id: "job-1",
+              googleSubject,
+              status: "completed",
+              criteria: {
+                bankId,
+                searchMode: "sender",
+                senderEmail: "alerts@example.com",
+                after: 1769904000,
+                before: 1772582400,
+                subject: "Transaction alert",
+                keyword: null,
+              },
+              pageToken: "private-page-token",
+              progress: {
+                messagesDiscovered: 3,
+                messagesProcessed: 3,
+                transactionsExtracted: 2,
+                messagesSkipped: 1,
+              },
+              errorMessage: null,
+              createdAt: "2026-02-01T00:00:00.000Z",
+              updatedAt: "2026-02-01T00:02:00.000Z",
+              startedAt: "2026-02-01T00:00:30.000Z",
+              completedAt: "2026-02-01T00:02:00.000Z",
             },
-            pageToken: "private-page-token",
-            progress: {
-              messagesDiscovered: 3,
-              messagesProcessed: 3,
-              transactionsExtracted: 2,
-              messagesSkipped: 1,
-            },
-            errorMessage: null,
-            createdAt: "2026-02-01T00:00:00.000Z",
-            updatedAt: "2026-02-01T00:02:00.000Z",
-            startedAt: "2026-02-01T00:00:30.000Z",
-            completedAt: "2026-02-01T00:02:00.000Z",
-          },
-        ];
+          ],
+        };
       },
     }),
     transactionStorePromise: Promise.resolve({}),
@@ -227,8 +230,8 @@ test("lists historical import summaries for the authenticated user and bank", as
   router.handle(
     {
       method: "GET",
-      url: "/imports/gmail/jobs?bankId=union-bank",
-      query: { bankId: "union-bank" },
+      url: "/imports/gmail/jobs?bankId=union-bank&page=2&pageSize=10",
+      query: { bankId: "union-bank", page: "2", pageSize: "10" },
       headers: { cookie: `${appConfig.sessionCookieName}=session-1` },
     },
     response,
@@ -237,7 +240,13 @@ test("lists historical import summaries for the authenticated user and bank", as
   await responseCompleted;
 
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(calls, [{ googleSubject: "google-subject", bankId: "union-bank" }]);
+  assert.deepEqual(calls, [
+    {
+      googleSubject: "google-subject",
+      bankId: "union-bank",
+      options: { page: 2, pageSize: 10 },
+    },
+  ]);
   assert.deepEqual(response.body, {
     jobs: [
       {
@@ -264,6 +273,14 @@ test("lists historical import summaries for the authenticated user and bank", as
         completedAt: "2026-02-01T00:02:00.000Z",
       },
     ],
+    pagination: {
+      page: 2,
+      pageSize: 10,
+      total: 1,
+      totalPages: 1,
+      hasNext: false,
+      hasPrevious: true,
+    },
   });
   assert.deepEqual(
     toImportJobSummary({
