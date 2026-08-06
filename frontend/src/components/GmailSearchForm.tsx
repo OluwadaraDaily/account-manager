@@ -319,11 +319,11 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
             className={inputClassName}
           />
         </label>
-        <div className="flex flex-col justify-end md:col-span-2 lg:col-span-6">
+        <div className="flex justify-end md:col-span-2 lg:col-span-6">
           <button
             type="submit"
             disabled={searching || importActive || banksLoading || !searchForm.bankId}
-            className="focus-visible:ring-moss focus-visible:ring-offset-paper w-full rounded-[12px] bg-white px-4 py-2.5 text-[12px] font-bold text-black transition hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
+            className="focus-visible:ring-moss focus-visible:ring-offset-paper w-max rounded-[12px] bg-white px-4 py-2.5 text-[12px] font-bold text-black transition hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
           >
             {searching
               ? "Starting Gmail import…"

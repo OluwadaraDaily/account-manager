@@ -2,7 +2,9 @@ import { useState } from "react";
 import { AccountSnapshot } from "@/components/AccountSnapshot";
 import { HeroSection } from "@/components/HeroSection";
 import { PrivacyNotice } from "@/components/PrivacyNotice";
+import { TransactionsPreview } from "@/components/TransactionsPreview";
 import { mockTransactions } from "@/data/mockTransactions";
+import { downloadTransactionsAsCsv } from "@/utils/exportTransactions";
 import { filterTransactionsByPeriod } from "@/utils/transactionPeriods";
 
 export function LandingPage() {
@@ -16,6 +18,11 @@ export function LandingPage() {
         period={period}
         onPeriodChange={setPeriod}
         transactions={periodTransactions}
+      />
+      <TransactionsPreview
+        period={period}
+        transactions={periodTransactions}
+        onExportCsv={() => downloadTransactionsAsCsv(periodTransactions)}
       />
       <PrivacyNotice />
     </>
