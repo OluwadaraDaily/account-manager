@@ -9,7 +9,7 @@ import {
 } from "../integrations/google/gmailClient.js";
 import { parseCookies } from "../http/cookies.js";
 import { validateBody, validateQuery, type ValidatedLocals } from "../middleware/validation.js";
-import type { ImportJobStore } from "../db/repositories/importJobStore.js";
+import type { ImportJob, ImportJobStore } from "../db/repositories/importJobStore.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { SessionStore } from "../db/repositories/sessionStore.js";
 import type {
@@ -22,6 +22,7 @@ import { buildGmailSearchQuery } from "../import/gmailSearch.js";
 import {
   createImportJobBodySchema,
   importMessageMetadataBodySchema,
+  importJobsQuerySchema,
   importMessagesQuerySchema,
   importTransactionsQuerySchema,
   updateImportedTransactionBodySchema,
@@ -39,6 +40,19 @@ type ImportRouterDependencies = {
 export function toTransactionResponse(transaction: StoredNormalizedTransaction) {
   const { googleSubject: _googleSubject, bankId: _bankId, ...safeTransaction } = transaction;
   return safeTransaction;
+}
+
+export function toImportJobSummary(job: ImportJob) {
+  return {
+    id: job.id,
+    status: job.status,
+    criteria: job.criteria,
+    progress: job.progress,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+    startedAt: job.startedAt,
+    completedAt: job.completedAt,
+  };
 }
 
 export function createImportRouter({
@@ -136,6 +150,26 @@ export function createImportRouter({
 
       response.status(202).json({ job });
       void runGmailImportJob(job.id, account.googleSubject);
+    },
+  );
+
+  router.get(
+    "/imports/gmail/jobs",
+    validateQuery(importJobsQuerySchema),
+    async (request, response: Response<unknown, ValidatedLocals<typeof importJobsQuerySchema>>) => {
+      const { bankId } = response.locals.validatedQuery;
+      const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
+      const sessionStore = await sessionStorePromise;
+      const account = sessionId ? await sessionStore.get(sessionId) : null;
+
+      if (!account) {
+        response.status(401).json({ error: "Gmail authentication is required." });
+        return;
+      }
+
+      const importJobStore = await importJobStorePromise;
+      const jobs = await importJobStore.list(account.googleSubject, bankId);
+      response.json({ jobs: jobs.map(toImportJobSummary) });
     },
   );
 

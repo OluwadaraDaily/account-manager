@@ -50,6 +50,7 @@ export type ImportJobUpdate = {
 export interface ImportJobStore {
   create(googleSubject: string, criteria: ImportJobCriteria): Promise<ImportJob>;
   get(jobId: string, googleSubject: string): Promise<ImportJob | null>;
+  list(googleSubject: string, bankId: string): Promise<ImportJob[]>;
   update(jobId: string, googleSubject: string, changes: ImportJobUpdate): Promise<ImportJob | null>;
   close(): Promise<void>;
 }
@@ -169,6 +170,19 @@ export class SqliteImportJobStore implements ImportJobStore {
     return row ? toImportJob(row) : null;
   }
 
+  async list(googleSubject: string, bankId: string) {
+    const rows = this.database
+      .prepare(
+        `SELECT ${getColumns()}
+         FROM gmail_import_jobs
+         WHERE google_subject = ? AND bank_id = ?
+         ORDER BY created_at DESC, job_id DESC`,
+      )
+      .all(googleSubject, bankId) as ImportJobRow[];
+
+    return rows.map(toImportJob);
+  }
+
   async update(jobId: string, googleSubject: string, changes: ImportJobUpdate) {
     const assignments: string[] = [];
     const values: unknown[] = [];
@@ -258,6 +272,18 @@ export class PostgresImportJobStore implements ImportJobStore {
     );
 
     return result.rows[0] ? toImportJob(result.rows[0]) : null;
+  }
+
+  async list(googleSubject: string, bankId: string) {
+    const result = await this.pool.query<ImportJobRow>(
+      `SELECT ${getColumns()}
+       FROM gmail_import_jobs
+       WHERE google_subject = $1 AND bank_id = $2
+       ORDER BY created_at DESC, job_id DESC`,
+      [googleSubject, bankId],
+    );
+
+    return result.rows.map(toImportJob);
   }
 
   async update(jobId: string, googleSubject: string, changes: ImportJobUpdate) {

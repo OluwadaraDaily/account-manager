@@ -24,6 +24,12 @@ export const importMessagesQuerySchema = gmailSearchCriteriaObjectSchema
 
 export type ImportMessagesQuery = z.infer<typeof importMessagesQuerySchema>;
 
+export const importJobsQuerySchema = z.object({
+  bankId: z.string().trim().min(1).max(100),
+});
+
+export type ImportJobsQuery = z.infer<typeof importJobsQuerySchema>;
+
 export const importTransactionsQuerySchema = z.object({
   bankId: z.string().trim().min(1).max(100),
 });
