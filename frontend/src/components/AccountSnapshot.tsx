@@ -1,12 +1,17 @@
 import { Icon } from "./Icon";
 import { StatCard } from "./StatCard";
+import { formatNaira, summarizeTransactions } from "../utils/transactionPeriods";
+import type { Transaction } from "../types/transaction";
 
 type AccountSnapshotProps = {
   period: string;
   onPeriodChange: (period: string) => void;
+  transactions: Transaction[];
 };
 
-export function AccountSnapshot({ period, onPeriodChange }: AccountSnapshotProps) {
+export function AccountSnapshot({ period, onPeriodChange, transactions }: AccountSnapshotProps) {
+  const summary = summarizeTransactions(transactions);
+
   return (
     <section className="py-10">
       <div className="mb-7 flex flex-col justify-between gap-5 md:flex-row md:items-end">
@@ -21,11 +26,15 @@ export function AccountSnapshot({ period, onPeriodChange }: AccountSnapshotProps
             Showing
           </label>
           <div className="relative">
+            <span className="text-muted pointer-events-none absolute top-1/2 left-3 -translate-y-1/2">
+              <Icon name="calendar" size={15} />
+            </span>
             <select
               id="period"
+              aria-label="Rolling date range"
               value={period}
               onChange={(event) => onPeriodChange(event.target.value)}
-              className="border-line bg-card focus:border-moss appearance-none rounded-full border py-2.5 pr-10 pl-4 text-[12px] font-semibold outline-none"
+              className="border-line bg-card focus:border-moss appearance-none rounded-full border py-2.5 pr-10 pl-10 text-[12px] font-semibold outline-none"
             >
               <option>Last 7 days</option>
               <option>Last 30 days</option>
@@ -38,9 +47,24 @@ export function AccountSnapshot({ period, onPeriodChange }: AccountSnapshotProps
         </div>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard label="Total inflow" value="₦630,000" note="2 credits" tone="green" />
-        <StatCard label="Total outflow" value="₦111,850" note="3 debits" tone="red" />
-        <StatCard label="Net movement" value="₦518,150" note="This period" tone="dark" />
+        <StatCard
+          label="Total inflow"
+          value={formatNaira(summary.inflow)}
+          note={`${summary.creditCount} credits`}
+          tone="green"
+        />
+        <StatCard
+          label="Total outflow"
+          value={formatNaira(summary.outflow)}
+          note={`${summary.debitCount} debits`}
+          tone="red"
+        />
+        <StatCard
+          label="Net movement"
+          value={formatNaira(summary.net)}
+          note="This period"
+          tone="dark"
+        />
       </div>
     </section>
   );

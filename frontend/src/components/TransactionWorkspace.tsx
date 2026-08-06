@@ -63,7 +63,11 @@ export function TransactionWorkspace({
           </button>
         </div>
       </div>
-      <TransactionTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      <TransactionTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        needsReviewCount={transactions.filter((item) => item.status === "Review").length}
+      />
       <TransactionTable transactions={visibleTransactions} />
     </section>
   );

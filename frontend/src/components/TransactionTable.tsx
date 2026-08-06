@@ -1,4 +1,5 @@
 import type { Transaction } from "../types/transaction";
+import { formatTransactionDate } from "../utils/transactionPeriods";
 
 type TransactionTableProps = {
   transactions: Transaction[];
@@ -24,7 +25,9 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               key={`${item.date}-${item.description}`}
               className="border-line/70 border-b last:border-0"
             >
-              <td className="text-muted px-5 py-5 text-[12px] sm:px-7">{item.date}</td>
+              <td className="text-muted px-5 py-5 text-[12px] sm:px-7">
+                {formatTransactionDate(item.date)}
+              </td>
               <td className="px-3 py-5 text-[13px] font-semibold">{item.description}</td>
               <td className="text-muted px-3 py-5 text-[13px]">{item.counterparty}</td>
               <td className="px-3 py-5">

@@ -1,9 +1,14 @@
 type TransactionTabsProps = {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  needsReviewCount: number;
 };
 
-export function TransactionTabs({ activeTab, onTabChange }: TransactionTabsProps) {
+export function TransactionTabs({
+  activeTab,
+  onTabChange,
+  needsReviewCount,
+}: TransactionTabsProps) {
   return (
     <div className="border-line flex gap-6 border-b px-5 sm:px-7">
       <Tab
@@ -15,7 +20,7 @@ export function TransactionTabs({ activeTab, onTabChange }: TransactionTabsProps
         label="Needs review"
         active={activeTab === "Needs review"}
         onClick={() => onTabChange("Needs review")}
-        count={1}
+        count={needsReviewCount}
       />
     </div>
   );

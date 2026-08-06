@@ -1,8 +1,15 @@
 import type { Transaction } from "../types/transaction";
 
+function daysAgo(days: number) {
+  const date = new Date();
+  date.setHours(12, 0, 0, 0);
+  date.setDate(date.getDate() - days);
+  return date.toISOString().slice(0, 10);
+}
+
 export const mockTransactions: Transaction[] = [
   {
-    date: "28 Jun 2024",
+    date: daysAgo(2),
     description: "POS PURCHASE",
     counterparty: "Shoprite Ikeja",
     type: "Debit",
@@ -10,7 +17,7 @@ export const mockTransactions: Transaction[] = [
     status: "Matched",
   },
   {
-    date: "27 Jun 2024",
+    date: daysAgo(3),
     description: "TRANSFER IN",
     counterparty: "John Doe",
     type: "Credit",
@@ -18,7 +25,7 @@ export const mockTransactions: Transaction[] = [
     status: "Matched",
   },
   {
-    date: "25 Jun 2024",
+    date: daysAgo(4),
     description: "USSD TRANSFER",
     counterparty: "DSTV Nigeria",
     type: "Debit",
@@ -26,7 +33,7 @@ export const mockTransactions: Transaction[] = [
     status: "Matched",
   },
   {
-    date: "24 Jun 2024",
+    date: daysAgo(6),
     description: "ATM WITHDRAWAL",
     counterparty: "Union Bank ATM",
     type: "Debit",
@@ -34,7 +41,7 @@ export const mockTransactions: Transaction[] = [
     status: "Review",
   },
   {
-    date: "21 Jun 2024",
+    date: daysAgo(10),
     description: "TRANSFER IN",
     counterparty: "Salary / Acme Ltd",
     type: "Credit",
