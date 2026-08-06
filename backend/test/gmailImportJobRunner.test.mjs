@@ -45,6 +45,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
   const messageIds = [];
   const savedSenders = [];
   const savedTransactions = [];
+  const linkedTransactions = [];
 
   const runner = createGmailImportJobRunner({
     importJobStorePromise: Promise.resolve({
@@ -76,13 +77,20 @@ test("processes Gmail messages sequentially and updates extraction progress", as
         return encryptToken("refresh-token");
       },
     }),
+    importJobTransactionStorePromise: Promise.resolve({
+      async link(googleSubject, bankId, jobId, transactionId) {
+        linkedTransactions.push({ googleSubject, bankId, jobId, transactionId });
+      },
+    }),
     transactionStorePromise: Promise.resolve({
       async findByFingerprint() {
-        return savedTransactions.length > 0 ? { sourceMessageId: "transaction-message" } : null;
+        return savedTransactions.length > 0
+          ? { id: "transaction-1", sourceMessageId: "transaction-message" }
+          : null;
       },
       async upsert(input) {
         savedTransactions.push(input);
-        return input.transaction;
+        return { id: "transaction-1", ...input.transaction };
       },
     }),
     async listMessages() {
@@ -154,6 +162,20 @@ test("processes Gmail messages sequentially and updates extraction progress", as
       },
     },
   ]);
+  assert.deepEqual(linkedTransactions, [
+    {
+      googleSubject: "google-subject",
+      bankId: "union-bank",
+      jobId: "job-1",
+      transactionId: "transaction-1",
+    },
+    {
+      googleSubject: "google-subject",
+      bankId: "union-bank",
+      jobId: "job-1",
+      transactionId: "transaction-1",
+    },
+  ]);
   const progressUpdate = updates.at(-2);
   assert.equal(progressUpdate.messagesDiscovered, 3);
   assert.equal(progressUpdate.messagesProcessed, 3);
@@ -210,6 +232,9 @@ test("fails before reading Gmail when the import has no selected bank", async ()
       async get() {
         return null;
       },
+    }),
+    importJobTransactionStorePromise: Promise.resolve({
+      async link() {},
     }),
     transactionStorePromise: Promise.resolve({
       async upsert() {

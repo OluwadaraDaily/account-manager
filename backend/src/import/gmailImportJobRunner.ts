@@ -5,6 +5,7 @@ import {
   type GmailMessageList,
 } from "../integrations/google/gmailClient.js";
 import type { ImportJobStore } from "../db/repositories/importJobStore.js";
+import type { ImportJobTransactionStore } from "../db/repositories/importJobTransactionStore.js";
 import type { BankDirectoryStore } from "../db/repositories/bankDirectoryStore.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { TransactionStore } from "../db/repositories/transactionStore.js";
@@ -32,6 +33,7 @@ function messageBelongsToSelectedBank(
 
 type GmailImportJobRunnerDependencies = {
   importJobStorePromise: Promise<ImportJobStore>;
+  importJobTransactionStorePromise: Promise<ImportJobTransactionStore>;
   bankDirectoryStorePromise: Promise<BankDirectoryStore>;
   refreshTokenStorePromise: Promise<RefreshTokenStore>;
   transactionStorePromise: Promise<TransactionStore>;
@@ -41,6 +43,7 @@ type GmailImportJobRunnerDependencies = {
 
 export function createGmailImportJobRunner({
   importJobStorePromise,
+  importJobTransactionStorePromise,
   bankDirectoryStorePromise,
   refreshTokenStorePromise,
   transactionStorePromise,
@@ -89,6 +92,7 @@ export function createGmailImportJobRunner({
       }
 
       const transactionStore = await transactionStorePromise;
+      const importJobTransactionStore = await importJobTransactionStorePromise;
 
       const query = buildGmailSearchQuery({
         senderEmail:
@@ -164,13 +168,25 @@ export function createGmailImportJobRunner({
                   existingTransaction &&
                   existingTransaction.sourceMessageId !== transaction.sourceMessageId
                 ) {
+                  await importJobTransactionStore.link(
+                    googleSubject,
+                    bankId,
+                    job.id,
+                    existingTransaction.id,
+                  );
                   messagesSkipped += 1;
                 } else {
-                  await transactionStore.upsert({
+                  const savedTransaction = await transactionStore.upsert({
                     googleSubject,
                     bankId,
                     transaction,
                   });
+                  await importJobTransactionStore.link(
+                    googleSubject,
+                    bankId,
+                    job.id,
+                    savedTransaction.id,
+                  );
                   transactionsExtracted += 1;
                 }
               } else {

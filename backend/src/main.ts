@@ -4,6 +4,7 @@ import { appConfig } from "./config.js";
 import { createDatabaseConnection } from "./db/database.js";
 import { createBankDirectoryStore } from "./db/repositories/bankDirectoryStore.js";
 import { createImportJobStore } from "./db/repositories/importJobStore.js";
+import { createImportJobTransactionStore } from "./db/repositories/importJobTransactionStore.js";
 import { initializeDatabase } from "./db/schema.js";
 import { createRefreshTokenStore } from "./db/repositories/refreshTokenStore.js";
 import { createSessionStore } from "./db/repositories/sessionStore.js";
@@ -22,6 +23,9 @@ const refreshTokenStorePromise = databaseReady.then(() =>
 );
 const sessionStorePromise = databaseReady.then(() => createSessionStore(databaseConnection));
 const importJobStorePromise = databaseReady.then(() => createImportJobStore(databaseConnection));
+const importJobTransactionStorePromise = databaseReady.then(() =>
+  createImportJobTransactionStore(databaseConnection),
+);
 const bankDirectoryStorePromise = databaseReady.then(() =>
   createBankDirectoryStore(databaseConnection),
 );
@@ -31,6 +35,7 @@ const transactionStorePromise = databaseReady.then(() =>
 const runGmailImportJob = createGmailImportJobRunner({
   bankDirectoryStorePromise,
   importJobStorePromise,
+  importJobTransactionStorePromise,
   refreshTokenStorePromise,
   transactionStorePromise,
 });
