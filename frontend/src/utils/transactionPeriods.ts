@@ -63,6 +63,46 @@ export function summarizeTransactions(transactions: Transaction[]) {
   };
 }
 
+export function groupTransactionsByMonth(transactions: Transaction[]) {
+  const groups = new Map<
+    string,
+    { month: string; inflow: number; outflow: number; creditCount: number; debitCount: number }
+  >();
+
+  for (const transaction of transactions) {
+    const date = parseLocalDate(transaction.date);
+    if (!date) continue;
+
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+    const group = groups.get(key) ?? {
+      month: date.toLocaleDateString("en-NG", { month: "long", year: "numeric" }),
+      inflow: 0,
+      outflow: 0,
+      creditCount: 0,
+      debitCount: 0,
+    };
+    const amount = amountValue(transaction.amount);
+
+    if (transaction.type === "Credit") {
+      group.inflow += amount;
+      group.creditCount += 1;
+    } else {
+      group.outflow += amount;
+      group.debitCount += 1;
+    }
+
+    groups.set(key, group);
+  }
+
+  return [...groups.entries()]
+    .sort(([firstKey], [secondKey]) => secondKey.localeCompare(firstKey))
+    .map(([key, group]) => ({
+      key,
+      ...group,
+      net: group.inflow - group.outflow,
+    }));
+}
+
 export function formatNaira(value: number) {
   return new Intl.NumberFormat("en-NG", {
     style: "currency",

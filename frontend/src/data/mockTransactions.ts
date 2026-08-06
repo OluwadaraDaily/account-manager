@@ -41,7 +41,7 @@ export const mockTransactions: Transaction[] = [
     status: "Review",
   },
   {
-    date: daysAgo(10),
+    date: daysAgo(40),
     description: "TRANSFER IN",
     counterparty: "Salary / Acme Ltd",
     type: "Credit",
