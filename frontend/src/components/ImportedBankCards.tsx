@@ -63,7 +63,7 @@ export function ImportedBankCards({
   return (
     <section
       aria-labelledby="imported-banks-heading"
-      className="border-line border-b bg-[#fafcf9] px-5 py-5 sm:px-7"
+      className="border-line bg-card border-b px-5 py-5 sm:px-7"
     >
       <div className="mb-4">
         <h2
@@ -79,7 +79,7 @@ export function ImportedBankCards({
 
       {loading && <p className="text-muted text-[12px]">Loading imported banks…</p>}
       {error && (
-        <p className="text-[12px] text-[#b34f42]" role="alert">
+        <p className="text-muted text-[12px]" role="alert">
           {error}
         </p>
       )}
@@ -96,8 +96,8 @@ export function ImportedBankCards({
               onClick={() => onSelect(bank.bankId)}
               className={`rounded-[14px] border px-4 py-4 text-left transition ${
                 selectedBankId === bank.bankId
-                  ? "border-moss bg-[#edf5ee]"
-                  : "border-line bg-card hover:border-moss"
+                  ? "border-white bg-white/10"
+                  : "border-line bg-card hover:border-white"
               }`}
             >
               <p className="text-ink text-[13px] font-bold">{bank.displayName}</p>

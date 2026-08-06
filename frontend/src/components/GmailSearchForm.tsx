@@ -183,7 +183,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
   return (
     <section
       aria-labelledby="gmail-search-heading"
-      className="border-line border-b bg-[#fafcf9] px-5 py-5 sm:px-7"
+      className="border-line bg-card border-b px-5 py-5 sm:px-7"
     >
       <div className="mb-4">
         <h2
@@ -323,7 +323,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
           <button
             type="submit"
             disabled={searching || importActive || banksLoading || !searchForm.bankId}
-            className="bg-ink hover:bg-moss-dark focus-visible:ring-moss focus-visible:ring-offset-paper w-full rounded-[12px] px-4 py-2.5 text-[12px] font-bold text-white transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
+            className="focus-visible:ring-moss focus-visible:ring-offset-paper w-full rounded-[12px] bg-white px-4 py-2.5 text-[12px] font-bold text-black transition hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
           >
             {searching
               ? "Starting Gmail import…"
@@ -337,7 +337,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
         <p
           id={dateRangeError ? "gmail-date-range-error" : "gmail-search-error"}
           role="alert"
-          className="mt-3 text-[12px] text-[#b34f42]"
+          className="text-muted mt-3 text-[12px]"
         >
           {error}
         </p>
@@ -357,7 +357,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
                 type="button"
                 onClick={startBroaderSearch}
                 disabled={searching || importActive}
-                className="text-moss-dark ml-1 font-bold underline underline-offset-2 disabled:opacity-60"
+                className="text-ink ml-1 font-bold underline underline-offset-2 disabled:opacity-60"
               >
                 Try broader bank search
               </button>

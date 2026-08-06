@@ -44,7 +44,7 @@ function Tab({
     >
       {label}
       {count ? (
-        <span className="rounded-full bg-[#fff1ef] px-1.5 py-0.5 text-[10px] text-[#c66b61]">
+        <span className="text-muted rounded-full bg-white/10 px-1.5 py-0.5 text-[10px]">
           {count}
         </span>
       ) : null}

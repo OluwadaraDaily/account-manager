@@ -90,7 +90,7 @@ export function ImportedImportHistory({
   return (
     <section
       aria-labelledby="import-history-heading"
-      className="border-line border-b bg-[#fafcf9] px-5 py-5 sm:px-7"
+      className="border-line bg-card border-b px-5 py-5 sm:px-7"
     >
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
@@ -113,7 +113,7 @@ export function ImportedImportHistory({
 
       {loading && <p className="text-muted text-[12px]">Loading import history…</p>}
       {error && (
-        <p className="text-[12px] text-[#b34f42]" role="alert">
+        <p className="text-muted text-[12px]" role="alert">
           {error}
         </p>
       )}
@@ -129,7 +129,7 @@ export function ImportedImportHistory({
                 onClick={() => onSelect(item.id)}
                 aria-pressed={selectedJobId === item.id}
                 className={`flex w-full flex-col gap-2 px-3 py-3 text-left transition sm:flex-row sm:items-center sm:justify-between ${
-                  selectedJobId === item.id ? "bg-[#edf5ee]" : "hover:bg-[#f3f7f3]"
+                  selectedJobId === item.id ? "bg-white/10" : "hover:bg-white/5"
                 }`}
               >
                 <div>
@@ -146,11 +146,7 @@ export function ImportedImportHistory({
                 </div>
                 <span
                   className={`text-[11px] font-semibold ${
-                    item.status === "completed"
-                      ? "text-moss"
-                      : item.status === "failed"
-                        ? "text-[#b34f42]"
-                        : "text-[#c18b47]"
+                    item.status === "completed" ? "text-ink" : "text-muted"
                   }`}
                 >
                   {statusLabel(item.status)}

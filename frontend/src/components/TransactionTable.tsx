@@ -32,23 +32,23 @@ export function TransactionTable({ transactions }: TransactionTableProps) {
               <td className="text-muted px-3 py-5 text-[13px]">{item.counterparty}</td>
               <td className="px-3 py-5">
                 <span
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${item.type === "Credit" ? "bg-[#edf6e7] text-[#5c8655]" : "bg-[#fff1ef] text-[#c66b61]"}`}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${item.type === "Credit" ? "text-ink bg-white/10" : "text-muted bg-white/5"}`}
                 >
                   {item.type}
                 </span>
               </td>
               <td
-                className={`px-3 py-5 text-right text-[13px] font-bold ${item.type === "Credit" ? "text-[#5c8655]" : "text-ink"}`}
+                className={`px-3 py-5 text-right text-[13px] font-bold ${item.type === "Credit" ? "text-ink" : "text-muted"}`}
               >
                 {item.type === "Credit" ? "+" : "−"}
                 {item.amount}
               </td>
               <td className="px-5 py-5 text-right sm:px-7">
                 <span
-                  className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${item.status === "Review" ? "text-[#c18b47]" : "text-moss"}`}
+                  className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${item.status === "Review" ? "text-muted" : "text-ink"}`}
                 >
                   <span
-                    className={`h-1.5 w-1.5 rounded-full ${item.status === "Review" ? "bg-[#e6b568]" : "bg-[#9ec978]"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${item.status === "Review" ? "bg-zinc-500" : "bg-white"}`}
                   />
                   {item.status}
                 </span>

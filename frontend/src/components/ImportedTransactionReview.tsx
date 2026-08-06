@@ -186,7 +186,7 @@ export function ImportedTransactionReview({
   return (
     <section
       aria-labelledby="imported-review-heading"
-      className="border-line border-b bg-[#fafcf9] px-5 py-5 sm:px-7"
+      className="border-line bg-card border-b px-5 py-5 sm:px-7"
     >
       <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
         <div>
@@ -226,7 +226,7 @@ export function ImportedTransactionReview({
               Boolean(error) ||
               transactions.every((transaction) => transaction.reviewStatus === "dismissed")
             }
-            className="bg-ink text-card hover:bg-moss-dark rounded-full px-4 py-2 text-[12px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-full bg-white px-4 py-2 text-[12px] font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Export XLSX
           </button>
@@ -235,7 +235,7 @@ export function ImportedTransactionReview({
 
       {loading && <p className="text-muted text-[12px]">Loading imported transactions…</p>}
       {error && (
-        <p className="text-[12px] text-[#b34f42]" role="alert">
+        <p className="text-muted text-[12px]" role="alert">
           {error}
         </p>
       )}
@@ -380,10 +380,10 @@ export function ImportedTransactionReview({
                           <span
                             className={
                               transaction.reviewStatus === "needs-review"
-                                ? "font-semibold text-[#c18b47]"
+                                ? "text-muted font-semibold"
                                 : transaction.reviewStatus === "dismissed"
                                   ? "text-muted font-semibold"
-                                  : "text-moss font-semibold"
+                                  : "text-ink font-semibold"
                             }
                           >
                             {transaction.reviewStatus === "needs-review"
@@ -404,7 +404,7 @@ export function ImportedTransactionReview({
                           type="button"
                           onClick={() => void saveTransaction(transaction.id)}
                           disabled={savingTransactionId !== null || !changed}
-                          className="text-moss-dark font-semibold underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="text-ink font-semibold underline underline-offset-2 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           {savingTransactionId === transaction.id ? "Saving…" : "Save"}
                         </button>
