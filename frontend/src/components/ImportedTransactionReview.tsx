@@ -4,6 +4,7 @@ import {
   updateImportedTransaction,
   type ImportedTransaction,
 } from "../google/gmailAuth";
+import { downloadImportedTransactionsAsCsv } from "../utils/exportTransactions";
 
 type ImportedTransactionReviewProps = {
   bankId: string;
@@ -175,21 +176,35 @@ export function ImportedTransactionReview({ bankId, refreshKey }: ImportedTransa
       aria-labelledby="imported-review-heading"
       className="border-line border-b bg-[#fafcf9] px-5 py-5 sm:px-7"
     >
-      <div className="mb-4">
-        <h2
-          id="imported-review-heading"
-          className="text-moss text-[11px] font-bold tracking-[0.16em] uppercase"
-        >
-          Imported transactions
-        </h2>
-        <p className="text-muted mt-1 text-[12px]">
-          Normalized results from the selected bank. Review and correct any uncertain items.
-        </p>
-        {!loading && !error && (
-          <p className="text-muted mt-2 text-[12px]" aria-live="polite">
-            {needsReviewCount} transaction{needsReviewCount === 1 ? "" : "s"} need review.
+      <div className="mb-4 flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div>
+          <h2
+            id="imported-review-heading"
+            className="text-moss text-[11px] font-bold tracking-[0.16em] uppercase"
+          >
+            Imported transactions
+          </h2>
+          <p className="text-muted mt-1 text-[12px]">
+            Normalized results from the selected bank. Review and correct any uncertain items.
           </p>
-        )}
+          {!loading && !error && (
+            <p className="text-muted mt-2 text-[12px]" aria-live="polite">
+              {needsReviewCount} transaction{needsReviewCount === 1 ? "" : "s"} need review.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => downloadImportedTransactionsAsCsv(transactions)}
+          disabled={
+            loading ||
+            Boolean(error) ||
+            transactions.every((transaction) => transaction.reviewStatus === "dismissed")
+          }
+          className="border-line text-ink hover:border-ink rounded-full border px-4 py-2 text-[12px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Export CSV
+        </button>
       </div>
 
       {loading && <p className="text-muted text-[12px]">Loading imported transactions…</p>}
