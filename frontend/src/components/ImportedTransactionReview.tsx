@@ -312,11 +312,11 @@ export function ImportedTransactionReview({
       )}
       {!loading && !error && transactions.length > 0 && (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1180px] text-left">
+          <table className="w-full min-w-[1180px] table-fixed text-left">
             <thead>
               <tr className="border-line text-muted border-b text-[10px] font-bold tracking-[0.13em] uppercase">
                 <th className="px-2 py-3 font-semibold">Date</th>
-                <th className="px-2 py-3 font-semibold">Description</th>
+                <th className="w-[190px] px-2 py-3 font-semibold">Description</th>
                 <th className="px-2 py-3 font-semibold">Counterparty</th>
                 <th className="px-2 py-3 font-semibold">Transaction type</th>
                 <th className="px-2 py-3 text-right font-semibold">Amount</th>
@@ -368,10 +368,12 @@ export function ImportedTransactionReview({
                             }))
                           }
                           disabled={savingTransactionId !== null}
-                          className="border-line bg-card text-ink w-full min-w-[180px] rounded-[8px] border px-2 py-1 text-[11px]"
+                          className="border-line bg-card text-ink w-full min-w-0 rounded-[8px] border px-2 py-1 text-[11px]"
                         />
                       ) : (
-                        <span className="text-ink">{transaction.description ?? "—"}</span>
+                        <span className="text-ink block max-w-full break-words">
+                          {transaction.description ?? "—"}
+                        </span>
                       )}
                     </td>
                     <td className="px-2 py-4 text-[12px]">
