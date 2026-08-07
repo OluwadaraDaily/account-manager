@@ -449,8 +449,8 @@ export function ImportedTransactionReview({
                       )}
                     </td>
                     <td className="px-2 py-4 text-[12px]">
-                      <div className="flex items-start gap-2">
-                        <div>
+                      <div className="grid min-w-[220px] grid-cols-[minmax(0,1fr)_4.5rem_4rem] items-center gap-2">
+                        <div className="min-w-0">
                           <span
                             className={
                               transaction.reviewStatus === "needs-review"
@@ -475,7 +475,7 @@ export function ImportedTransactionReview({
                           )}
                         </div>
                         {isEditing ? (
-                          <div className="flex shrink-0 items-center gap-1">
+                          <div className="flex items-center justify-center gap-1">
                             <Button
                               type="button"
                               variant="ghost"
@@ -510,7 +510,7 @@ export function ImportedTransactionReview({
                             disabled={savingTransactionId !== null}
                             aria-label={`Edit ${label}`}
                             title="Edit transaction"
-                            className="text-muted hover:text-ink rounded-full hover:bg-white/10"
+                            className="text-muted hover:text-ink justify-self-center rounded-full hover:bg-white/10"
                           >
                             <PencilIcon />
                           </Button>
@@ -522,7 +522,7 @@ export function ImportedTransactionReview({
                             size="xs"
                             onClick={() => void dismissTransaction(transaction.id)}
                             disabled={savingTransactionId !== null}
-                            className="text-muted hover:text-ink px-1 hover:bg-white/10"
+                            className="text-muted hover:text-ink justify-self-end px-1 hover:bg-white/10"
                           >
                             Dismiss
                           </Button>
