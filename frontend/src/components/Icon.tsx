@@ -1,5 +1,15 @@
 export type IconName =
-  "arrow" | "calendar" | "check" | "chevron" | "download" | "filter" | "mail" | "shield" | "spark";
+  | "arrow"
+  | "calendar"
+  | "check"
+  | "chevron"
+  | "download"
+  | "filter"
+  | "mail"
+  | "shield"
+  | "spark"
+  | "volume"
+  | "volumeOff";
 
 type IconProps = {
   name: IconName;
@@ -74,6 +84,17 @@ export function Icon({ name, size = 18 }: IconProps) {
       <svg {...common}>
         <path d="m12 3 1.4 5.6L19 10l-5.6 1.4L12 17l-1.4-5.6L5 10l5.6-1.4L12 3Z" />
         <path d="m19 16 .6 2.4L22 19l-2.4.6L19 22l-.6-2.4L16 19l2.4-.6L19 16Z" />
+      </svg>
+    );
+  if (name === "volume" || name === "volumeOff")
+    return (
+      <svg {...common}>
+        <path d="M4 10v4h4l5 4V6l-5 4H4Z" />
+        {name === "volume" ? (
+          <path d="M17 9a4 4 0 0 1 0 6M19.5 6.5a8 8 0 0 1 0 11" />
+        ) : (
+          <path d="m17 10 4 4m0-4-4 4" />
+        )}
       </svg>
     );
   return null;

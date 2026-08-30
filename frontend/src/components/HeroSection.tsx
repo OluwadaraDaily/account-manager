@@ -9,6 +9,7 @@ import {
   startGmailAuthorization,
   type GmailSession,
 } from "../google/gmailAuth";
+import { playSensoryCue } from "../utils/sensoryFeedback";
 
 export function HeroSection() {
   const queryClient = useQueryClient();
@@ -46,11 +47,13 @@ export function HeroSection() {
   const connectGmail = () => {
     setAuthorizationError(null);
     setRedirecting(true);
+    playSensoryCue("tap");
     startGmailAuthorization();
   };
 
   const disconnect = () => {
     setAuthorizationError(null);
+    playSensoryCue("tap");
     disconnectMutation.mutate();
   };
 

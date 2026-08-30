@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Icon } from "./Icon";
+import { isSoundEnabled, playSensoryCue, setSoundEnabled } from "../utils/sensoryFeedback";
 
 export type AppPage = "home" | "workspace";
 
@@ -19,6 +20,19 @@ type AppHeaderProps = {
 
 export function AppHeader({ page, onNavigate }: AppHeaderProps) {
   const [helpOpen, setHelpOpen] = useState(false);
+  const [soundEnabled, setSoundEnabledState] = useState(isSoundEnabled);
+
+  const navigateWithFeedback = () => {
+    playSensoryCue("navigation");
+    onNavigate(page === "home" ? "workspace" : "home");
+  };
+
+  const toggleSound = () => {
+    const nextValue = !soundEnabled;
+    setSoundEnabledState(nextValue);
+    setSoundEnabled(nextValue);
+    if (nextValue) playSensoryCue("tap");
+  };
 
   return (
     <header className="border-line bg-paper/90 sticky top-0 z-30 border-b backdrop-blur-xl">
@@ -41,11 +55,20 @@ export function AppHeader({ page, onNavigate }: AppHeaderProps) {
             <span className="bg-moss h-1.5 w-1.5 rounded-full" />
             local mode
           </div>
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-label={soundEnabled ? "Mute interface sounds" : "Enable interface sounds"}
+            className="text-muted hover:text-ink flex items-center gap-2 font-mono text-[10px] tracking-[0.1em] uppercase transition-colors"
+          >
+            <Icon name={soundEnabled ? "volume" : "volumeOff"} size={14} />
+            <span className="hidden sm:inline">sound {soundEnabled ? "on" : "off"}</span>
+          </button>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => onNavigate(page === "home" ? "workspace" : "home")}
+            onClick={navigateWithFeedback}
             className="border-line bg-card text-ink hover:border-ink rounded-none px-4 font-mono text-[10px] tracking-[0.1em] uppercase shadow-none"
           >
             {page === "home" ? "Workspace" : "Home"}

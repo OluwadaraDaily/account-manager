@@ -8,6 +8,7 @@ import {
   type GmailImportJob,
 } from "../google/gmailAuth";
 import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
+import { playSensoryCue } from "../utils/sensoryFeedback";
 
 const inputClassName =
   "border-line bg-card text-ink focus:border-moss focus-visible:ring-moss min-w-0 rounded-[12px] border px-3 py-2.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
@@ -125,9 +126,11 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
           timeoutId = window.setTimeout(() => void poll(), 1000);
         } else if (nextJob.status === "completed") {
           window.sessionStorage.removeItem(activeImportJobStorageKey);
+          playSensoryCue("success");
           onImportCompleted?.();
         } else if (nextJob.status === "failed") {
           window.sessionStorage.removeItem(activeImportJobStorageKey);
+          playSensoryCue("error");
           setError(nextJob.errorMessage ?? "The Gmail import failed.");
         }
       } catch (pollError: unknown) {
