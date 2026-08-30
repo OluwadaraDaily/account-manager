@@ -21,27 +21,32 @@ export function AppHeader({ page, onNavigate }: AppHeaderProps) {
   const [helpOpen, setHelpOpen] = useState(false);
 
   return (
-    <header className="border-line bg-paper/85 sticky top-0 z-30 border-b backdrop-blur-xl">
-      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-5 lg:px-10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[11px] bg-white text-black shadow-sm ring-1 ring-white/10">
-            <Icon name="spark" size={19} />
-          </div>
-          <span className="font-display text-[17px] font-extrabold tracking-[-0.03em]">
-            account manager
-          </span>
-        </div>
+    <header className="border-line bg-paper/90 sticky top-0 z-30 border-b backdrop-blur-xl">
+      <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-4 lg:px-10">
         <div className="flex items-center gap-4">
-          <div className="text-muted hidden items-center gap-2 text-[12px] sm:flex">
-            <span className="h-2 w-2 rounded-full bg-white shadow-[0_0_0_3px_rgba(255,255,255,0.12)]" />
-            Local-only mode
+          <div className="border-line text-ink flex h-9 w-9 items-center justify-center border bg-transparent font-mono text-[11px] font-bold tracking-[-0.08em]">
+            AM
+          </div>
+          <div>
+            <span className="font-display block text-[15px] font-bold tracking-[-0.04em]">
+              account manager
+            </span>
+            <span className="text-muted font-mono text-[9px] tracking-[0.16em] uppercase">
+              private finance workbench
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-muted hidden items-center gap-2 font-mono text-[10px] tracking-[0.1em] uppercase sm:flex">
+            <span className="bg-moss h-1.5 w-1.5 rounded-full" />
+            local mode
           </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => onNavigate(page === "home" ? "workspace" : "home")}
-            className="border-line bg-card text-ink hover:border-ink rounded-full px-4 font-semibold shadow-none"
+            className="border-line bg-card text-ink hover:border-ink rounded-none px-4 font-mono text-[10px] tracking-[0.1em] uppercase shadow-none"
           >
             {page === "home" ? "Workspace" : "Home"}
           </Button>
@@ -50,7 +55,7 @@ export function AppHeader({ page, onNavigate }: AppHeaderProps) {
             variant="outline"
             size="sm"
             onClick={() => setHelpOpen(true)}
-            className="border-line bg-card text-ink hover:border-ink rounded-full px-4 font-semibold shadow-none"
+            className="border-line bg-card text-ink hover:border-ink rounded-none px-4 font-mono text-[10px] tracking-[0.1em] uppercase shadow-none"
           >
             Help
           </Button>

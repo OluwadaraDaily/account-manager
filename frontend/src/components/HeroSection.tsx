@@ -55,35 +55,50 @@ export function HeroSection() {
   };
 
   return (
-    <section className="border-line grid gap-8 border-b py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:py-16">
-      <div>
-        <div className="text-muted border-line bg-card mb-5 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12px] font-semibold">
-          <Icon name="shield" size={14} /> Your data stays with you
+    <section className="border-line grid gap-10 border-b py-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:py-20">
+      <div className="max-w-[760px]">
+        <div className="text-muted mb-7 flex items-center gap-3 font-mono text-[10px] tracking-[0.16em] uppercase">
+          <span className="bg-moss h-px w-8" />
+          private by design / 001
         </div>
-        <h1 className="font-display max-w-[720px] text-[clamp(2.7rem,6vw,5.65rem)] leading-[0.99] font-extrabold tracking-[-0.075em]">
-          See your money
+        <h1 className="font-display max-w-[760px] text-[clamp(3.6rem,8vw,7.8rem)] leading-[0.86] font-bold tracking-[-0.09em]">
+          A clearer
           <br />
-          <span className="text-moss">clearly.</span>
+          <span className="text-moss">signal.</span>
         </h1>
-        <p className="text-muted mt-6 max-w-[560px] text-[16px] leading-7">
-          Turn transaction emails into a clean, useful view of your finances. No bank passwords. No
-          data stored on our servers.
+        <p className="text-muted mt-8 max-w-[520px] text-[15px] leading-7">
+          Turn the transaction alerts already in your inbox into a calm, reviewable record of where
+          your money moved.
         </p>
       </div>
-      <Card className="border-line bg-card text-ink rounded-[24px] p-6 shadow-[0_22px_50px_rgba(0,0,0,0.3)] lg:ml-auto lg:max-w-[430px]">
-        <div className="mb-10 flex items-start justify-between">
-          <div className="text-ink rounded-full bg-white/10 p-3">
-            <Icon name="mail" size={21} />
+      <Card className="border-line bg-card text-ink relative rounded-none p-6 shadow-[0_24px_60px_rgba(0,0,0,0.24)] lg:ml-auto lg:max-w-[430px]">
+        <div className="mb-9 flex items-start justify-between border-b border-white/10 pb-5">
+          <div className="text-muted font-mono text-[10px] tracking-[0.12em] uppercase">
+            connection / intake
           </div>
-          <span className="text-muted rounded-full bg-white/10 px-3 py-1 text-[11px] font-medium">
-            MVP preview
-          </span>
+          <Icon name="mail" size={18} />
         </div>
-        <p className="font-display max-w-[300px] text-[22px] leading-8 font-bold tracking-[-0.04em]">
-          Connect once. Understand more.
+        <div className="signal-rail mb-8 space-y-5 pl-7">
+          <div className="flex items-center gap-3">
+            <span className="signal-node" data-active="true" />
+            <span className="text-ink text-[12px] font-semibold">Connect Gmail</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="signal-node" />
+            <span className="text-muted text-[12px]">Find transaction alerts</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="signal-node" />
+            <span className="text-muted text-[12px]">Review before export</span>
+          </div>
+        </div>
+        <p className="font-display max-w-[300px] text-[24px] leading-[1.05] font-bold tracking-[-0.06em]">
+          Connect once.
+          <br />
+          Keep your bearings.
         </p>
-        <p className="text-muted mt-3 text-[13px] leading-6">
-          Read-only Gmail access, local processing, and a spreadsheet you control.
+        <p className="text-muted mt-4 text-[12px] leading-6">
+          Read-only Gmail access, private processing, and a spreadsheet you control.
         </p>
         <Button
           type="button"
