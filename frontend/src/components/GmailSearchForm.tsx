@@ -11,6 +11,7 @@ import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
 
 const inputClassName =
   "border-line bg-card text-ink focus:border-moss focus-visible:ring-moss min-w-0 rounded-[12px] border px-3 py-2.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+const activeImportJobStorageKey = "account-manager-active-import-job";
 
 type SearchForm = {
   bankId: string;
@@ -79,6 +80,36 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
   }, []);
 
   useEffect(() => {
+    const activeJobId = window.sessionStorage.getItem(activeImportJobStorageKey);
+    if (!activeJobId) return;
+
+    let cancelled = false;
+
+    void getGmailImportJob(activeJobId)
+      .then((storedJob) => {
+        if (cancelled) return;
+
+        setJob(storedJob);
+        if (!["queued", "running"].includes(storedJob.status)) {
+          window.sessionStorage.removeItem(activeImportJobStorageKey);
+        }
+      })
+      .catch((restoreError: unknown) => {
+        if (!cancelled) {
+          setError(
+            restoreError instanceof Error
+              ? restoreError.message
+              : "The active Gmail import could not be restored.",
+          );
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!job || !["queued", "running"].includes(job.status)) return;
 
     let cancelled = false;
@@ -93,8 +124,10 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
         if (nextJob.status === "queued" || nextJob.status === "running") {
           timeoutId = window.setTimeout(() => void poll(), 1000);
         } else if (nextJob.status === "completed") {
+          window.sessionStorage.removeItem(activeImportJobStorageKey);
           onImportCompleted?.();
         } else if (nextJob.status === "failed") {
+          window.sessionStorage.removeItem(activeImportJobStorageKey);
           setError(nextJob.errorMessage ?? "The Gmail import failed.");
         }
       } catch (pollError: unknown) {
@@ -166,7 +199,10 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
       subject: searchForm.subject || undefined,
       keyword: searchForm.keyword || undefined,
     })
-      .then((createdJob) => setJob(createdJob))
+      .then((createdJob) => {
+        window.sessionStorage.setItem(activeImportJobStorageKey, createdJob.id);
+        setJob(createdJob);
+      })
       .catch((searchError: unknown) => {
         setError(searchError instanceof Error ? searchError.message : "Gmail search failed.");
       })
