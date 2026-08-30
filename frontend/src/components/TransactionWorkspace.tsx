@@ -55,10 +55,10 @@ export function TransactionWorkspace() {
           className="border-line bg-card text-ink w-full gap-0 overflow-hidden p-0 sm:max-w-2xl"
         >
           <SheetHeader className="border-line shrink-0 border-b px-6 py-5 pr-16">
-            <SheetTitle className="font-display text-ink tracking-[-0.04em]">
+            <SheetTitle className="font-display text-ink text-2xl tracking-[-0.06em]">
               Imported transactions
             </SheetTitle>
-            <SheetDescription className="text-muted">
+            <SheetDescription className="text-muted font-mono text-[10px] tracking-[0.06em] uppercase">
               Review and correct the transactions extracted from this import.
             </SheetDescription>
           </SheetHeader>

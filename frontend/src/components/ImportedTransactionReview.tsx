@@ -12,6 +12,7 @@ import {
   downloadImportedTransactionsAsXlsx,
 } from "../utils/exportTransactions";
 import { formatNaira, formatTransactionDate } from "../utils/transactionPeriods";
+import { playSensoryCue } from "../utils/sensoryFeedback";
 
 type ImportedTransactionReviewProps = {
   bankId: string;
@@ -169,6 +170,7 @@ export function ImportedTransactionReview({
         [transactionId]: toEditableDraft(updatedTransaction),
       }));
       setEditingTransactionId(null);
+      playSensoryCue("success");
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error
@@ -197,6 +199,7 @@ export function ImportedTransactionReview({
         [transactionId]: toEditableDraft(updatedTransaction),
       }));
       setEditingTransactionId(null);
+      playSensoryCue("success");
     } catch (requestError: unknown) {
       setError(
         requestError instanceof Error

@@ -4,6 +4,8 @@ type TransactionTabsProps = {
   needsReviewCount: number;
 };
 
+import { playSensoryCue } from "../utils/sensoryFeedback";
+
 export function TransactionTabs({
   activeTab,
   onTabChange,
@@ -14,12 +16,18 @@ export function TransactionTabs({
       <Tab
         label="Overview"
         active={activeTab === "Overview"}
-        onClick={() => onTabChange("Overview")}
+        onClick={() => {
+          playSensoryCue("navigation");
+          onTabChange("Overview");
+        }}
       />
       <Tab
         label="Needs review"
         active={activeTab === "Needs review"}
-        onClick={() => onTabChange("Needs review")}
+        onClick={() => {
+          playSensoryCue("navigation");
+          onTabChange("Needs review");
+        }}
         count={needsReviewCount}
       />
     </div>
@@ -40,17 +48,15 @@ function Tab({
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-2 py-4 text-[12px] font-bold transition ${active ? "text-ink" : "text-muted hover:text-ink"}`}
+      className={`relative flex items-center gap-2 py-4 font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition ${active ? "text-ink" : "text-muted hover:text-ink"}`}
     >
       {label}
       {count ? (
-        <span className="text-muted rounded-full bg-white/10 px-1.5 py-0.5 text-[10px]">
+        <span className="text-muted border-line bg-paper px-1.5 py-0.5 font-mono text-[10px]">
           {count}
         </span>
       ) : null}
-      {active ? (
-        <span className="bg-moss absolute right-0 bottom-0 left-0 h-0.5 rounded-full" />
-      ) : null}
+      {active ? <span className="bg-moss absolute right-0 bottom-0 left-0 h-px" /> : null}
     </button>
   );
 }

@@ -85,7 +85,7 @@ export function AppHeader({ page, onNavigate }: AppHeaderProps) {
         </div>
       </div>
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
-        <DialogContent className="border-line bg-card text-ink rounded-[24px]">
+        <DialogContent className="border-line bg-card text-ink rounded-none shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
           <DialogHeader>
             <DialogTitle className="font-display tracking-[-0.04em]">
               A clearer way to review your money
@@ -96,11 +96,11 @@ export function AppHeader({ page, onNavigate }: AppHeaderProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3 text-[12px] leading-5">
-            <div className="border-line bg-paper rounded-[16px] border p-4">
+            <div className="border-line bg-paper border p-4">
               <p className="text-ink font-bold">Read-only Gmail access</p>
               <p className="text-muted mt-1">No bank passwords and no Gmail write actions.</p>
             </div>
-            <div className="border-line bg-paper rounded-[16px] border p-4">
+            <div className="border-line bg-paper border p-4">
               <p className="text-ink font-bold">Review before export</p>
               <p className="text-muted mt-1">
                 Uncertain transactions stay visible so you can correct them before exporting.
