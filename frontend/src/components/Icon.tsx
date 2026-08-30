@@ -1,4 +1,5 @@
 export type IconName =
+  | "alert"
   | "arrow"
   | "calendar"
   | "check"
@@ -28,6 +29,13 @@ export function Icon({ name, size = 18 }: IconProps) {
     strokeLinejoin: "round" as const,
   };
 
+  if (name === "alert")
+    return (
+      <svg {...common}>
+        <path d="m12 3 9 17H3L12 3Z" />
+        <path d="M12 9v5m0 3h.01" />
+      </svg>
+    );
   if (name === "arrow")
     return (
       <svg {...common}>

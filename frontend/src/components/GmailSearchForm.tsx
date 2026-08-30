@@ -9,6 +9,7 @@ import {
 } from "../google/gmailAuth";
 import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
 import { playSensoryCue } from "../utils/sensoryFeedback";
+import { Icon } from "./Icon";
 
 const inputClassName =
   "border-line bg-card text-ink focus:border-moss focus-visible:ring-moss min-w-0 rounded-none border px-3 py-2.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
@@ -41,6 +42,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
   const [searching, setSearching] = useState(false);
   const [job, setJob] = useState<GmailImportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastSearchMode, setLastSearchMode] = useState<"sender" | "bank-fallback">("sender");
   const dateRangeError = Boolean(
     searchForm.fromDate && searchForm.toDate && searchForm.fromDate > searchForm.toDate,
   );
@@ -204,6 +206,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
     }
 
     const { after, before } = localDateRangeToUnixSeconds(searchForm.fromDate, searchForm.toDate);
+    setLastSearchMode(searchMode);
     setSearching(true);
 
     void createGmailImportJob({
@@ -231,6 +234,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
   };
 
   const startBroaderSearch = () => startImport("bank-fallback");
+  const retryFailedImport = () => startImport(lastSearchMode);
 
   return (
     <section
@@ -387,13 +391,31 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
         </div>
       </form>
       {error && (
-        <p
+        <div
           id={dateRangeError ? "gmail-date-range-error" : "gmail-search-error"}
           role="alert"
-          className="text-muted mt-3 text-[12px]"
+          className="border-line bg-paper text-ink mt-3 flex items-start gap-3 border p-3 text-[12px]"
         >
-          {error}
-        </p>
+          <span className="text-moss mt-0.5 shrink-0" aria-hidden="true">
+            <Icon name="alert" size={16} />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">
+              {job?.status === "failed" ? "Import stopped" : "Search needs attention"}
+            </p>
+            <p className="text-muted mt-1 leading-5">{error}</p>
+            {job?.status === "failed" && (
+              <button
+                type="button"
+                onClick={retryFailedImport}
+                disabled={searching || importActive}
+                className="text-ink focus-ring mt-2 font-mono text-[10px] font-bold tracking-[0.1em] uppercase underline underline-offset-4 disabled:opacity-60"
+              >
+                Try the import again
+              </button>
+            )}
+          </div>
+        </div>
       )}
       {job && (
         <div
