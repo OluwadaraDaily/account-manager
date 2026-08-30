@@ -215,13 +215,13 @@ export function createGmailImportJobRunner({
           ...(pageToken ? {} : { completedAt: new Date().toISOString() }),
         });
       } while (pageToken);
-    } catch {
+    } catch(error) {
       await importJobStore.update(job.id, googleSubject, {
         status: "failed",
         errorMessage: "Gmail import failed.",
         completedAt: new Date().toISOString(),
       });
-      console.error("Gmail import job failed.");
+      console.error("Gmail import job failed:", error);
     }
   };
 }
