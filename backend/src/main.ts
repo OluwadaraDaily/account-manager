@@ -10,6 +10,7 @@ import { createRefreshTokenStore } from "./db/repositories/refreshTokenStore.js"
 import { createSessionStore } from "./db/repositories/sessionStore.js";
 import { createTransactionStore } from "./db/repositories/transactionStore.js";
 import { createGmailImportJobRunner } from "./import/gmailImportJobRunner.js";
+import { createGmailImportJobQueue } from "./import/gmailImportJobQueue.js";
 import { createAuthRouter } from "./routes/authRoutes.js";
 import { createBankRouter } from "./routes/bankRoutes.js";
 import { createHealthRouter } from "./routes/healthRoutes.js";
@@ -32,6 +33,7 @@ const bankDirectoryStorePromise = databaseReady.then(() =>
 const transactionStorePromise = databaseReady.then(() =>
   createTransactionStore(databaseConnection),
 );
+const importJobQueue = createGmailImportJobQueue({ importJobStorePromise });
 const runGmailImportJob = createGmailImportJobRunner({
   bankDirectoryStorePromise,
   importJobStorePromise,
@@ -39,51 +41,13 @@ const runGmailImportJob = createGmailImportJobRunner({
   refreshTokenStorePromise,
   transactionStorePromise,
   scheduleRetry: (jobId, googleSubject, delayMs) => {
-    void enqueueGmailImportJob(jobId, googleSubject, delayMs);
+    void importJobQueue.enqueue(jobId, googleSubject, delayMs);
   },
 });
-
-const maxConcurrentImports = 2;
-const pendingImportJobs: Array<{ id: string; googleSubject: string }> = [];
-let activeImportCount = 0;
-
-function enqueueGmailImportJob(id: string, googleSubject: string, delayMs = 0): Promise<void> {
-  if (delayMs > 0) {
-    setTimeout(() => enqueueGmailImportJob(id, googleSubject), delayMs);
-    return Promise.resolve();
-  }
-
-  pendingImportJobs.push({ id, googleSubject });
-  void drainGmailImportQueue();
-  return Promise.resolve();
-}
-
-async function drainGmailImportQueue() {
-  while (activeImportCount < maxConcurrentImports && pendingImportJobs.length > 0) {
-    const nextJob = pendingImportJobs.shift();
-    if (!nextJob) return;
-
-    activeImportCount += 1;
-    void runGmailImportJob(nextJob.id, nextJob.googleSubject).finally(() => {
-      activeImportCount -= 1;
-      void drainGmailImportQueue();
-    });
-  }
-}
+importJobQueue.setRunner(runGmailImportJob);
 
 void databaseReady
-  .then(async () => {
-    const importJobStore = await importJobStorePromise;
-    await importJobStore.requeueRunning();
-    const unfinishedJobs = await importJobStore.listUnfinished();
-
-    unfinishedJobs.forEach((job) => {
-      const delayMs = job.nextAttemptAt
-        ? Math.max(0, Date.parse(job.nextAttemptAt) - Date.now())
-        : 0;
-      void enqueueGmailImportJob(job.id, job.googleSubject, delayMs);
-    });
-  })
+  .then(() => importJobQueue.start())
   .catch((error: unknown) => {
     console.error("Could not resume unfinished Gmail import jobs:", error);
   });
@@ -103,7 +67,7 @@ app.use(
     sessionStorePromise,
     importJobStorePromise,
     transactionStorePromise,
-    runGmailImportJob: enqueueGmailImportJob,
+    runGmailImportJob: importJobQueue.enqueue,
   }),
 );
 
