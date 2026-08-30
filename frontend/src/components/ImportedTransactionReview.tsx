@@ -255,7 +255,7 @@ export function ImportedTransactionReview({
             }
             variant="outline"
             size="sm"
-            className="h-9 rounded-full px-3 text-xs whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-10 rounded-none px-3 font-mono text-[10px] tracking-[0.08em] whitespace-nowrap uppercase disabled:cursor-not-allowed disabled:opacity-40"
           >
             Export CSV
           </Button>
@@ -268,7 +268,7 @@ export function ImportedTransactionReview({
               transactions.every((transaction) => transaction.reviewStatus === "dismissed")
             }
             size="sm"
-            className="h-9 rounded-full bg-white px-3 text-xs whitespace-nowrap text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-10 rounded-none bg-white px-3 font-mono text-[10px] tracking-[0.08em] whitespace-nowrap text-black uppercase hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Export XLSX
           </Button>
@@ -285,11 +285,7 @@ export function ImportedTransactionReview({
         <p className="text-muted text-[12px]">No imported transactions for this bank yet.</p>
       )}
       {!loading && !error && transactions.length > 0 && (
-        <div
-          className="border-line mb-4 rounded-[12px] border px-3 py-3"
-          role="status"
-          aria-live="polite"
-        >
+        <div className="border-line mb-4 border px-3 py-3" role="status" aria-live="polite">
           <p className="text-ink text-[12px] font-semibold">
             {needsReviewCount === 0 ? "Review complete." : "Review in progress."}
           </p>
@@ -314,7 +310,7 @@ export function ImportedTransactionReview({
         </div>
       )}
       {!loading && !error && transactions.length > 0 && (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overscroll-x-contain">
           <table className="w-full min-w-[1180px] table-fixed text-left">
             <thead>
               <tr className="border-line text-muted border-b text-[10px] font-bold tracking-[0.13em] uppercase">

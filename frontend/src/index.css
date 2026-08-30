@@ -46,6 +46,11 @@ button {
   cursor: pointer;
 }
 
+:where(button, a, input, select):focus-visible {
+  outline: 2px solid var(--color-moss);
+  outline-offset: 3px;
+}
+
 ::selection {
   color: #10110f;
   background: #d8d7ce;
@@ -99,5 +104,16 @@ button {
   }
   50% {
     box-shadow: 0 0 0 6px rgba(241, 240, 234, 0.02);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

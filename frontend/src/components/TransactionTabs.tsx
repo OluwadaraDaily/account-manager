@@ -48,7 +48,7 @@ function Tab({
   return (
     <button
       onClick={onClick}
-      className={`relative flex items-center gap-2 py-4 font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition ${active ? "text-ink" : "text-muted hover:text-ink"}`}
+      className={`relative flex min-h-11 items-center gap-2 py-4 font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition ${active ? "text-ink" : "text-muted hover:text-ink"}`}
     >
       {label}
       {count ? (

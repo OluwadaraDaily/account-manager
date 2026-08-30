@@ -7,7 +7,7 @@ type TransactionTableProps = {
 
 export function TransactionTable({ transactions }: TransactionTableProps) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto overscroll-x-contain">
       <table className="w-full min-w-[760px] text-left">
         <thead>
           <tr className="border-line text-muted border-b font-mono text-[10px] font-bold tracking-[0.13em] uppercase">
