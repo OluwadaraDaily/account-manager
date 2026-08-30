@@ -21,6 +21,7 @@ export type ImportJob = {
   googleSubject: string;
   status: ImportJobStatus;
   attemptCount: number;
+  nextAttemptAt: string | null;
   criteria: ImportJobCriteria;
   pageToken: string | null;
   progress: {
@@ -46,6 +47,7 @@ export type ImportJobUpdate = {
   errorMessage?: string | null;
   startedAt?: string | null;
   completedAt?: string | null;
+  nextAttemptAt?: string | null;
 };
 
 export type ImportJobListOptions = {
@@ -85,6 +87,7 @@ type ImportJobRow = {
   google_subject: string;
   status: ImportJobStatus;
   attempt_count: number;
+  next_attempt_at: string | null;
   bank_id: string | null;
   search_mode: ImportSearchMode;
   sender_email: string | null;
@@ -110,6 +113,7 @@ function toImportJob(row: ImportJobRow): ImportJob {
     googleSubject: row.google_subject,
     status: row.status,
     attemptCount: row.attempt_count,
+    nextAttemptAt: row.next_attempt_at,
     criteria: {
       bankId: row.bank_id,
       searchMode: row.search_mode,
@@ -142,7 +146,7 @@ function assertNonNegative(value: number, field: string) {
 
 function getColumns() {
   return `
-    job_id, google_subject, status, attempt_count, bank_id, search_mode, sender_email,
+    job_id, google_subject, status, attempt_count, next_attempt_at, bank_id, search_mode, sender_email,
     after_timestamp, before_timestamp,
     subject, keyword, page_token, messages_discovered, messages_processed,
     transactions_extracted, messages_skipped, error_message, created_at, updated_at,
@@ -203,7 +207,7 @@ export class SqliteImportJobStore implements ImportJobStore {
       .prepare(
         `UPDATE gmail_import_jobs
          SET status = 'running', attempt_count = attempt_count + 1,
-             started_at = ?, error_message = NULL, updated_at = ?
+             next_attempt_at = NULL, started_at = ?, error_message = NULL, updated_at = ?
          WHERE job_id = ? AND google_subject = ? AND status = 'queued'`,
       )
       .run(now, now, jobId, googleSubject);
@@ -308,6 +312,7 @@ export class SqliteImportJobStore implements ImportJobStore {
     if (changes.errorMessage !== undefined) addChange("error_message", changes.errorMessage);
     if (changes.startedAt !== undefined) addChange("started_at", changes.startedAt);
     if (changes.completedAt !== undefined) addChange("completed_at", changes.completedAt);
+    if (changes.nextAttemptAt !== undefined) addChange("next_attempt_at", changes.nextAttemptAt);
 
     if (assignments.length === 0) throw new Error("At least one import job change is required.");
 
@@ -374,7 +379,7 @@ export class PostgresImportJobStore implements ImportJobStore {
     const result = await this.pool.query(
       `UPDATE gmail_import_jobs
        SET status = 'running', attempt_count = attempt_count + 1,
-           started_at = $1, error_message = NULL, updated_at = $1
+           next_attempt_at = NULL, started_at = $1, error_message = NULL, updated_at = $1
        WHERE job_id = $2 AND google_subject = $3 AND status = 'queued'`,
       [now, jobId, googleSubject],
     );

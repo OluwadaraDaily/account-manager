@@ -227,12 +227,13 @@ export function createGmailImportJobRunner({
       } while (pageToken);
     } catch (error) {
       if (error instanceof TemporaryGmailError && job.attemptCount < maxJobAttempts) {
+        const jitter = Math.floor(Math.random() * (retryJitterMs + 1));
         await importJobStore.update(job.id, googleSubject, {
           status: "queued",
           errorMessage: "Gmail temporarily unavailable; retrying.",
           startedAt: null,
+          nextAttemptAt: new Date(Date.now() + retryDelayMs + jitter).toISOString(),
         });
-        const jitter = Math.floor(Math.random() * (retryJitterMs + 1));
         schedule(job.id, googleSubject, retryDelayMs + jitter);
       } else {
         await importJobStore.update(job.id, googleSubject, {
