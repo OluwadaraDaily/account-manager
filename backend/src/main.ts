@@ -38,6 +38,9 @@ const runGmailImportJob = createGmailImportJobRunner({
   importJobTransactionStorePromise,
   refreshTokenStorePromise,
   transactionStorePromise,
+  scheduleRetry: (jobId, googleSubject, delayMs) => {
+    setTimeout(() => enqueueGmailImportJob(jobId, googleSubject), delayMs);
+  },
 });
 
 const maxConcurrentImports = 2;
