@@ -6,9 +6,9 @@ let audioContext: AudioContext | null = null;
 
 export function isSoundEnabled() {
   try {
-    return window.localStorage.getItem(soundPreferenceKey) !== "false";
+    return window.localStorage.getItem(soundPreferenceKey) === "true";
   } catch {
-    return true;
+    return false;
   }
 }
 
