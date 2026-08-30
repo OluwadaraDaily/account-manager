@@ -99,6 +99,35 @@ test("lists imported banks only for the requested user with import counts", asyn
   database.close();
 });
 
+test("lists queued and running jobs for startup recovery", async () => {
+  const database = createSqliteDatabase(":memory:");
+  await initializeDatabase({ dialect: "sqlite", database, close: async () => database.close() });
+  const store = new SqliteImportJobStore(database, false);
+
+  const criteria = {
+    bankId: "union-bank",
+    searchMode: "sender",
+    senderEmail: "alerts@example.com",
+    after: null,
+    before: null,
+    subject: null,
+    keyword: null,
+  };
+  const queuedJob = await store.create("google-subject", criteria);
+  const runningJob = await store.create("google-subject", criteria);
+  await store.update(runningJob.id, runningJob.googleSubject, { status: "running" });
+  const completedJob = await store.create("google-subject", criteria);
+  await store.update(completedJob.id, completedJob.googleSubject, { status: "completed" });
+
+  const unfinishedJobs = await store.listUnfinished();
+
+  assert.deepEqual(
+    unfinishedJobs.map((job) => job.id).sort(),
+    [queuedJob.id, runningJob.id].sort(),
+  );
+  database.close();
+});
+
 test("returns empty history for a user with no imports", async () => {
   const database = createSqliteDatabase(":memory:");
   await initializeDatabase({ dialect: "sqlite", database, close: async () => database.close() });

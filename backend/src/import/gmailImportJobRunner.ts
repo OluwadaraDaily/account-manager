@@ -54,7 +54,7 @@ export function createGmailImportJobRunner({
     const importJobStore = await importJobStorePromise;
     const job = await importJobStore.get(jobId, googleSubject);
 
-    if (!job || job.status !== "queued") return;
+    if (!job || !["queued", "running"].includes(job.status)) return;
 
     const startedAt = new Date().toISOString();
     await importJobStore.update(job.id, googleSubject, {

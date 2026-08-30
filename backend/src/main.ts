@@ -40,6 +40,19 @@ const runGmailImportJob = createGmailImportJobRunner({
   transactionStorePromise,
 });
 
+void databaseReady
+  .then(async () => {
+    const importJobStore = await importJobStorePromise;
+    const unfinishedJobs = await importJobStore.listUnfinished();
+
+    await Promise.all(
+      unfinishedJobs.map((job) => runGmailImportJob(job.id, job.googleSubject)),
+    );
+  })
+  .catch((error: unknown) => {
+    console.error("Could not resume unfinished Gmail import jobs:", error);
+  });
+
 app.use(createHealthRouter());
 app.use(createBankRouter({ bankDirectoryStorePromise }));
 app.use(

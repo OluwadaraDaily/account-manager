@@ -66,6 +66,7 @@ export type ImportedBankSummary = {
 export interface ImportJobStore {
   create(googleSubject: string, criteria: ImportJobCriteria): Promise<ImportJob>;
   get(jobId: string, googleSubject: string): Promise<ImportJob | null>;
+  listUnfinished(): Promise<ImportJob[]>;
   listImportedBanks(googleSubject: string): Promise<ImportedBankSummary[]>;
   list(
     googleSubject: string,
@@ -189,6 +190,19 @@ export class SqliteImportJobStore implements ImportJobStore {
       .get(jobId, googleSubject) as ImportJobRow | undefined;
 
     return row ? toImportJob(row) : null;
+  }
+
+  async listUnfinished() {
+    const rows = this.database
+      .prepare(
+        `SELECT ${getColumns()}
+         FROM gmail_import_jobs
+         WHERE status IN ('queued', 'running')
+         ORDER BY created_at ASC, job_id ASC`,
+      )
+      .all() as ImportJobRow[];
+
+    return rows.map(toImportJob);
   }
 
   async listImportedBanks(googleSubject: string) {
@@ -324,6 +338,17 @@ export class PostgresImportJobStore implements ImportJobStore {
     );
 
     return result.rows[0] ? toImportJob(result.rows[0]) : null;
+  }
+
+  async listUnfinished() {
+    const result = await this.pool.query<ImportJobRow>(
+      `SELECT ${getColumns()}
+       FROM gmail_import_jobs
+       WHERE status IN ('queued', 'running')
+       ORDER BY created_at ASC, job_id ASC`,
+    );
+
+    return result.rows.map(toImportJob);
   }
 
   async listImportedBanks(googleSubject: string) {
