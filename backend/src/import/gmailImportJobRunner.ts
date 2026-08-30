@@ -1,5 +1,6 @@
 import {
   getGmailMessageContent,
+  TemporaryGmailError,
   listGmailMessages,
   type GmailMessageContent,
   type GmailMessageList,
@@ -39,6 +40,7 @@ type GmailImportJobRunnerDependencies = {
   transactionStorePromise: Promise<TransactionStore>;
   listMessages?: typeof listGmailMessages;
   getMessageContent?: typeof getGmailMessageContent;
+  scheduleRetry?: (jobId: string, googleSubject: string, delayMs: number) => void;
 };
 
 export function createGmailImportJobRunner({
@@ -49,8 +51,20 @@ export function createGmailImportJobRunner({
   transactionStorePromise,
   listMessages = listGmailMessages,
   getMessageContent = getGmailMessageContent,
+  scheduleRetry,
 }: GmailImportJobRunnerDependencies) {
-  return async function runGmailImportJob(jobId: string, googleSubject: string) {
+  const maxJobAttempts = 3;
+  const retryDelayMs = 3_000;
+  const retryJitterMs = 1_000;
+
+  let runGmailImportJob: (jobId: string, googleSubject: string) => Promise<void>;
+  const schedule =
+    scheduleRetry ??
+    ((jobId: string, googleSubject: string, delayMs: number) => {
+      setTimeout(() => void runGmailImportJob(jobId, googleSubject), delayMs);
+    });
+
+  runGmailImportJob = async function runGmailImportJob(jobId: string, googleSubject: string) {
     const importJobStore = await importJobStorePromise;
     const existingJob = await importJobStore.get(jobId, googleSubject);
 
@@ -212,12 +226,27 @@ export function createGmailImportJobRunner({
         });
       } while (pageToken);
     } catch (error) {
-      await importJobStore.update(job.id, googleSubject, {
-        status: "failed",
-        errorMessage: "Gmail import failed.",
-        completedAt: new Date().toISOString(),
-      });
+      if (error instanceof TemporaryGmailError && job.attemptCount < maxJobAttempts) {
+        await importJobStore.update(job.id, googleSubject, {
+          status: "queued",
+          errorMessage: "Gmail temporarily unavailable; retrying.",
+          startedAt: null,
+        });
+        const jitter = Math.floor(Math.random() * (retryJitterMs + 1));
+        schedule(job.id, googleSubject, retryDelayMs + jitter);
+      } else {
+        await importJobStore.update(job.id, googleSubject, {
+          status: "failed",
+          errorMessage:
+            error instanceof TemporaryGmailError
+              ? "Gmail import failed after three attempts."
+              : "Gmail import failed.",
+          completedAt: new Date().toISOString(),
+        });
+      }
       console.error("Gmail import job failed:", error);
     }
   };
+
+  return runGmailImportJob;
 }

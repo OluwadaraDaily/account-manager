@@ -5,10 +5,12 @@ import test from "node:test";
 
 process.env.TOKEN_ENCRYPTION_KEY = randomBytes(32).toString("base64");
 
-const [{ createGmailImportJobRunner }, { encryptToken }] = await Promise.all([
-  import("../dist/import/gmailImportJobRunner.js"),
-  import("../dist/security/encryption.js"),
-]);
+const [{ createGmailImportJobRunner }, { encryptToken }, { TemporaryGmailError }] =
+  await Promise.all([
+    import("../dist/import/gmailImportJobRunner.js"),
+    import("../dist/security/encryption.js"),
+    import("../dist/integrations/google/gmailClient.js"),
+  ]);
 const duplicateFixture = await readFile(
   new URL("./fixtures/union-bank-duplicate-redacted.txt", import.meta.url),
   "utf8",
@@ -257,4 +259,154 @@ test("fails before reading Gmail when the import has no selected bank", async ()
 
   assert.equal(messagesListed, false);
   assert.equal(updates.at(-1).status, "failed");
+});
+
+test("requeues a temporary failure after the first attempt", async () => {
+  const job = {
+    id: "temporary-job",
+    googleSubject: "google-subject",
+    status: "queued",
+    attemptCount: 0,
+    criteria: {
+      bankId: "union-bank",
+      searchMode: "sender",
+      senderEmail: "alerts@unionbankng.com",
+      after: null,
+      before: null,
+      subject: null,
+      keyword: null,
+    },
+    pageToken: null,
+    progress: {
+      messagesDiscovered: 0,
+      messagesProcessed: 0,
+      transactionsExtracted: 0,
+      messagesSkipped: 0,
+    },
+    errorMessage: null,
+  };
+  const updates = [];
+  let retryDelay;
+
+  const runner = createGmailImportJobRunner({
+    importJobStorePromise: Promise.resolve({
+      async get() {
+        return job;
+      },
+      async claim() {
+        return { ...job, attemptCount: 1, status: "running" };
+      },
+      async update(_jobId, _googleSubject, changes) {
+        updates.push(changes);
+        return job;
+      },
+    }),
+    refreshTokenStorePromise: Promise.resolve({
+      async get() {
+        return encryptToken("refresh-token");
+      },
+    }),
+    bankDirectoryStorePromise: Promise.resolve({
+      async get() {
+        return {
+          status: "active",
+          verificationStatus: "verified",
+          officialDomains: ["unionbankng.com"],
+          searchTerms: ["union bank"],
+          transactionNotificationSenderEmail: "alerts@unionbankng.com",
+        };
+      },
+    }),
+    importJobTransactionStorePromise: Promise.resolve({
+      async link() {},
+    }),
+    transactionStorePromise: Promise.resolve({}),
+    scheduleRetry(_jobId, _googleSubject, delayMs) {
+      retryDelay = delayMs;
+    },
+    async listMessages() {
+      throw new TemporaryGmailError("temporary Gmail failure");
+    },
+  });
+
+  await runner(job.id, job.googleSubject);
+
+  assert.equal(updates.at(-1).status, "queued");
+  assert.equal(updates.at(-1).startedAt, null);
+  assert.equal(retryDelay >= 3_000 && retryDelay <= 4_000, true);
+});
+
+test("marks a temporary failure failed after the third attempt", async () => {
+  const job = {
+    id: "final-temporary-job",
+    googleSubject: "google-subject",
+    status: "queued",
+    attemptCount: 2,
+    criteria: {
+      bankId: "union-bank",
+      searchMode: "sender",
+      senderEmail: "alerts@unionbankng.com",
+      after: null,
+      before: null,
+      subject: null,
+      keyword: null,
+    },
+    pageToken: null,
+    progress: {
+      messagesDiscovered: 0,
+      messagesProcessed: 0,
+      transactionsExtracted: 0,
+      messagesSkipped: 0,
+    },
+    errorMessage: null,
+  };
+  const updates = [];
+  let scheduled = false;
+
+  const runner = createGmailImportJobRunner({
+    importJobStorePromise: Promise.resolve({
+      async get() {
+        return job;
+      },
+      async claim() {
+        return { ...job, attemptCount: 3, status: "running" };
+      },
+      async update(_jobId, _googleSubject, changes) {
+        updates.push(changes);
+        return job;
+      },
+    }),
+    refreshTokenStorePromise: Promise.resolve({
+      async get() {
+        return encryptToken("refresh-token");
+      },
+    }),
+    bankDirectoryStorePromise: Promise.resolve({
+      async get() {
+        return {
+          status: "active",
+          verificationStatus: "verified",
+          officialDomains: ["unionbankng.com"],
+          searchTerms: ["union bank"],
+          transactionNotificationSenderEmail: "alerts@unionbankng.com",
+        };
+      },
+    }),
+    importJobTransactionStorePromise: Promise.resolve({
+      async link() {},
+    }),
+    transactionStorePromise: Promise.resolve({}),
+    scheduleRetry() {
+      scheduled = true;
+    },
+    async listMessages() {
+      throw new TemporaryGmailError("temporary Gmail failure");
+    },
+  });
+
+  await runner(job.id, job.googleSubject);
+
+  assert.equal(updates.at(-1).status, "failed");
+  assert.equal(updates.at(-1).errorMessage, "Gmail import failed after three attempts.");
+  assert.equal(scheduled, false);
 });

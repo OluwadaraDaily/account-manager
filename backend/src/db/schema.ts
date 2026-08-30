@@ -30,6 +30,7 @@ const importJobSchema = `
     job_id TEXT PRIMARY KEY,
     google_subject TEXT NOT NULL,
     status TEXT NOT NULL CHECK (status IN ('queued', 'running', 'completed', 'failed', 'cancelled')),
+    attempt_count INTEGER NOT NULL DEFAULT 0,
     bank_id TEXT,
     search_mode TEXT NOT NULL DEFAULT 'sender'
       CHECK (search_mode IN ('sender', 'bank-fallback')),
@@ -144,6 +145,9 @@ export async function initializeDatabase(connection: DatabaseConnection) {
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS bank_id TEXT",
     );
     await connection.pool.query(
+      "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS attempt_count INTEGER NOT NULL DEFAULT 0",
+    );
+    await connection.pool.query(
       "ALTER TABLE gmail_import_jobs ADD COLUMN IF NOT EXISTS search_mode TEXT NOT NULL DEFAULT 'sender'",
     );
     await connection.pool.query(
@@ -230,6 +234,11 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     .all() as Array<{ name: string }>;
   if (!columns.some((column) => column.name === "bank_id")) {
     connection.database.exec("ALTER TABLE gmail_import_jobs ADD COLUMN bank_id TEXT");
+  }
+  if (!columns.some((column) => column.name === "attempt_count")) {
+    connection.database.exec(
+      "ALTER TABLE gmail_import_jobs ADD COLUMN attempt_count INTEGER NOT NULL DEFAULT 0",
+    );
   }
   if (!columns.some((column) => column.name === "search_mode")) {
     connection.database.exec(

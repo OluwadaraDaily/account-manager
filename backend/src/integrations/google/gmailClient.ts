@@ -59,6 +59,13 @@ const maxGmailRequestAttempts = 3;
 const defaultRetryDelayMs = 250;
 const maxRetryDelayMs = 5_000;
 
+export class TemporaryGmailError extends Error {
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
+    this.name = "TemporaryGmailError";
+  }
+}
+
 function getRetryDelayMs(response: Response, attempt: number) {
   const retryAfterSeconds = Number(response.headers.get("retry-after"));
   if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) {
@@ -82,7 +89,7 @@ async function requestGmailJson<T>(url: URL, accessToken: string, description: s
       });
     } catch (error) {
       if (attempt === maxGmailRequestAttempts) {
-        throw new Error(`${description} failed after retries.`, { cause: error });
+        throw new TemporaryGmailError(`${description} failed after retries.`, { cause: error });
       }
 
       await wait(defaultRetryDelayMs * 2 ** (attempt - 1));
@@ -92,6 +99,10 @@ async function requestGmailJson<T>(url: URL, accessToken: string, description: s
     if (response.ok) return (await response.json()) as T;
 
     if (!retryableGmailStatuses.has(response.status) || attempt === maxGmailRequestAttempts) {
+      if (retryableGmailStatuses.has(response.status)) {
+        throw new TemporaryGmailError(`${description} failed with status ${response.status}.`);
+      }
+
       throw new Error(`${description} failed with status ${response.status}.`);
     }
 

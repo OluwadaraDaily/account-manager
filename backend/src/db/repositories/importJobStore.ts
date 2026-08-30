@@ -20,6 +20,7 @@ export type ImportJob = {
   id: string;
   googleSubject: string;
   status: ImportJobStatus;
+  attemptCount: number;
   criteria: ImportJobCriteria;
   pageToken: string | null;
   progress: {
@@ -83,6 +84,7 @@ type ImportJobRow = {
   job_id: string;
   google_subject: string;
   status: ImportJobStatus;
+  attempt_count: number;
   bank_id: string | null;
   search_mode: ImportSearchMode;
   sender_email: string | null;
@@ -107,6 +109,7 @@ function toImportJob(row: ImportJobRow): ImportJob {
     id: row.job_id,
     googleSubject: row.google_subject,
     status: row.status,
+    attemptCount: row.attempt_count,
     criteria: {
       bankId: row.bank_id,
       searchMode: row.search_mode,
@@ -139,7 +142,7 @@ function assertNonNegative(value: number, field: string) {
 
 function getColumns() {
   return `
-    job_id, google_subject, status, bank_id, search_mode, sender_email,
+    job_id, google_subject, status, attempt_count, bank_id, search_mode, sender_email,
     after_timestamp, before_timestamp,
     subject, keyword, page_token, messages_discovered, messages_processed,
     transactions_extracted, messages_skipped, error_message, created_at, updated_at,
@@ -199,7 +202,8 @@ export class SqliteImportJobStore implements ImportJobStore {
     const result = this.database
       .prepare(
         `UPDATE gmail_import_jobs
-         SET status = 'running', started_at = ?, error_message = NULL, updated_at = ?
+         SET status = 'running', attempt_count = attempt_count + 1,
+             started_at = ?, error_message = NULL, updated_at = ?
          WHERE job_id = ? AND google_subject = ? AND status = 'queued'`,
       )
       .run(now, now, jobId, googleSubject);
@@ -211,7 +215,7 @@ export class SqliteImportJobStore implements ImportJobStore {
     this.database
       .prepare(
         `UPDATE gmail_import_jobs
-         SET status = 'queued', started_at = NULL, updated_at = ?
+       SET status = 'queued', started_at = NULL, updated_at = ?
          WHERE status = 'running'`,
       )
       .run(new Date().toISOString());
@@ -369,7 +373,8 @@ export class PostgresImportJobStore implements ImportJobStore {
     const now = new Date().toISOString();
     const result = await this.pool.query(
       `UPDATE gmail_import_jobs
-       SET status = 'running', started_at = $1, error_message = NULL, updated_at = $1
+       SET status = 'running', attempt_count = attempt_count + 1,
+           started_at = $1, error_message = NULL, updated_at = $1
        WHERE job_id = $2 AND google_subject = $3 AND status = 'queued'`,
       [now, jobId, googleSubject],
     );
