@@ -62,6 +62,8 @@ export type GmailImportJobStatus = "queued" | "running" | "completed" | "failed"
 export type GmailImportJob = {
   id: string;
   status: GmailImportJobStatus;
+  attemptCount: number;
+  nextAttemptAt: string | null;
   progress: {
     messagesDiscovered: number;
     messagesProcessed: number;

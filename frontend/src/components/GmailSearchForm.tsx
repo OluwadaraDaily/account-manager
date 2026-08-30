@@ -46,6 +46,19 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
   );
   const importActive = job !== null && ["queued", "running"].includes(job.status);
   const noMatches = job?.status === "completed" && job.progress.messagesDiscovered === 0;
+  const messagesRemaining = job
+    ? Math.max(0, job.progress.messagesDiscovered - job.progress.messagesProcessed)
+    : 0;
+  const retrySeconds = job?.nextAttemptAt
+    ? Math.max(0, Math.ceil((Date.parse(job.nextAttemptAt) - Date.now()) / 1000))
+    : 0;
+  const progressPercent =
+    job && job.progress.messagesDiscovered > 0
+      ? Math.min(
+          100,
+          Math.round((job.progress.messagesProcessed / job.progress.messagesDiscovered) * 100),
+        )
+      : 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -389,6 +402,34 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
           aria-live="polite"
           aria-atomic="true"
         >
+          <div className="border-line border p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-ink font-mono text-[10px] font-bold tracking-[0.1em] uppercase">
+                Import status / {job.status}
+              </p>
+              <p className="font-mono text-[10px] tracking-[0.08em] uppercase">
+                Attempt {job.attemptCount} / 3
+              </p>
+            </div>
+            <div className="bg-line/30 mt-3 h-1" aria-hidden="true">
+              <div
+                className="bg-moss h-1 transition-[width] duration-300"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <div className="text-muted mt-2 flex flex-wrap justify-between gap-x-4 gap-y-1 text-[11px]">
+              <span>
+                {job.progress.messagesProcessed} processed / {job.progress.messagesDiscovered}{" "}
+                discovered
+              </span>
+              <span>{messagesRemaining} remaining</span>
+            </div>
+            {retrySeconds > 0 && (
+              <p className="text-moss mt-2 text-[11px]" role="timer">
+                Temporary Gmail issue. Retrying in {retrySeconds}s.
+              </p>
+            )}
+          </div>
           {noMatches ? (
             <p>
               No matching messages found. Adjust the sender, dates, subject, or keyword, or try a
