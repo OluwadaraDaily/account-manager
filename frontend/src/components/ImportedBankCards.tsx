@@ -87,21 +87,27 @@ export function ImportedBankCards({
         <p className="text-muted text-[12px]">No previous imports yet.</p>
       )}
       {!loading && !error && banks.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {banks.map((bank) => (
+        <div className="border-line bg-line grid gap-px border sm:grid-cols-2 lg:grid-cols-3">
+          {banks.map((bank, index) => (
             <button
               key={bank.bankId}
               type="button"
               aria-pressed={selectedBankId === bank.bankId}
               onClick={() => onSelect(bank.bankId)}
-              className={`rounded-[14px] border px-4 py-4 text-left transition ${
-                selectedBankId === bank.bankId
-                  ? "border-white bg-white/10"
-                  : "border-line bg-card hover:border-white"
+              className={`bg-card px-4 py-4 text-left transition ${
+                selectedBankId === bank.bankId ? "bg-white/10" : "hover:bg-white/5"
               }`}
             >
-              <p className="text-ink text-[13px] font-bold">{bank.displayName}</p>
-              <p className="text-muted mt-2 text-[11px]">
+              <div className="mb-6 flex items-start justify-between gap-3">
+                <span className="text-muted font-mono text-[10px]">0{index + 1}</span>
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${selectedBankId === bank.bankId ? "bg-moss" : "bg-line"}`}
+                />
+              </div>
+              <p className="text-ink text-[13px] font-bold tracking-[-0.02em]">
+                {bank.displayName}
+              </p>
+              <p className="text-muted mt-2 font-mono text-[10px] tracking-[0.08em] uppercase">
                 {bank.importCount} import{bank.importCount === 1 ? "" : "s"}
               </p>
               <p className="text-muted mt-1 text-[10px]">

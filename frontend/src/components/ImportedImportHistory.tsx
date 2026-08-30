@@ -121,31 +121,36 @@ export function ImportedImportHistory({
         <p className="text-muted text-[12px]">No previous imports for this bank yet.</p>
       )}
       {!loading && !error && history && history.jobs.length > 0 && (
-        <ol className="border-line divide-line divide-y rounded-[12px] border">
+        <ol className="border-line divide-line divide-y border">
           {history.jobs.map((item) => (
             <li key={item.id}>
               <button
                 type="button"
                 onClick={() => onSelect(item.id)}
                 aria-pressed={selectedJobId === item.id}
-                className={`flex w-full flex-col gap-2 px-3 py-3 text-left transition sm:flex-row sm:items-center sm:justify-between ${
+                className={`flex w-full flex-col gap-3 px-4 py-4 text-left transition sm:flex-row sm:items-center sm:justify-between ${
                   selectedJobId === item.id ? "bg-white/10" : "hover:bg-white/5"
                 }`}
               >
-                <div>
-                  <p className="text-ink text-[12px] font-semibold">
-                    {item.completedAt
-                      ? formatDateTime(item.completedAt)
-                      : formatDateTime(item.createdAt)}
-                  </p>
-                  <p className="text-muted mt-1 text-[11px]">
-                    {formatDateRange(item)} · {item.progress.transactionsExtracted} transaction
-                    {item.progress.transactionsExtracted === 1 ? "" : "s"} extracted ·{" "}
-                    {item.progress.messagesSkipped} skipped
-                  </p>
+                <div className="flex min-w-0 items-start gap-3">
+                  <span
+                    className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${item.status === "completed" ? "bg-moss" : "bg-line"}`}
+                  />
+                  <div>
+                    <p className="text-ink font-mono text-[11px] font-semibold tracking-[0.02em]">
+                      {item.completedAt
+                        ? formatDateTime(item.completedAt)
+                        : formatDateTime(item.createdAt)}
+                    </p>
+                    <p className="text-muted mt-1 text-[11px]">
+                      {formatDateRange(item)} · {item.progress.transactionsExtracted} transaction
+                      {item.progress.transactionsExtracted === 1 ? "" : "s"} extracted ·{" "}
+                      {item.progress.messagesSkipped} skipped
+                    </p>
+                  </div>
                 </div>
                 <span
-                  className={`text-[11px] font-semibold ${
+                  className={`font-mono text-[10px] font-semibold tracking-[0.1em] uppercase ${
                     item.status === "completed" ? "text-ink" : "text-muted"
                   }`}
                 >

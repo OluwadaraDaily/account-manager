@@ -17,7 +17,18 @@ export function TransactionWorkspace() {
   const [importRefreshKey, setImportRefreshKey] = useState(0);
 
   return (
-    <section className="border-line bg-card overflow-hidden rounded-[24px] border">
+    <section className="border-line bg-card overflow-hidden border">
+      <div className="border-line flex flex-col gap-2 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+        <div className="flex items-center gap-3">
+          <span className="bg-moss h-1.5 w-1.5 rounded-full" />
+          <span className="text-muted font-mono text-[10px] tracking-[0.16em] uppercase">
+            workspace / live ledger
+          </span>
+        </div>
+        <span className="text-muted font-mono text-[10px] tracking-[0.1em] uppercase">
+          review before export
+        </span>
+      </div>
       <GmailSearchForm onImportCompleted={() => setImportRefreshKey((current) => current + 1)} />
       <ImportedBankCards
         selectedBankId={selectedBankId}
