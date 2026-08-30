@@ -4,6 +4,7 @@ import {
   type GmailImportHistoryItem,
   type GmailImportHistoryPage,
 } from "../google/gmailAuth";
+import { playSensoryCue } from "../utils/sensoryFeedback";
 
 type ImportedImportHistoryProps = {
   bankId: string;
@@ -118,7 +119,29 @@ export function ImportedImportHistory({
         </p>
       )}
       {!loading && !error && history?.jobs.length === 0 && (
-        <p className="text-muted text-[12px]">No previous imports for this bank yet.</p>
+        <div className="border-line bg-paper grid gap-4 border p-5 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div className="flex items-start gap-3">
+            <span className="text-moss font-mono text-[11px] font-bold" aria-hidden="true">
+              00
+            </span>
+            <div>
+              <p className="text-ink font-display text-xl tracking-[-0.04em]">
+                Your ledger starts here.
+              </p>
+              <p className="text-muted mt-1 max-w-xl text-[12px] leading-5">
+                Search Gmail for this bank’s transaction alerts. Completed imports will appear here
+                for review before export.
+              </p>
+            </div>
+          </div>
+          <a
+            href="#gmail-search"
+            onClick={() => playSensoryCue("navigation")}
+            className="border-line text-ink focus-ring inline-flex min-h-10 items-center justify-center border px-4 py-2 font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition hover:bg-white hover:text-black"
+          >
+            Start a Gmail search
+          </a>
+        </div>
       )}
       {!loading && !error && history && history.jobs.length > 0 && (
         <ol className="border-line divide-line divide-y border">

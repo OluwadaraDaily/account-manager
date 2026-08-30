@@ -221,6 +221,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
 
   return (
     <section
+      id="gmail-search"
       aria-labelledby="gmail-search-heading"
       className="border-line bg-card border-b px-5 py-5 sm:px-7"
     >
