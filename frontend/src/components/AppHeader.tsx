@@ -51,10 +51,6 @@ export function AppHeader({ page, onNavigate }: AppHeaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-muted hidden items-center gap-2 font-mono text-[10px] tracking-[0.1em] uppercase sm:flex">
-            <span className="bg-moss h-1.5 w-1.5 rounded-full" />
-            local mode
-          </div>
           <button
             type="button"
             onClick={toggleSound}
