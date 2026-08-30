@@ -310,7 +310,222 @@ export function ImportedTransactionReview({
         </div>
       )}
       {!loading && !error && transactions.length > 0 && (
-        <div className="overflow-x-auto overscroll-x-contain">
+        <div className="grid gap-3 md:hidden">
+          {transactions.map((transaction) => {
+            const draft = draftTransactions[transaction.id] ?? toEditableDraft(transaction);
+            const changed = hasDraftChanges(transaction, draft);
+            const label = transaction.description ?? transaction.id;
+            const isEditing = editingTransactionId === transaction.id;
+
+            return (
+              <article key={transaction.id} className="border-line bg-paper border p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-ink text-[13px] font-semibold break-words">
+                      {transaction.description ?? "Untitled transaction"}
+                    </p>
+                    <p className="text-muted mt-1 font-mono text-[10px] tracking-[0.08em] uppercase">
+                      {transaction.transactionDate
+                        ? formatTransactionDate(transaction.transactionDate)
+                        : "Date not set"}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 text-right text-[13px] font-bold ${transaction.direction === "credit" ? "text-ink" : "text-muted"}`}
+                  >
+                    {formatImportedAmount(transaction)}
+                  </span>
+                </div>
+
+                {isEditing ? (
+                  <div className="mt-4 grid gap-3">
+                    <label className="text-muted flex flex-col gap-1 text-[10px] font-semibold uppercase">
+                      Date
+                      <input
+                        aria-label={`Transaction date for ${label}`}
+                        type="date"
+                        value={draft.transactionDate}
+                        onChange={(event) =>
+                          setDraftTransactions((currentDrafts) => ({
+                            ...currentDrafts,
+                            [transaction.id]: { ...draft, transactionDate: event.target.value },
+                          }))
+                        }
+                        disabled={savingTransactionId !== null}
+                        className="border-line bg-card text-ink rounded-none border px-2 py-2 text-[11px]"
+                      />
+                    </label>
+                    <label className="text-muted flex flex-col gap-1 text-[10px] font-semibold uppercase">
+                      Description
+                      <input
+                        aria-label={`Description for ${label}`}
+                        type="text"
+                        value={draft.description}
+                        onChange={(event) =>
+                          setDraftTransactions((currentDrafts) => ({
+                            ...currentDrafts,
+                            [transaction.id]: { ...draft, description: event.target.value },
+                          }))
+                        }
+                        disabled={savingTransactionId !== null}
+                        className="border-line bg-card text-ink rounded-none border px-2 py-2 text-[11px]"
+                      />
+                    </label>
+                    <label className="text-muted flex flex-col gap-1 text-[10px] font-semibold uppercase">
+                      Counterparty
+                      <input
+                        aria-label={`Counterparty for ${label}`}
+                        type="text"
+                        value={draft.counterparty}
+                        onChange={(event) =>
+                          setDraftTransactions((currentDrafts) => ({
+                            ...currentDrafts,
+                            [transaction.id]: { ...draft, counterparty: event.target.value },
+                          }))
+                        }
+                        disabled={savingTransactionId !== null}
+                        className="border-line bg-card text-ink rounded-none border px-2 py-2 text-[11px]"
+                      />
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <label className="text-muted flex flex-col gap-1 text-[10px] font-semibold uppercase">
+                        Type
+                        <select
+                          aria-label={`Transaction type for ${label}`}
+                          value={draft.direction}
+                          onChange={(event) =>
+                            setDraftTransactions((currentDrafts) => ({
+                              ...currentDrafts,
+                              [transaction.id]: {
+                                ...draft,
+                                direction: event.target.value as "debit" | "credit" | "",
+                              },
+                            }))
+                          }
+                          disabled={savingTransactionId !== null}
+                          className="border-line bg-card text-ink rounded-none border px-2 py-2 text-[11px]"
+                        >
+                          <option value="">Select type</option>
+                          <option value="debit">Debit</option>
+                          <option value="credit">Credit</option>
+                        </select>
+                      </label>
+                      <label className="text-muted flex flex-col gap-1 text-[10px] font-semibold uppercase">
+                        Amount
+                        <input
+                          aria-label={`Amount for ${label}`}
+                          type="text"
+                          inputMode="decimal"
+                          value={draft.amount}
+                          onChange={(event) =>
+                            setDraftTransactions((currentDrafts) => ({
+                              ...currentDrafts,
+                              [transaction.id]: { ...draft, amount: event.target.value },
+                            }))
+                          }
+                          disabled={savingTransactionId !== null}
+                          className="border-line bg-card text-ink rounded-none border px-2 py-2 text-right text-[11px]"
+                        />
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <dl className="text-muted mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-[11px]">
+                    <div>
+                      <dt className="font-mono text-[9px] tracking-[0.1em] uppercase">
+                        Counterparty
+                      </dt>
+                      <dd className="text-ink mt-0.5 break-words">
+                        {transaction.counterparty ?? "—"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-mono text-[9px] tracking-[0.1em] uppercase">Type</dt>
+                      <dd className="text-ink mt-0.5">{transaction.direction ?? "—"}</dd>
+                    </div>
+                  </dl>
+                )}
+
+                <div className="border-line mt-4 border-t pt-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-ink text-[11px] font-semibold">
+                        {transaction.reviewStatus === "needs-review"
+                          ? "Needs review"
+                          : transaction.reviewStatus === "dismissed"
+                            ? "Dismissed"
+                            : "Ready"}
+                      </p>
+                      {transaction.reviewReasons.length > 0 && (
+                        <ul className="text-muted mt-1 space-y-0.5 text-[10px]">
+                          {transaction.reviewReasons.map((reason) => (
+                            <li key={reason}>{formatReviewReason(reason)}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isEditing ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => void saveTransaction(transaction.id)}
+                            disabled={savingTransactionId !== null || !changed}
+                            className="rounded-none font-mono text-[10px] uppercase"
+                          >
+                            Save
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => cancelEdit(transaction.id)}
+                            disabled={savingTransactionId !== null}
+                            className="rounded-none font-mono text-[10px] uppercase"
+                          >
+                            Cancel
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEditingTransactionId(transaction.id)}
+                          disabled={savingTransactionId !== null}
+                          className="rounded-none font-mono text-[10px] uppercase"
+                        >
+                          Edit
+                        </Button>
+                      )}
+                      {transaction.reviewStatus !== "dismissed" && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => void dismissTransaction(transaction.id)}
+                          disabled={savingTransactionId !== null}
+                          className="text-muted hover:text-ink rounded-none font-mono text-[10px] uppercase"
+                        >
+                          Dismiss
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+          <div className="border-line flex items-center justify-between border-t pt-4">
+            <span className="text-muted text-[11px] font-semibold uppercase">Total</span>
+            <span className="text-ink text-[12px] font-bold">{formatNaira(totalAmount)}</span>
+          </div>
+        </div>
+      )}
+      {!loading && !error && transactions.length > 0 && (
+        <div className="hidden overflow-x-auto overscroll-x-contain md:block">
           <table className="w-full min-w-[1180px] table-fixed text-left">
             <thead>
               <tr className="border-line text-muted border-b text-[10px] font-bold tracking-[0.13em] uppercase">
