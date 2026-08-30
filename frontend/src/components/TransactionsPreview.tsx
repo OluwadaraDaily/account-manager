@@ -21,11 +21,12 @@ export function TransactionsPreview({
   );
 
   return (
-    <section className="border-line bg-card mt-10 overflow-hidden rounded-[24px] border">
+    <section className="border-line bg-card mt-10 overflow-hidden border">
       <div className="border-line flex flex-col justify-between gap-5 border-b px-5 py-5 sm:flex-row sm:items-center sm:px-7">
         <div>
-          <div className="border-line text-muted mb-2 inline-flex items-center gap-2 rounded-full border bg-white/5 px-3 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase">
-            Sample view
+          <div className="text-muted mb-3 flex items-center gap-2 font-mono text-[10px] font-semibold tracking-[0.12em] uppercase">
+            <span className="bg-moss h-1.5 w-1.5 rounded-full" />
+            sample view / read-only
           </div>
           <h2 className="font-display text-[20px] font-extrabold tracking-[-0.04em]">
             Transaction preview
@@ -38,7 +39,7 @@ export function TransactionsPreview({
         <button
           type="button"
           onClick={onExportCsv}
-          className="border-line text-ink hover:border-ink flex items-center gap-2 rounded-full border px-4 py-2.5 text-[12px] font-semibold transition"
+          className="border-line text-ink hover:border-ink flex items-center gap-2 rounded-none border px-4 py-2.5 font-mono text-[10px] font-semibold tracking-[0.1em] uppercase transition"
         >
           <Icon name="download" size={15} /> Export sample
         </button>

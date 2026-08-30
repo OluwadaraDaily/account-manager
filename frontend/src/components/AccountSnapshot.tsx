@@ -21,16 +21,19 @@ export function AccountSnapshot({ period, onPeriodChange, transactions }: Accoun
   const counterpartySummaries = groupTransactionsByCounterparty(transactions);
 
   return (
-    <section className="py-10">
+    <section className="py-14">
       <div className="mb-7 flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
-          <p className="text-moss mb-2 text-[11px] font-bold tracking-[0.18em] uppercase">
-            Your account snapshot
+          <p className="text-muted mb-2 font-mono text-[10px] tracking-[0.18em] uppercase">
+            readout / account snapshot
           </p>
-          <h2 className="font-display text-3xl font-extrabold tracking-[-0.055em]">Union Bank</h2>
+          <h2 className="font-display text-4xl font-bold tracking-[-0.075em]">Union Bank</h2>
         </div>
         <div className="flex items-center gap-3">
-          <label htmlFor="period" className="text-muted text-[12px]">
+          <label
+            htmlFor="period"
+            className="text-muted font-mono text-[10px] tracking-[0.1em] uppercase"
+          >
             Showing
           </label>
           <div className="relative">
@@ -42,7 +45,7 @@ export function AccountSnapshot({ period, onPeriodChange, transactions }: Accoun
               aria-label="Rolling date range"
               value={period}
               onChange={(event) => onPeriodChange(event.target.value)}
-              className="border-line bg-card focus:border-moss appearance-none rounded-full border py-2.5 pr-10 pl-10 text-[12px] font-semibold outline-none"
+              className="border-line bg-card focus:border-moss appearance-none rounded-none border py-2.5 pr-10 pl-10 font-mono text-[10px] font-semibold tracking-[0.08em] uppercase outline-none"
             >
               <option>Last 7 days</option>
               <option>Last 30 days</option>
@@ -54,7 +57,7 @@ export function AccountSnapshot({ period, onPeriodChange, transactions }: Accoun
           </div>
         </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="border-line bg-line grid gap-px border md:grid-cols-3">
         <StatCard
           label="Total inflow"
           value={formatNaira(summary.inflow)}
@@ -75,7 +78,7 @@ export function AccountSnapshot({ period, onPeriodChange, transactions }: Accoun
         />
       </div>
       {monthlySummaries.length > 0 && (
-        <Card className="border-line bg-card mt-4 gap-0 overflow-x-auto rounded-[20px] p-0 shadow-none">
+        <Card className="border-line bg-card mt-4 gap-0 overflow-x-auto rounded-none p-0 shadow-none">
           <CardHeader className="gap-0 px-5 pt-5 pb-0">
             <CardTitle className="text-ink text-[13px] font-bold">Monthly movement</CardTitle>
             <CardDescription className="text-muted mt-1 text-[11px]">
@@ -84,7 +87,7 @@ export function AccountSnapshot({ period, onPeriodChange, transactions }: Accoun
           </CardHeader>
           <CardContent className="px-5 pt-4 pb-4">
             <table className="w-full min-w-[560px] text-left text-[11px]">
-              <thead className="text-muted border-line border-b font-semibold">
+              <thead className="text-muted border-line border-b font-mono text-[10px] font-semibold tracking-[0.08em] uppercase">
                 <tr>
                   <th className="px-2 py-2">Month</th>
                   <th className="px-2 py-2 text-right">Inflow</th>
@@ -113,7 +116,7 @@ export function AccountSnapshot({ period, onPeriodChange, transactions }: Accoun
         </Card>
       )}
       {counterpartySummaries.length > 0 && (
-        <Card className="border-line bg-card mt-4 gap-0 overflow-x-auto rounded-[20px] p-0 shadow-none">
+        <Card className="border-line bg-card mt-4 gap-0 overflow-x-auto rounded-none p-0 shadow-none">
           <CardHeader className="gap-0 px-5 pt-5 pb-0">
             <CardTitle className="text-ink text-[13px] font-bold">By counterparty</CardTitle>
             <CardDescription className="text-muted mt-1 text-[11px]">
@@ -122,7 +125,7 @@ export function AccountSnapshot({ period, onPeriodChange, transactions }: Accoun
           </CardHeader>
           <CardContent className="px-5 pt-4 pb-4">
             <table className="w-full min-w-[560px] text-left text-[11px]">
-              <thead className="text-muted border-line border-b font-semibold">
+              <thead className="text-muted border-line border-b font-mono text-[10px] font-semibold tracking-[0.08em] uppercase">
                 <tr>
                   <th className="px-2 py-2">Counterparty</th>
                   <th className="px-2 py-2 text-right">Inflow</th>
