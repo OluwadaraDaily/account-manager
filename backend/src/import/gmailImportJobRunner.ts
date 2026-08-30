@@ -52,16 +52,12 @@ export function createGmailImportJobRunner({
 }: GmailImportJobRunnerDependencies) {
   return async function runGmailImportJob(jobId: string, googleSubject: string) {
     const importJobStore = await importJobStorePromise;
-    const job = await importJobStore.get(jobId, googleSubject);
+    const existingJob = await importJobStore.get(jobId, googleSubject);
 
-    if (!job || !["queued", "running"].includes(job.status)) return;
+    if (!existingJob || existingJob.status !== "queued") return;
 
-    const startedAt = new Date().toISOString();
-    await importJobStore.update(job.id, googleSubject, {
-      status: "running",
-      startedAt,
-      errorMessage: null,
-    });
+    const job = await importJobStore.claim(jobId, googleSubject);
+    if (!job) return;
 
     try {
       const refreshTokenStore = await refreshTokenStorePromise;
@@ -215,7 +211,7 @@ export function createGmailImportJobRunner({
           ...(pageToken ? {} : { completedAt: new Date().toISOString() }),
         });
       } while (pageToken);
-    } catch(error) {
+    } catch (error) {
       await importJobStore.update(job.id, googleSubject, {
         status: "failed",
         errorMessage: "Gmail import failed.",

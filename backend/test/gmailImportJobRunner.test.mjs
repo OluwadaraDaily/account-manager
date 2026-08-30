@@ -52,6 +52,9 @@ test("processes Gmail messages sequentially and updates extraction progress", as
       async get() {
         return job;
       },
+      async claim() {
+        return job;
+      },
       async update(_jobId, _googleSubject, changes) {
         updates.push(changes);
         return job;
@@ -216,6 +219,9 @@ test("fails before reading Gmail when the import has no selected bank", async ()
   const runner = createGmailImportJobRunner({
     importJobStorePromise: Promise.resolve({
       async get() {
+        return job;
+      },
+      async claim() {
         return job;
       },
       async update(_jobId, _googleSubject, changes) {

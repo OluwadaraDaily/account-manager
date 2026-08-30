@@ -128,6 +128,25 @@ test("lists queued and running jobs for startup recovery", async () => {
   database.close();
 });
 
+test("claims a queued job only once", async () => {
+  const database = createSqliteDatabase(":memory:");
+  await initializeDatabase({ dialect: "sqlite", database, close: async () => database.close() });
+  const store = new SqliteImportJobStore(database, false);
+  const job = await store.create("google-subject", {
+    bankId: "union-bank",
+    searchMode: "sender",
+    senderEmail: "alerts@example.com",
+    after: null,
+    before: null,
+    subject: null,
+    keyword: null,
+  });
+
+  assert.equal((await store.claim(job.id, job.googleSubject))?.status, "running");
+  assert.equal(await store.claim(job.id, job.googleSubject), null);
+  database.close();
+});
+
 test("returns empty history for a user with no imports", async () => {
   const database = createSqliteDatabase(":memory:");
   await initializeDatabase({ dialect: "sqlite", database, close: async () => database.close() });

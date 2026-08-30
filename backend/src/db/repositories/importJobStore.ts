@@ -66,6 +66,8 @@ export type ImportedBankSummary = {
 export interface ImportJobStore {
   create(googleSubject: string, criteria: ImportJobCriteria): Promise<ImportJob>;
   get(jobId: string, googleSubject: string): Promise<ImportJob | null>;
+  claim(jobId: string, googleSubject: string): Promise<ImportJob | null>;
+  requeueRunning(): Promise<void>;
   listUnfinished(): Promise<ImportJob[]>;
   listImportedBanks(googleSubject: string): Promise<ImportedBankSummary[]>;
   list(
@@ -190,6 +192,29 @@ export class SqliteImportJobStore implements ImportJobStore {
       .get(jobId, googleSubject) as ImportJobRow | undefined;
 
     return row ? toImportJob(row) : null;
+  }
+
+  async claim(jobId: string, googleSubject: string) {
+    const now = new Date().toISOString();
+    const result = this.database
+      .prepare(
+        `UPDATE gmail_import_jobs
+         SET status = 'running', started_at = ?, error_message = NULL, updated_at = ?
+         WHERE job_id = ? AND google_subject = ? AND status = 'queued'`,
+      )
+      .run(now, now, jobId, googleSubject);
+
+    return result.changes === 0 ? null : this.get(jobId, googleSubject);
+  }
+
+  async requeueRunning() {
+    this.database
+      .prepare(
+        `UPDATE gmail_import_jobs
+         SET status = 'queued', started_at = NULL, updated_at = ?
+         WHERE status = 'running'`,
+      )
+      .run(new Date().toISOString());
   }
 
   async listUnfinished() {
@@ -338,6 +363,26 @@ export class PostgresImportJobStore implements ImportJobStore {
     );
 
     return result.rows[0] ? toImportJob(result.rows[0]) : null;
+  }
+
+  async claim(jobId: string, googleSubject: string) {
+    const now = new Date().toISOString();
+    const result = await this.pool.query(
+      `UPDATE gmail_import_jobs
+       SET status = 'running', started_at = $1, error_message = NULL, updated_at = $1
+       WHERE job_id = $2 AND google_subject = $3 AND status = 'queued'`,
+      [now, jobId, googleSubject],
+    );
+
+    return result.rowCount === 0 ? null : this.get(jobId, googleSubject);
+  }
+
+  async requeueRunning() {
+    await this.pool.query(
+      `UPDATE gmail_import_jobs
+       SET status = 'queued', started_at = NULL, updated_at = NOW()
+       WHERE status = 'running'`,
+    );
   }
 
   async listUnfinished() {
