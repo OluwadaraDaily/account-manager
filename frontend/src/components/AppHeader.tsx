@@ -22,9 +22,9 @@ export function AppHeader({ page, onNavigate }: AppHeaderProps) {
   const [helpOpen, setHelpOpen] = useState(false);
   const [soundEnabled, setSoundEnabledState] = useState(isSoundEnabled);
 
-  const navigateWithFeedback = () => {
+  const navigateTo = (nextPage: AppPage) => {
     playSensoryCue("navigation");
-    onNavigate(page === "home" ? "workspace" : "home");
+    onNavigate(nextPage);
   };
 
   const toggleSound = () => {
@@ -64,15 +64,25 @@ export function AppHeader({ page, onNavigate }: AppHeaderProps) {
             <Icon name={soundEnabled ? "volume" : "volumeOff"} size={14} />
             <span className="hidden sm:inline">sound {soundEnabled ? "on" : "off"}</span>
           </button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={navigateWithFeedback}
-            className="border-line bg-card text-ink hover:border-ink rounded-none px-4 font-mono text-[10px] tracking-[0.1em] uppercase shadow-none"
-          >
-            {page === "home" ? "Workspace" : "Home"}
-          </Button>
+          <nav aria-label="Primary navigation" className="border-line bg-card flex border p-0.5">
+            {(["home", "workspace"] as const).map((nextPage) => (
+              <Button
+                key={nextPage}
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => navigateTo(nextPage)}
+                aria-current={page === nextPage ? "page" : undefined}
+                className={`rounded-none px-3 font-mono text-[10px] tracking-[0.1em] uppercase shadow-none transition-colors sm:px-4 ${
+                  page === nextPage
+                    ? "bg-white text-black hover:bg-white"
+                    : "text-muted hover:text-ink hover:bg-white/10"
+                }`}
+              >
+                {nextPage === "home" ? "Home" : "Workspace"}
+              </Button>
+            ))}
+          </nav>
           <Button
             type="button"
             variant="outline"
