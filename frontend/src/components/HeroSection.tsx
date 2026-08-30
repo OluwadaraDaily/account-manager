@@ -107,7 +107,7 @@ export function HeroSection() {
           type="button"
           onClick={connected ? disconnect : connectGmail}
           disabled={checkingSession || connecting}
-          className="mt-7 flex h-auto w-full items-center justify-between rounded-full bg-white px-5 py-3.5 text-[13px] font-bold text-black shadow-none transition hover:bg-zinc-200 disabled:cursor-wait disabled:opacity-70"
+          className="mt-7 flex h-auto w-full items-center justify-between rounded-none bg-white px-5 py-3.5 text-[13px] font-bold text-black shadow-none transition hover:bg-zinc-200 disabled:cursor-wait disabled:opacity-70"
         >
           {checkingSession
             ? "Checking Gmail…"

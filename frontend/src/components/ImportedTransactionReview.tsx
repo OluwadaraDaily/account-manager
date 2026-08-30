@@ -344,7 +344,7 @@ export function ImportedTransactionReview({
                             }))
                           }
                           disabled={savingTransactionId !== null}
-                          className="border-line bg-card text-ink rounded-[8px] border px-2 py-1 text-[11px]"
+                          className="border-line bg-card text-ink rounded-none border px-2 py-1 text-[11px]"
                         />
                       ) : (
                         <span className="text-muted">
@@ -367,7 +367,7 @@ export function ImportedTransactionReview({
                             }))
                           }
                           disabled={savingTransactionId !== null}
-                          className="border-line bg-card text-ink w-full min-w-0 rounded-[8px] border px-2 py-1 text-[11px]"
+                          className="border-line bg-card text-ink w-full min-w-0 rounded-none border px-2 py-1 text-[11px]"
                         />
                       ) : (
                         <span className="text-ink block max-w-full break-words">
@@ -388,7 +388,7 @@ export function ImportedTransactionReview({
                             }))
                           }
                           disabled={savingTransactionId !== null}
-                          className="border-line bg-card text-ink w-full min-w-[150px] rounded-[8px] border px-2 py-1 text-[11px]"
+                          className="border-line bg-card text-ink w-full min-w-[150px] rounded-none border px-2 py-1 text-[11px]"
                         />
                       ) : (
                         <span className="text-muted">{transaction.counterparty ?? "—"}</span>
@@ -409,7 +409,7 @@ export function ImportedTransactionReview({
                             }))
                           }
                           disabled={savingTransactionId !== null}
-                          className="border-line bg-card text-ink rounded-[8px] border px-2 py-1 text-[11px]"
+                          className="border-line bg-card text-ink rounded-none border px-2 py-1 text-[11px]"
                         >
                           <option value="">Select type</option>
                           <option value="debit">Debit</option>
@@ -439,7 +439,7 @@ export function ImportedTransactionReview({
                             }))
                           }
                           disabled={savingTransactionId !== null}
-                          className="border-line bg-card text-ink w-full min-w-[110px] rounded-[8px] border px-2 py-1 text-right text-[11px]"
+                          className="border-line bg-card text-ink w-full min-w-[110px] rounded-none border px-2 py-1 text-right text-[11px]"
                         />
                       ) : (
                         <span
@@ -485,7 +485,7 @@ export function ImportedTransactionReview({
                               disabled={savingTransactionId !== null || !changed}
                               aria-label={`Save ${label}`}
                               title={savingTransactionId === transaction.id ? "Saving…" : "Save"}
-                              className="text-ink rounded-full hover:bg-white/10"
+                              className="text-ink rounded-none hover:bg-white/10"
                             >
                               <CheckIcon />
                             </Button>
@@ -497,7 +497,7 @@ export function ImportedTransactionReview({
                               disabled={savingTransactionId !== null}
                               aria-label={`Cancel editing ${label}`}
                               title="Cancel editing"
-                              className="text-muted hover:text-ink rounded-full hover:bg-white/10"
+                              className="text-muted hover:text-ink rounded-none hover:bg-white/10"
                             >
                               <XIcon />
                             </Button>
@@ -511,7 +511,7 @@ export function ImportedTransactionReview({
                             disabled={savingTransactionId !== null}
                             aria-label={`Edit ${label}`}
                             title="Edit transaction"
-                            className="text-muted hover:text-ink justify-self-center rounded-full hover:bg-white/10"
+                            className="text-muted hover:text-ink justify-self-center rounded-none hover:bg-white/10"
                           >
                             <PencilIcon />
                           </Button>

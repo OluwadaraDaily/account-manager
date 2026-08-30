@@ -10,6 +10,7 @@ import { GmailSearchForm } from "./GmailSearchForm";
 import { ImportedBankCards } from "./ImportedBankCards";
 import { ImportedImportHistory } from "./ImportedImportHistory";
 import { ImportedTransactionReview } from "./ImportedTransactionReview";
+import { playSensoryCue } from "../utils/sensoryFeedback";
 
 export function TransactionWorkspace() {
   const [selectedBankId, setSelectedBankId] = useState("");
@@ -47,6 +48,7 @@ export function TransactionWorkspace() {
       <Sheet
         open={selectedImportJobId !== null}
         onOpenChange={(open) => {
+          playSensoryCue(open ? "overlayOpen" : "overlayClose");
           if (!open) setSelectedImportJobId(null);
         }}
       >

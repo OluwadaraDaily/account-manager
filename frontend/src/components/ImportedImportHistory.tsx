@@ -168,7 +168,7 @@ export function ImportedImportHistory({
             type="button"
             onClick={() => setPage((currentPage) => currentPage - 1)}
             disabled={loading || !history.pagination.hasPrevious}
-            className="border-line text-ink rounded-full border px-3 py-1.5 text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+            className="border-line text-ink rounded-none border px-3 py-1.5 text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
           >
             Previous
           </button>
@@ -179,7 +179,7 @@ export function ImportedImportHistory({
             type="button"
             onClick={() => setPage((currentPage) => currentPage + 1)}
             disabled={loading || !history.pagination.hasNext}
-            className="border-line text-ink rounded-full border px-3 py-1.5 text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
+            className="border-line text-ink rounded-none border px-3 py-1.5 text-[11px] font-semibold disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
           </button>

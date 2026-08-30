@@ -1,4 +1,5 @@
-export type SensoryCue = "tap" | "navigation" | "success" | "error";
+export type SensoryCue =
+  "tap" | "navigation" | "success" | "error" | "overlayOpen" | "overlayClose";
 
 const soundPreferenceKey = "account-manager-sound-enabled";
 let audioContext: AudioContext | null = null;
@@ -38,6 +39,8 @@ export function playSensoryCue(cue: SensoryCue) {
     navigation: { frequency: 330, duration: 0.12, volume: 0.04 },
     success: { frequency: 660, duration: 0.18, volume: 0.045 },
     error: { frequency: 190, duration: 0.14, volume: 0.03 },
+    overlayOpen: { frequency: 280, duration: 0.09, volume: 0.035 },
+    overlayClose: { frequency: 220, duration: 0.08, volume: 0.03 },
   }[cue];
 
   oscillator.type = "sine";
@@ -45,6 +48,10 @@ export function playSensoryCue(cue: SensoryCue) {
   if (cue === "navigation")
     oscillator.frequency.linearRampToValueAtTime(440, now + settings.duration);
   if (cue === "success") oscillator.frequency.linearRampToValueAtTime(880, now + settings.duration);
+  if (cue === "overlayOpen")
+    oscillator.frequency.linearRampToValueAtTime(360, now + settings.duration);
+  if (cue === "overlayClose")
+    oscillator.frequency.linearRampToValueAtTime(160, now + settings.duration);
   oscillator.connect(gain);
   gain.connect(context.destination);
   gain.gain.setValueAtTime(0, now);

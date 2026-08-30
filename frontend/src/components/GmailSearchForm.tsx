@@ -11,7 +11,7 @@ import { localDateRangeToUnixSeconds } from "../google/gmailSearch";
 import { playSensoryCue } from "../utils/sensoryFeedback";
 
 const inputClassName =
-  "border-line bg-card text-ink focus:border-moss focus-visible:ring-moss min-w-0 rounded-[12px] border px-3 py-2.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
+  "border-line bg-card text-ink focus:border-moss focus-visible:ring-moss min-w-0 rounded-none border px-3 py-2.5 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 const activeImportJobStorageKey = "account-manager-active-import-job";
 
 type SearchForm = {
@@ -362,7 +362,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
           <button
             type="submit"
             disabled={searching || importActive || banksLoading || !searchForm.bankId}
-            className="focus-visible:ring-moss focus-visible:ring-offset-paper w-max rounded-[12px] bg-white px-4 py-2.5 text-[12px] font-bold text-black transition hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
+            className="focus-visible:ring-moss focus-visible:ring-offset-paper w-max rounded-none bg-white px-4 py-2.5 text-[12px] font-bold text-black transition hover:bg-zinc-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60"
           >
             {searching
               ? "Starting Gmail import…"
@@ -409,7 +409,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
             </p>
           )}
           <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
-            <div className="border-line rounded-[10px] border px-2 py-2">
+            <div className="border-line border px-2 py-2">
               <dt className="text-[10px] font-semibold tracking-[0.08em] uppercase">
                 Messages imported
               </dt>
@@ -417,7 +417,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
                 {job.progress.messagesProcessed}
               </dd>
             </div>
-            <div className="border-line rounded-[10px] border px-2 py-2">
+            <div className="border-line border px-2 py-2">
               <dt className="text-[10px] font-semibold tracking-[0.08em] uppercase">
                 Transactions extracted
               </dt>
@@ -425,7 +425,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
                 {job.progress.transactionsExtracted}
               </dd>
             </div>
-            <div className="border-line rounded-[10px] border px-2 py-2">
+            <div className="border-line border px-2 py-2">
               <dt className="text-[10px] font-semibold tracking-[0.08em] uppercase">
                 Messages skipped
               </dt>
