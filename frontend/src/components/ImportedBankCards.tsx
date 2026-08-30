@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { listImportedBanks, type ImportedBankSummary } from "../google/gmailAuth";
+import { InlineAlert } from "./InlineAlert";
 
 type ImportedBankCardsProps = {
   selectedBankId: string;
@@ -19,6 +20,7 @@ export function ImportedBankCards({
   const [banks, setBanks] = useState<ImportedBankSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +47,7 @@ export function ImportedBankCards({
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, [refreshKey, retryKey]);
 
   useEffect(() => {
     if (loading) return;
@@ -79,9 +81,7 @@ export function ImportedBankCards({
 
       {loading && <p className="text-muted text-[12px]">Loading imported banks…</p>}
       {error && (
-        <p className="text-muted text-[12px]" role="alert">
-          {error}
-        </p>
+        <InlineAlert message={error} onRetry={() => setRetryKey((current) => current + 1)} />
       )}
       {!loading && !error && banks.length === 0 && (
         <p className="text-muted text-[12px]">No previous imports yet.</p>

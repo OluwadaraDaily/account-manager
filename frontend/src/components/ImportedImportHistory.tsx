@@ -5,6 +5,7 @@ import {
   type GmailImportHistoryPage,
 } from "../google/gmailAuth";
 import { playSensoryCue } from "../utils/sensoryFeedback";
+import { InlineAlert } from "./InlineAlert";
 
 type ImportedImportHistoryProps = {
   bankId: string;
@@ -51,6 +52,7 @@ export function ImportedImportHistory({
   const [history, setHistory] = useState<GmailImportHistoryPage | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +86,7 @@ export function ImportedImportHistory({
     return () => {
       cancelled = true;
     };
-  }, [bankId, page, refreshKey]);
+  }, [bankId, page, refreshKey, retryKey]);
 
   if (!bankId) return null;
 
@@ -114,9 +116,7 @@ export function ImportedImportHistory({
 
       {loading && <p className="text-muted text-[12px]">Loading import history…</p>}
       {error && (
-        <p className="text-muted text-[12px]" role="alert">
-          {error}
-        </p>
+        <InlineAlert message={error} onRetry={() => setRetryKey((current) => current + 1)} />
       )}
       {!loading && !error && history?.jobs.length === 0 && (
         <div className="border-line bg-paper grid gap-4 border p-5 sm:grid-cols-[1fr_auto] sm:items-end">

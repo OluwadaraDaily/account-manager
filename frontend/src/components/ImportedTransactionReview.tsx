@@ -13,6 +13,7 @@ import {
 } from "../utils/exportTransactions";
 import { formatNaira, formatTransactionDate } from "../utils/transactionPeriods";
 import { playSensoryCue } from "../utils/sensoryFeedback";
+import { InlineAlert } from "./InlineAlert";
 
 type ImportedTransactionReviewProps = {
   bankId: string;
@@ -87,6 +88,7 @@ export function ImportedTransactionReview({
   >({});
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const needsReviewCount = transactions.filter(
     (transaction) => transaction.reviewStatus === "needs-review",
   ).length;
@@ -144,7 +146,7 @@ export function ImportedTransactionReview({
     return () => {
       cancelled = true;
     };
-  }, [bankId, importJobId, refreshKey]);
+  }, [bankId, importJobId, refreshKey, retryKey]);
 
   const saveTransaction = async (transactionId: string) => {
     const draft = draftTransactions[transactionId];
@@ -277,9 +279,7 @@ export function ImportedTransactionReview({
 
       {loading && <p className="text-muted text-[12px]">Loading imported transactions…</p>}
       {error && (
-        <p className="text-muted text-[12px]" role="alert">
-          {error}
-        </p>
+        <InlineAlert message={error} onRetry={() => setRetryKey((current) => current + 1)} />
       )}
       {!loading && !error && transactions.length === 0 && (
         <p className="text-muted text-[12px]">No imported transactions for this bank yet.</p>
