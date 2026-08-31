@@ -15,6 +15,7 @@ import { formatNaira, formatTransactionDate } from "../utils/transactionPeriods"
 import { playSensoryCue } from "../utils/sensoryFeedback";
 import { InlineAlert } from "./InlineAlert";
 import { TransactionTabs } from "./TransactionTabs";
+import { TransactionGroupingSummary } from "./TransactionGroupingSummary";
 
 type ImportedTransactionReviewProps = {
   bankId: string;
@@ -304,6 +305,13 @@ export function ImportedTransactionReview({
           onTabChange={setActiveTab}
           needsReviewCount={needsReviewCount}
           confirmedCount={readyCount}
+        />
+      )}
+      {!loading && !error && transactions.length > 0 && (
+        <TransactionGroupingSummary
+          bankId={bankId}
+          transactionIds={transactions.map((transaction) => transaction.id)}
+          refreshKey={refreshKey}
         />
       )}
       {!loading && !error && transactions.length > 0 && (
