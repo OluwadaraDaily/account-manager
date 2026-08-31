@@ -5,6 +5,7 @@ import {
   createTransactionGroup,
   listTransactionGroupMemberships,
   listTransactionGroups,
+  renameTransactionGroup,
 } from "../api/transactionGroups";
 import { InlineAlert } from "./InlineAlert";
 
@@ -23,6 +24,8 @@ export function TransactionGroupingSummary({
   const [createFormOpen, setCreateFormOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+  const [editingGroupName, setEditingGroupName] = useState("");
   const createGroupMutation = useMutation({
     mutationFn: () => createTransactionGroup(bankId, groupName.trim()),
     onSuccess: () => {
@@ -33,6 +36,19 @@ export function TransactionGroupingSummary({
     },
     onError: (error: unknown) => {
       setFormError(error instanceof Error ? error.message : "The group could not be created.");
+    },
+  });
+  const renameGroupMutation = useMutation({
+    mutationFn: ({ groupId, name }: { groupId: string; name: string }) =>
+      renameTransactionGroup(bankId, groupId, name),
+    onSuccess: () => {
+      setEditingGroupId(null);
+      setEditingGroupName("");
+      setFormError(null);
+      void queryClient.invalidateQueries({ queryKey: ["transaction-groups", bankId] });
+    },
+    onError: (error: unknown) => {
+      setFormError(error instanceof Error ? error.message : "The group could not be renamed.");
     },
   });
   const groupsQuery = useQuery({
@@ -153,9 +169,74 @@ export function TransactionGroupingSummary({
       {formError && <p className="text-muted mt-2 text-[11px]">{formError}</p>}
       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
         {groupsQuery.data.map((group) => (
-          <div key={group.id} className="flex items-baseline gap-2 text-[11px]">
-            <span className="text-ink font-semibold">{group.name}</span>
-            <span className="text-muted">{countsByGroup.get(group.id) ?? 0}</span>
+          <div key={group.id} className="flex min-w-0 items-center gap-2 text-[11px]">
+            {editingGroupId === group.id ? (
+              <form
+                className="flex min-w-0 items-center gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const trimmedName = editingGroupName.trim();
+                  if (!trimmedName) {
+                    setFormError("Enter a name for this group.");
+                    return;
+                  }
+                  setFormError(null);
+                  renameGroupMutation.mutate({ groupId: group.id, name: trimmedName });
+                }}
+              >
+                <label className="sr-only" htmlFor={`rename-group-${group.id}`}>
+                  Rename {group.name}
+                </label>
+                <input
+                  id={`rename-group-${group.id}`}
+                  type="text"
+                  value={editingGroupName}
+                  onChange={(event) => setEditingGroupName(event.target.value)}
+                  maxLength={80}
+                  disabled={renameGroupMutation.isPending}
+                  className="border-line bg-paper text-ink min-h-8 w-36 rounded-none border px-2 text-[11px] outline-none focus-visible:ring-1 focus-visible:ring-white"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={renameGroupMutation.isPending}
+                  className="h-8 rounded-none bg-white px-2 font-mono text-[10px] text-black uppercase hover:bg-zinc-200 disabled:opacity-70"
+                >
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingGroupId(null);
+                    setFormError(null);
+                  }}
+                  disabled={renameGroupMutation.isPending}
+                  className="text-muted hover:text-ink h-8 rounded-none px-1 font-mono text-[10px] uppercase"
+                >
+                  Cancel
+                </Button>
+              </form>
+            ) : (
+              <>
+                <span className="text-ink font-semibold">{group.name}</span>
+                <span className="text-muted">{countsByGroup.get(group.id) ?? 0}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setEditingGroupId(group.id);
+                    setEditingGroupName(group.name);
+                    setFormError(null);
+                  }}
+                  className="text-muted hover:text-ink h-7 rounded-none px-1 font-mono text-[9px] uppercase"
+                >
+                  Rename
+                </Button>
+              </>
+            )}
           </div>
         ))}
         {groupsQuery.data.length === 0 && <p className="text-muted text-[11px]">No groups created yet.</p>}
