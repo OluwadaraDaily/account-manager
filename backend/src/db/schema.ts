@@ -89,6 +89,29 @@ const importJobTransactionSchema = `
   )
 `;
 
+const transactionGroupingSchema = `
+  CREATE TABLE IF NOT EXISTS transaction_groups (
+    group_id TEXT PRIMARY KEY,
+    google_subject TEXT NOT NULL,
+    bank_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS transaction_group_memberships (
+    transaction_id TEXT PRIMARY KEY,
+    group_id TEXT NOT NULL,
+    google_subject TEXT NOT NULL,
+    bank_id TEXT NOT NULL,
+    assignment_source TEXT NOT NULL CHECK (assignment_source IN ('manual')),
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL,
+    FOREIGN KEY (group_id) REFERENCES transaction_groups(group_id) ON DELETE CASCADE,
+    FOREIGN KEY (transaction_id) REFERENCES normalized_transactions(transaction_id) ON DELETE CASCADE
+  )
+`;
+
 const bankDirectorySchema = `
   CREATE TABLE IF NOT EXISTS bank_directory (
     bank_id TEXT PRIMARY KEY,
@@ -117,6 +140,13 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     await connection.pool.query(importJobSchema);
     await connection.pool.query(normalizedTransactionSchema);
     await connection.pool.query(importJobTransactionSchema);
+    await connection.pool.query(transactionGroupingSchema);
+    await connection.pool.query(
+      "CREATE UNIQUE INDEX IF NOT EXISTS transaction_groups_user_bank_name_idx ON transaction_groups (google_subject, bank_id, LOWER(name))",
+    );
+    await connection.pool.query(
+      "CREATE INDEX IF NOT EXISTS transaction_group_memberships_user_bank_group_idx ON transaction_group_memberships (google_subject, bank_id, group_id)",
+    );
     await connection.pool.query(
       "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS confidence TEXT NOT NULL DEFAULT 'low'",
     );
@@ -256,6 +286,13 @@ export async function initializeDatabase(connection: DatabaseConnection) {
     "CREATE INDEX IF NOT EXISTS gmail_import_jobs_user_bank_created_idx ON gmail_import_jobs (google_subject, bank_id, created_at DESC, job_id DESC)",
   );
   connection.database.exec(importJobTransactionSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
+  connection.database.exec(transactionGroupingSchema.replaceAll("TIMESTAMPTZ", "TEXT"));
+  connection.database.exec(
+    "CREATE UNIQUE INDEX IF NOT EXISTS transaction_groups_user_bank_name_idx ON transaction_groups (google_subject, bank_id, name COLLATE NOCASE)",
+  );
+  connection.database.exec(
+    "CREATE INDEX IF NOT EXISTS transaction_group_memberships_user_bank_group_idx ON transaction_group_memberships (google_subject, bank_id, group_id)",
+  );
   connection.database.exec(
     "CREATE INDEX IF NOT EXISTS gmail_import_job_transactions_user_bank_job_idx ON gmail_import_job_transactions (google_subject, bank_id, job_id, transaction_id)",
   );

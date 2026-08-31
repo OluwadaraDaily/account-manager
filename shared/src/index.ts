@@ -19,3 +19,23 @@ export type NormalizedTransaction = {
   reviewReasons: string[];
   reviewStatus: TransactionReviewStatus;
 };
+
+export type TransactionGroup = {
+  id: string;
+  name: string;
+  googleSubject: string;
+  bankId: string;
+  transactionCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TransactionGroupMembership = {
+  transactionId: string;
+  groupId: string;
+  googleSubject: string;
+  bankId: string;
+  assignmentSource: "manual";
+  createdAt: string;
+  updatedAt: string;
+};
