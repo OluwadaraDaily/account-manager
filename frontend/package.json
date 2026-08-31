@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@account-manager/shared": "0.1.0",
     "@tailwindcss/vite": "latest",
     "@tanstack/react-query": "^5.101.4",
     "@vitejs/plugin-react": "latest",

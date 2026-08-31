@@ -30,6 +30,8 @@ export type TransactionGroup = {
   updatedAt: string;
 };
 
+export type TransactionGroupResponse = Omit<TransactionGroup, "googleSubject" | "bankId">;
+
 export type TransactionGroupMembership = {
   transactionId: string;
   groupId: string;
@@ -39,3 +41,8 @@ export type TransactionGroupMembership = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type TransactionGroupMembershipResponse = Omit<
+  TransactionGroupMembership,
+  "googleSubject" | "bankId"
+>;

@@ -1,4 +1,8 @@
 import { Router } from "express";
+import type {
+  TransactionGroupMembershipResponse,
+  TransactionGroupResponse,
+} from "@account-manager/shared";
 import { appConfig } from "../config.js";
 import type { GroupingStore } from "../db/repositories/groupingStore.js";
 import { parseCookies } from "../http/cookies.js";
@@ -15,9 +19,19 @@ type GroupingRouterDependencies = {
   sessionStorePromise: Promise<{ get(sessionId: string): Promise<{ googleSubject: string } | null> }>;
 };
 
-function toGroupingResponse(group: Awaited<ReturnType<GroupingStore["create"]>>) {
+function toGroupingResponse(
+  group: Awaited<ReturnType<GroupingStore["create"]>>,
+): TransactionGroupResponse {
   const { googleSubject: _googleSubject, bankId: _bankId, ...safeGroup } = group;
   return safeGroup;
+}
+
+function toMembershipResponse(
+  membership: Awaited<ReturnType<GroupingStore["assign"]>>,
+): TransactionGroupMembershipResponse | null {
+  if (!membership) return null;
+  const { googleSubject: _googleSubject, bankId: _bankId, ...safeMembership } = membership;
+  return safeMembership;
 }
 
 export function createGroupingRouter({
@@ -121,7 +135,7 @@ export function createGroupingRouter({
         response.status(404).json({ error: "Group or transaction was not found." });
         return;
       }
-      response.json({ membership });
+      response.json({ membership: toMembershipResponse(membership) });
     },
   );
 
@@ -157,7 +171,7 @@ export function createGroupingRouter({
       account.googleSubject,
       response.locals.validatedQuery.bankId,
     );
-    response.json({ memberships });
+    response.json({ memberships: memberships.map((membership) => toMembershipResponse(membership)) });
   });
 
   return router;
