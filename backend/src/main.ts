@@ -15,6 +15,8 @@ import { createAuthRouter } from "./routes/authRoutes.js";
 import { createBankRouter } from "./routes/bankRoutes.js";
 import { createHealthRouter } from "./routes/healthRoutes.js";
 import { createImportRouter } from "./routes/importRoutes.js";
+import { createGroupingRouter } from "./routes/groupingRoutes.js";
+import { createGroupingStore } from "./db/repositories/groupingStore.js";
 
 const app = createApp();
 const databaseConnection = createDatabaseConnection();
@@ -33,6 +35,7 @@ const bankDirectoryStorePromise = databaseReady.then(() =>
 const transactionStorePromise = databaseReady.then(() =>
   createTransactionStore(databaseConnection),
 );
+const groupingStorePromise = databaseReady.then(() => createGroupingStore(databaseConnection));
 const importJobQueue = createGmailImportJobQueue({ importJobStorePromise });
 const runGmailImportJob = createGmailImportJobRunner({
   bankDirectoryStorePromise,
@@ -70,6 +73,7 @@ app.use(
     runGmailImportJob: importJobQueue.enqueue,
   }),
 );
+app.use(createGroupingRouter({ groupingStorePromise, sessionStorePromise }));
 
 const server = app.listen(appConfig.port, () => {
   console.log(`Account Manager backend listening on http://localhost:${appConfig.port}`);
