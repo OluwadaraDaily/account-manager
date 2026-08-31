@@ -2,7 +2,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   createTransactionGroup,
+  deleteTransactionGroup,
   listTransactionGroupMemberships,
   listTransactionGroups,
   renameTransactionGroup,
@@ -26,6 +35,7 @@ export function TransactionGroupingSummary({
   const [formError, setFormError] = useState<string | null>(null);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
   const [editingGroupName, setEditingGroupName] = useState("");
+  const [deletingGroup, setDeletingGroup] = useState<{ id: string; name: string } | null>(null);
   const createGroupMutation = useMutation({
     mutationFn: () => createTransactionGroup(bankId, groupName.trim()),
     onSuccess: () => {
@@ -49,6 +59,18 @@ export function TransactionGroupingSummary({
     },
     onError: (error: unknown) => {
       setFormError(error instanceof Error ? error.message : "The group could not be renamed.");
+    },
+  });
+  const deleteGroupMutation = useMutation({
+    mutationFn: (groupId: string) => deleteTransactionGroup(bankId, groupId),
+    onSuccess: () => {
+      setDeletingGroup(null);
+      setFormError(null);
+      void queryClient.invalidateQueries({ queryKey: ["transaction-groups", bankId] });
+      void queryClient.invalidateQueries({ queryKey: ["transaction-group-memberships", bankId] });
+    },
+    onError: (error: unknown) => {
+      setFormError(error instanceof Error ? error.message : "The group could not be deleted.");
     },
   });
   const groupsQuery = useQuery({
@@ -167,6 +189,42 @@ export function TransactionGroupingSummary({
         </form>
       )}
       {formError && <p className="text-muted mt-2 text-[11px]">{formError}</p>}
+      <Dialog
+        open={deletingGroup !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleteGroupMutation.isPending) setDeletingGroup(null);
+        }}
+      >
+        <DialogContent className="border-line bg-card text-ink rounded-none shadow-[0_24px_80px_rgba(0,0,0,0.35)]">
+          <DialogHeader>
+            <DialogTitle className="font-display tracking-[-0.04em]">Delete group?</DialogTitle>
+            <DialogDescription className="text-muted leading-6">
+              Delete “{deletingGroup?.name}”? Its transactions will be kept and returned to Ungrouped.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setDeletingGroup(null)}
+              disabled={deleteGroupMutation.isPending}
+              className="rounded-none font-mono text-[10px] uppercase"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (deletingGroup) deleteGroupMutation.mutate(deletingGroup.id);
+              }}
+              disabled={deleteGroupMutation.isPending || deletingGroup === null}
+              className="rounded-none bg-white font-mono text-[10px] text-black uppercase hover:bg-zinc-200 disabled:opacity-70"
+            >
+              {deleteGroupMutation.isPending ? "Deleting…" : "Delete group"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
         {groupsQuery.data.map((group) => (
           <div key={group.id} className="flex min-w-0 items-center gap-2 text-[11px]">
@@ -234,6 +292,18 @@ export function TransactionGroupingSummary({
                   className="text-muted hover:text-ink h-7 rounded-none px-1 font-mono text-[9px] uppercase"
                 >
                   Rename
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setDeletingGroup({ id: group.id, name: group.name });
+                    setFormError(null);
+                  }}
+                  className="text-muted hover:text-ink h-7 rounded-none px-1 font-mono text-[9px] uppercase"
+                >
+                  Delete
                 </Button>
               </>
             )}
