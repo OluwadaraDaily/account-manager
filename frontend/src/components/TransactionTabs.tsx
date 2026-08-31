@@ -2,6 +2,7 @@ type TransactionTabsProps = {
   activeTab: string;
   onTabChange: (tab: string) => void;
   needsReviewCount: number;
+  confirmedCount?: number;
 };
 
 import { playSensoryCue } from "../utils/sensoryFeedback";
@@ -10,26 +11,28 @@ export function TransactionTabs({
   activeTab,
   onTabChange,
   needsReviewCount,
+  confirmedCount,
 }: TransactionTabsProps) {
+  const tabs = [
+    { id: "Overview", label: "Overview" },
+    { id: "Needs review", label: "Needs review", count: needsReviewCount },
+    { id: "Confirmed", label: "Confirmed", count: confirmedCount },
+  ];
+
   return (
     <div className="border-line flex gap-6 border-b px-5 sm:px-7">
-      <Tab
-        label="Overview"
-        active={activeTab === "Overview"}
-        onClick={() => {
-          playSensoryCue("navigation");
-          onTabChange("Overview");
-        }}
-      />
-      <Tab
-        label="Needs review"
-        active={activeTab === "Needs review"}
-        onClick={() => {
-          playSensoryCue("navigation");
-          onTabChange("Needs review");
-        }}
-        count={needsReviewCount}
-      />
+      {tabs.map((tab) => (
+        <Tab
+          key={tab.id}
+          label={tab.label}
+          active={activeTab === tab.id}
+          onClick={() => {
+            playSensoryCue("navigation");
+            onTabChange(tab.id);
+          }}
+          count={tab.count}
+        />
+      ))}
     </div>
   );
 }

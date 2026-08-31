@@ -17,7 +17,10 @@ export function TransactionsPreview({
 }: TransactionsPreviewProps) {
   const [activeTab, setActiveTab] = useState("Overview");
   const visibleTransactions = transactions.filter(
-    (item) => activeTab === "Overview" || item.status === "Review",
+    (item) =>
+      activeTab === "Overview" ||
+      (activeTab === "Needs review" && item.status === "Review") ||
+      (activeTab === "Confirmed" && item.status === "Matched"),
   );
 
   return (
@@ -48,6 +51,7 @@ export function TransactionsPreview({
         activeTab={activeTab}
         onTabChange={setActiveTab}
         needsReviewCount={transactions.filter((item) => item.status === "Review").length}
+        confirmedCount={transactions.filter((item) => item.status === "Matched").length}
       />
       <TransactionTable transactions={visibleTransactions} />
     </section>

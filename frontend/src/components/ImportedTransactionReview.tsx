@@ -14,6 +14,7 @@ import {
 import { formatNaira, formatTransactionDate } from "../utils/transactionPeriods";
 import { playSensoryCue } from "../utils/sensoryFeedback";
 import { InlineAlert } from "./InlineAlert";
+import { TransactionTabs } from "./TransactionTabs";
 
 type ImportedTransactionReviewProps = {
   bankId: string;
@@ -87,6 +88,7 @@ export function ImportedTransactionReview({
     Record<string, EditableTransactionDraft>
   >({});
   const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("Needs review");
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
   const needsReviewCount = transactions.filter(
@@ -98,7 +100,14 @@ export function ImportedTransactionReview({
   const dismissedCount = transactions.filter(
     (transaction) => transaction.reviewStatus === "dismissed",
   ).length;
-  const totalAmount = transactions.reduce(
+  const visibleTransactions = transactions.filter((transaction) =>
+    activeTab === "Overview"
+      ? transaction.reviewStatus !== "dismissed"
+      : activeTab === "Needs review"
+        ? transaction.reviewStatus === "needs-review"
+        : transaction.reviewStatus === "ready",
+  );
+  const visibleTotalAmount = visibleTransactions.reduce(
     (total, transaction) => total + amountValue(transaction.amount),
     0,
   );
@@ -128,6 +137,11 @@ export function ImportedTransactionReview({
             ),
           );
           setEditingTransactionId(null);
+          setActiveTab(
+            nextTransactions.some((transaction) => transaction.reviewStatus === "needs-review")
+              ? "Needs review"
+              : "Overview",
+          );
         }
       })
       .catch((requestError: unknown) => {
@@ -285,6 +299,14 @@ export function ImportedTransactionReview({
         <p className="text-muted text-[12px]">No imported transactions for this bank yet.</p>
       )}
       {!loading && !error && transactions.length > 0 && (
+        <TransactionTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          needsReviewCount={needsReviewCount}
+          confirmedCount={readyCount}
+        />
+      )}
+      {!loading && !error && transactions.length > 0 && (
         <div className="border-line mb-4 border px-3 py-3" role="status" aria-live="polite">
           <p className="text-ink text-[12px] font-semibold">
             {needsReviewCount === 0 ? "Review complete." : "Review in progress."}
@@ -309,9 +331,18 @@ export function ImportedTransactionReview({
           </dl>
         </div>
       )}
-      {!loading && !error && transactions.length > 0 && (
+      {!loading && !error && transactions.length > 0 && visibleTransactions.length === 0 && (
+        <p className="text-muted py-5 text-[12px]">
+          {activeTab === "Needs review"
+            ? "No transactions need review."
+            : activeTab === "Confirmed"
+              ? "No confirmed transactions yet."
+              : "No transactions to show."}
+        </p>
+      )}
+      {!loading && !error && visibleTransactions.length > 0 && (
         <div className="grid gap-3 md:hidden">
-          {transactions.map((transaction) => {
+          {visibleTransactions.map((transaction) => {
             const draft = draftTransactions[transaction.id] ?? toEditableDraft(transaction);
             const changed = hasDraftChanges(transaction, draft);
             const label = transaction.description ?? transaction.id;
@@ -520,11 +551,11 @@ export function ImportedTransactionReview({
           })}
           <div className="border-line flex items-center justify-between border-t pt-4">
             <span className="text-muted text-[11px] font-semibold uppercase">Total</span>
-            <span className="text-ink text-[12px] font-bold">{formatNaira(totalAmount)}</span>
+            <span className="text-ink text-[12px] font-bold">{formatNaira(visibleTotalAmount)}</span>
           </div>
         </div>
       )}
-      {!loading && !error && transactions.length > 0 && (
+      {!loading && !error && visibleTransactions.length > 0 && (
         <div className="hidden overflow-x-auto overscroll-x-contain md:block">
           <table className="w-full min-w-[1180px] table-fixed text-left">
             <thead>
@@ -538,7 +569,7 @@ export function ImportedTransactionReview({
               </tr>
             </thead>
             <tbody>
-              {transactions.map((transaction) => {
+              {visibleTransactions.map((transaction) => {
                 const draft = draftTransactions[transaction.id] ?? toEditableDraft(transaction);
                 const changed = hasDraftChanges(transaction, draft);
                 const label = transaction.description ?? transaction.id;
@@ -758,7 +789,7 @@ export function ImportedTransactionReview({
                   Total
                 </td>
                 <td className="text-ink px-2 py-4 text-right text-[12px] font-bold">
-                  {formatNaira(totalAmount)}
+                  {formatNaira(visibleTotalAmount)}
                 </td>
                 <td className="px-2 py-4" />
               </tr>
