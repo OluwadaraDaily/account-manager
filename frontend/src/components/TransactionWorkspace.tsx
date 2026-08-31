@@ -43,7 +43,15 @@ export function TransactionWorkspace() {
         bankId={selectedBankId}
         refreshKey={importRefreshKey}
         selectedJobId={selectedImportJobId}
-        onSelect={setSelectedImportJobId}
+        onSelect={(jobId) => {
+          setSelectedImportJobId(jobId);
+          window.history.pushState(
+            {},
+            "",
+            `/workspace/imports/${encodeURIComponent(jobId)}?bankId=${encodeURIComponent(selectedBankId)}`,
+          );
+          window.dispatchEvent(new PopStateEvent("popstate"));
+        }}
       />
       <Sheet
         open={selectedImportJobId !== null}
