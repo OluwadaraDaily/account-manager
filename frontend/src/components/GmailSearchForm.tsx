@@ -44,6 +44,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
   const [searching, setSearching] = useState(false);
   const [job, setJob] = useState<GmailImportJob | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [lastSearchMode, setLastSearchMode] = useState<"sender" | "bank-fallback">("sender");
   const dateRangeError = Boolean(
     searchForm.fromDate && searchForm.toDate && searchForm.fromDate > searchForm.toDate,
@@ -63,6 +64,11 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
           Math.round((job.progress.messagesProcessed / job.progress.messagesDiscovered) * 100),
         )
       : 0;
+  const collapseDisabled = importActive || Boolean(error);
+
+  useEffect(() => {
+    if (collapseDisabled) setIsExpanded(true);
+  }, [collapseDisabled]);
 
   useEffect(() => {
     let cancelled = false;
@@ -245,32 +251,53 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
       aria-labelledby="gmail-search-heading"
       className="border-line bg-card border-b px-5 py-5 sm:px-7"
     >
-      <div className="mb-4">
-        <h2
-          id="gmail-search-heading"
-          className="text-moss text-[11px] font-bold tracking-[0.16em] uppercase"
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2
+            id="gmail-search-heading"
+            className="text-moss text-[11px] font-bold tracking-[0.16em] uppercase"
+          >
+            Search Gmail
+          </h2>
+          <p id="gmail-search-description" className="text-muted mt-1 text-[12px]">
+            Search matching messages on Gmail without loading your mailbox into the app.
+          </p>
+        </div>
+        <button
+          type="button"
+          aria-controls="gmail-search-fields"
+          aria-expanded={isExpanded}
+          disabled={collapseDisabled}
+          onClick={() => setIsExpanded((expanded) => !expanded)}
+          className="border-line text-muted focus-ring inline-flex min-h-10 shrink-0 items-center gap-2 border px-3 py-2 font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition hover:bg-white/5 hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Search Gmail
-        </h2>
-        <p id="gmail-search-description" className="text-muted mt-1 text-[12px]">
-          Search matching messages on Gmail without loading your mailbox into the app.
-        </p>
+          {isExpanded ? "Hide search" : "Show search"}
+          <span className={`transition-transform ${isExpanded ? "rotate-180" : ""}`}>
+            <Icon name="chevron" size={14} />
+          </span>
+        </button>
       </div>
-      <form
-        onSubmit={submitSearch}
-        aria-busy={searching || importActive}
-        aria-describedby={
-          error
-            ? dateRangeError
-              ? "gmail-date-range-error"
-              : "gmail-search-error"
-            : "gmail-search-description"
-        }
-        className="grid gap-3 md:grid-cols-2 lg:grid-cols-6"
-      >
+      {!isExpanded && job && (
+        <p className="text-muted mt-3 font-mono text-[10px] tracking-[0.08em] uppercase">
+          {job.name ?? "Unnamed import"} · {job.status}
+        </p>
+      )}
+      <div id="gmail-search-fields" hidden={!isExpanded}>
+        <form
+          onSubmit={submitSearch}
+          aria-busy={searching || importActive}
+          aria-describedby={
+            error
+              ? dateRangeError
+                ? "gmail-date-range-error"
+                : "gmail-search-error"
+              : "gmail-search-description"
+          }
+          className="mt-5 grid gap-x-4 gap-y-4 md:grid-cols-2 xl:grid-cols-4"
+        >
         <label
           htmlFor="gmail-import-name"
-          className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold md:col-span-2 lg:col-span-2"
+          className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold"
         >
           Import name <span className="text-muted/70 font-normal">(optional)</span>
           <input
@@ -314,7 +341,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
         </label>
         <label
           htmlFor="gmail-sender-email"
-          className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold"
+          className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold xl:col-span-2"
         >
           Sender email
           <input
@@ -396,7 +423,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
             className={inputClassName}
           />
         </label>
-        <div className="flex justify-end md:col-span-2 lg:col-span-6">
+        <div className="flex justify-end md:col-span-2 xl:col-span-4">
           <button
             type="submit"
             disabled={searching || importActive || banksLoading || !searchForm.bankId}
@@ -409,7 +436,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
                 : "Search matching messages"}
           </button>
         </div>
-      </form>
+        </form>
       {error && (
         <div
           id={dateRangeError ? "gmail-date-range-error" : "gmail-search-error"}
@@ -525,6 +552,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
           </dl>
         </div>
       )}
+      </div>
     </section>
   );
 }
