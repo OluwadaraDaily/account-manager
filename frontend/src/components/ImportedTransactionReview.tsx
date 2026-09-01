@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { CheckIcon, PencilIcon, XIcon } from "lucide-react";
 import {
@@ -16,6 +17,13 @@ import { playSensoryCue } from "../utils/sensoryFeedback";
 import { InlineAlert } from "./InlineAlert";
 import { TransactionTabs } from "./TransactionTabs";
 import { TransactionGroupingSummary } from "./TransactionGroupingSummary";
+import { TransactionGroupSelect } from "./TransactionGroupSelect";
+import {
+  assignTransactionToGroup,
+  listTransactionGroupMemberships,
+  listTransactionGroups,
+  unassignTransaction,
+} from "../api/transactionGroups";
 
 type ImportedTransactionReviewProps = {
   bankId: string;
@@ -82,6 +90,7 @@ export function ImportedTransactionReview({
   importJobId,
   refreshKey,
 }: ImportedTransactionReviewProps) {
+  const queryClient = useQueryClient();
   const [transactions, setTransactions] = useState<ImportedTransaction[]>([]);
   const [loading, setLoading] = useState(false);
   const [savingTransactionId, setSavingTransactionId] = useState<string | null>(null);
@@ -92,6 +101,39 @@ export function ImportedTransactionReview({
   const [activeTab, setActiveTab] = useState("Needs review");
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [movingTransactionId, setMovingTransactionId] = useState<string | null>(null);
+  const groupsQuery = useQuery({
+    queryKey: ["transaction-groups", bankId, refreshKey],
+    queryFn: () => listTransactionGroups(bankId),
+    enabled: Boolean(bankId),
+  });
+  const membershipsQuery = useQuery({
+    queryKey: ["transaction-group-memberships", bankId, refreshKey],
+    queryFn: () => listTransactionGroupMemberships(bankId),
+    enabled: Boolean(bankId),
+  });
+  const moveTransactionMutation = useMutation({
+    mutationFn: async ({ transactionId, groupId }: { transactionId: string; groupId: string }) => {
+      if (groupId) {
+        await assignTransactionToGroup(bankId, groupId, transactionId);
+        return;
+      }
+      await unassignTransaction(bankId, transactionId);
+    },
+    onSuccess: () => {
+      setMovingTransactionId(null);
+      void queryClient.invalidateQueries({ queryKey: ["transaction-groups", bankId] });
+      void queryClient.invalidateQueries({ queryKey: ["transaction-group-memberships", bankId] });
+    },
+    onError: (requestError: unknown) => {
+      setMovingTransactionId(null);
+      setError(
+        requestError instanceof Error
+          ? requestError.message
+          : "The transaction could not be moved.",
+      );
+    },
+  });
   const needsReviewCount = transactions.filter(
     (transaction) => transaction.reviewStatus === "needs-review",
   ).length;
@@ -112,6 +154,15 @@ export function ImportedTransactionReview({
     (total, transaction) => total + amountValue(transaction.amount),
     0,
   );
+  const groupIdByTransactionId = new Map(
+    (membershipsQuery.data ?? []).map((membership) => [membership.transactionId, membership.groupId]),
+  );
+
+  const moveTransaction = (transactionId: string, groupId: string) => {
+    setError(null);
+    setMovingTransactionId(transactionId);
+    moveTransactionMutation.mutate({ transactionId, groupId });
+  };
 
   useEffect(() => {
     let cancelled = false;
