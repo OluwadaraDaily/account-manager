@@ -446,9 +446,14 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
         >
           <div className="border-line border p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-ink font-mono text-[10px] font-bold tracking-[0.1em] uppercase">
-                Import status / {job.status}
-              </p>
+              <div>
+                <p className="text-ink font-mono text-[10px] font-bold tracking-[0.1em] uppercase">
+                  {job.name ?? "Unnamed import"}
+                </p>
+                <p className="text-muted mt-1 font-mono text-[10px] tracking-[0.1em] uppercase">
+                  Import status / {job.status}
+                </p>
+              </div>
               <p className="font-mono text-[10px] tracking-[0.08em] uppercase">
                 Attempt {job.attemptCount} / 3
               </p>

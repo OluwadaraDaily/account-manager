@@ -161,9 +161,12 @@ export function ImportedImportHistory({
                   />
                   <div>
                     <p className="text-ink font-mono text-[11px] font-semibold tracking-[0.02em]">
+                      {item.name ?? "Unnamed import"}
+                    </p>
+                    <p className="text-muted mt-1 text-[11px]">
                       {item.completedAt
-                        ? formatDateTime(item.completedAt)
-                        : formatDateTime(item.createdAt)}
+                        ? `Completed ${formatDateTime(item.completedAt)}`
+                        : `Started ${formatDateTime(item.createdAt)}`}
                     </p>
                     <p className="text-muted mt-1 text-[11px]">
                       {formatDateRange(item)} · {item.progress.transactionsExtracted} transaction
