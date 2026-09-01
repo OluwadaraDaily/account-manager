@@ -9,6 +9,7 @@ export type TransactionReviewStatus = "ready" | "needs-review" | "dismissed";
 export type NormalizedTransaction = {
   sourceMessageId: string;
   transactionDate: string | null;
+  transactionTime: string | null;
   direction: "debit" | "credit" | null;
   amount: string | null;
   currency: string | null;

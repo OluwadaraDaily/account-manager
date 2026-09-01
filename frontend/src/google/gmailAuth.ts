@@ -117,6 +117,7 @@ export type ImportedTransaction = {
   id: string;
   sourceMessageId: string;
   transactionDate: string | null;
+  transactionTime: string | null;
   direction: "debit" | "credit" | null;
   amount: string | null;
   currency: string | null;
@@ -133,6 +134,7 @@ export type ImportedTransaction = {
 export type ImportedTransactionUpdate = {
   direction?: "debit" | "credit";
   transactionDate?: string | null;
+  transactionTime?: string | null;
   amount?: string | null;
   counterparty?: string | null;
   description?: string | null;

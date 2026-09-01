@@ -61,6 +61,7 @@ const normalizedTransactionSchema = `
     source_message_id TEXT NOT NULL,
     fingerprint TEXT NOT NULL,
     transaction_date TEXT,
+    transaction_time TEXT,
     direction TEXT CHECK (direction IN ('debit', 'credit') OR direction IS NULL),
     amount TEXT,
     currency TEXT,
@@ -151,6 +152,9 @@ export async function initializeDatabase(connection: DatabaseConnection) {
       "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS confidence TEXT NOT NULL DEFAULT 'low'",
     );
     await connection.pool.query(
+      "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS transaction_time TEXT",
+    );
+    await connection.pool.query(
       "ALTER TABLE normalized_transactions ADD COLUMN IF NOT EXISTS review_reasons_json TEXT NOT NULL DEFAULT '[]'",
     );
     await connection.pool.query(
@@ -205,6 +209,9 @@ export async function initializeDatabase(connection: DatabaseConnection) {
       "ALTER TABLE normalized_transactions ADD COLUMN confidence TEXT NOT NULL DEFAULT 'low'",
     );
   }
+  if (!transactionColumns.some((column) => column.name === "transaction_time")) {
+    connection.database.exec("ALTER TABLE normalized_transactions ADD COLUMN transaction_time TEXT");
+  }
   if (!transactionColumns.some((column) => column.name === "review_reasons_json")) {
     connection.database.exec(
       "ALTER TABLE normalized_transactions ADD COLUMN review_reasons_json TEXT NOT NULL DEFAULT '[]'",
@@ -236,12 +243,12 @@ export async function initializeDatabase(connection: DatabaseConnection) {
       connection.database.exec(
         `INSERT INTO normalized_transactions_migrated (
           transaction_id, google_subject, bank_id, source_message_id, fingerprint,
-          transaction_date, direction, amount, currency, counterparty, description, channel,
+          transaction_date, transaction_time, direction, amount, currency, counterparty, description, channel,
           confidence, review_reasons_json, review_status, created_at, updated_at
         )
         SELECT
           transaction_id, google_subject, bank_id, source_message_id, fingerprint,
-          transaction_date, direction, amount, currency, counterparty, description, channel,
+          transaction_date, transaction_time, direction, amount, currency, counterparty, description, channel,
           confidence, review_reasons_json, review_status, created_at, updated_at
         FROM normalized_transactions`,
       );

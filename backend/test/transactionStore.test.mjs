@@ -118,6 +118,7 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
     "reviewStatus",
     "sourceMessageId",
     "transactionDate",
+    "transactionTime",
     "updatedAt",
   ]);
 

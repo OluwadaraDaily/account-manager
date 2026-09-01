@@ -7,6 +7,7 @@ function normalizePart(value: string | null) {
 export function buildTransactionFingerprint(transaction: NormalizedTransaction) {
   return [
     transaction.transactionDate,
+    transaction.transactionTime,
     transaction.direction,
     transaction.amount,
     transaction.currency,

@@ -14,6 +14,7 @@ export type NormalizedTransactionWrite = {
 export type NormalizedTransactionUpdate = {
   direction?: NormalizedTransaction["direction"];
   transactionDate?: NormalizedTransaction["transactionDate"];
+  transactionTime?: NormalizedTransaction["transactionTime"];
   amount?: NormalizedTransaction["amount"];
   counterparty?: NormalizedTransaction["counterparty"];
   description?: NormalizedTransaction["description"];
@@ -62,6 +63,7 @@ type TransactionRow = {
   source_message_id: string;
   fingerprint: string;
   transaction_date: string | null;
+  transaction_time: string | null;
   direction: "debit" | "credit" | null;
   amount: string | null;
   currency: string | null;
@@ -86,6 +88,7 @@ function toStoredTransaction(row: TransactionRow): StoredNormalizedTransaction {
     bankId: row.bank_id,
     sourceMessageId: row.source_message_id,
     transactionDate: row.transaction_date,
+    transactionTime: row.transaction_time,
     direction: row.direction,
     amount: row.amount,
     currency: row.currency,
@@ -105,7 +108,7 @@ function getColumns(tableAlias?: string) {
   return `
     ${prefix}transaction_id, ${prefix}google_subject, ${prefix}bank_id, ${prefix}source_message_id,
     ${prefix}fingerprint,
-    ${prefix}transaction_date, ${prefix}direction, ${prefix}amount, ${prefix}currency, ${prefix}counterparty, ${prefix}description, ${prefix}channel,
+    ${prefix}transaction_date, ${prefix}transaction_time, ${prefix}direction, ${prefix}amount, ${prefix}currency, ${prefix}counterparty, ${prefix}description, ${prefix}channel,
     ${prefix}confidence, ${prefix}review_reasons_json, ${prefix}review_status,
     ${prefix}created_at, ${prefix}updated_at`;
 }
@@ -118,6 +121,7 @@ function getValues(input: NormalizedTransactionWrite, transactionId: string, tim
     input.transaction.sourceMessageId,
     buildTransactionFingerprint(input.transaction),
     input.transaction.transactionDate,
+    input.transaction.transactionTime,
     input.transaction.direction,
     input.transaction.amount,
     input.transaction.currency,
@@ -150,6 +154,7 @@ function assertValidTransactionUpdate(
   if (
     changes.direction === undefined &&
     changes.transactionDate === undefined &&
+    changes.transactionTime === undefined &&
     changes.amount === undefined &&
     changes.counterparty === undefined &&
     changes.description === undefined &&
@@ -168,6 +173,8 @@ function applyUpdate(
     direction: changes.direction !== undefined ? changes.direction : transaction.direction,
     transactionDate:
       changes.transactionDate !== undefined ? changes.transactionDate : transaction.transactionDate,
+    transactionTime:
+      changes.transactionTime !== undefined ? changes.transactionTime : transaction.transactionTime,
     amount: changes.amount !== undefined ? changes.amount : transaction.amount,
     counterparty:
       changes.counterparty !== undefined ? changes.counterparty : transaction.counterparty,
@@ -192,9 +199,10 @@ export class SqliteTransactionStore implements TransactionStore {
       .prepare(
         `INSERT INTO normalized_transactions
           (${getColumns()})
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(google_subject, bank_id, source_message_id) DO UPDATE SET
            transaction_date = excluded.transaction_date,
+           transaction_time = excluded.transaction_time,
            direction = excluded.direction,
            amount = excluded.amount,
            currency = excluded.currency,
@@ -242,12 +250,13 @@ export class SqliteTransactionStore implements TransactionStore {
     this.database
       .prepare(
         `UPDATE normalized_transactions
-         SET transaction_date = ?, direction = ?, amount = ?, counterparty = ?, description = ?,
+         SET transaction_date = ?, transaction_time = ?, direction = ?, amount = ?, counterparty = ?, description = ?,
              review_status = ?, fingerprint = ?, updated_at = ?
          WHERE transaction_id = ? AND google_subject = ? AND bank_id = ?`,
       )
       .run(
         updated.transactionDate,
+        updated.transactionTime,
         updated.direction,
         updated.amount,
         updated.counterparty,
@@ -352,9 +361,10 @@ export class PostgresTransactionStore implements TransactionStore {
     const result = await this.pool.query<TransactionRow>(
       `INSERT INTO normalized_transactions
         (${getColumns()})
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        ON CONFLICT (google_subject, bank_id, source_message_id) DO UPDATE SET
          transaction_date = EXCLUDED.transaction_date,
+         transaction_time = EXCLUDED.transaction_time,
          direction = EXCLUDED.direction,
          amount = EXCLUDED.amount,
          currency = EXCLUDED.currency,
@@ -396,12 +406,13 @@ export class PostgresTransactionStore implements TransactionStore {
     const fingerprint = buildTransactionFingerprint(updated);
     const result = await this.pool.query<TransactionRow>(
       `UPDATE normalized_transactions
-       SET transaction_date = $1, direction = $2, amount = $3, counterparty = $4, description = $5,
-           review_status = $6, fingerprint = $7, updated_at = $8
-       WHERE transaction_id = $9 AND google_subject = $10 AND bank_id = $11
+       SET transaction_date = $1, transaction_time = $2, direction = $3, amount = $4, counterparty = $5, description = $6,
+           review_status = $7, fingerprint = $8, updated_at = $9
+       WHERE transaction_id = $10 AND google_subject = $11 AND bank_id = $12
        RETURNING ${getColumns()}`,
       [
         updated.transactionDate,
+        updated.transactionTime,
         updated.direction,
         updated.amount,
         updated.counterparty,

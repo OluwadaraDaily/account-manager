@@ -84,6 +84,27 @@ function parseDateValue(value: string | null) {
   return null;
 }
 
+function parseTimeValue(value: string | null) {
+  if (!value) return null;
+  const timeMatch = value.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?\b/i);
+  if (!timeMatch) return null;
+
+  let hours = Number(timeMatch[1]);
+  const minutes = Number(timeMatch[2]);
+  const seconds = Number(timeMatch[3] ?? "0");
+  const meridiem = timeMatch[4]?.toUpperCase();
+  if (minutes > 59 || seconds > 59) return null;
+  if (meridiem) {
+    if (hours < 1 || hours > 12) return null;
+    if (meridiem === "AM" && hours === 12) hours = 0;
+    if (meridiem === "PM" && hours !== 12) hours += 12;
+  } else if (hours > 23) {
+    return null;
+  }
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 function toIsoDate(year: number, month: number, day: number) {
   const date = new Date(Date.UTC(year, month - 1, day));
   if (
@@ -156,6 +177,7 @@ export function parseUnionBankTransaction(
   const transactionDateValue =
     captureField(bodyText, fieldLabels.date) ?? captureAdjacentField(bodyText, fieldLabels.date);
   const parsedTransactionDate = parseDateValue(transactionDateValue);
+  const transactionTime = parseTimeValue(transactionDateValue);
   const fallbackDate = fallbackMessageDate(message);
   const transactionDate = parsedTransactionDate ?? fallbackDate;
   const reviewReasons: string[] = [];
@@ -183,6 +205,7 @@ export function parseUnionBankTransaction(
   return {
     sourceMessageId: message.id,
     transactionDate,
+    transactionTime,
     direction,
     amount,
     currency: amount ? "NGN" : null,

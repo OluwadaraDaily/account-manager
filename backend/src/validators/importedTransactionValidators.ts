@@ -15,6 +15,11 @@ export const updateImportedTransactionBodySchema = z
       .regex(/^\d{4}-\d{2}-\d{2}$/, "transactionDate must use YYYY-MM-DD format.")
       .nullable()
       .optional(),
+    transactionTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}:\d{2}$/, "transactionTime must use HH:mm:ss format.")
+      .nullable()
+      .optional(),
     amount: z
       .string()
       .regex(/^\d+(?:\.\d{1,2})?$/, "amount must be a positive number with up to two decimals.")
@@ -28,6 +33,7 @@ export const updateImportedTransactionBodySchema = z
     (body) =>
       body.direction !== undefined ||
       body.transactionDate !== undefined ||
+      body.transactionTime !== undefined ||
       body.amount !== undefined ||
       body.counterparty !== undefined ||
       body.description !== undefined ||
