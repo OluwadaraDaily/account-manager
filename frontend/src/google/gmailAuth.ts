@@ -21,6 +21,7 @@ export type GmailSearchCriteria = {
 
 export type GmailImportCriteria = GmailSearchCriteria & {
   bankId: string;
+  name?: string;
   searchMode?: "sender" | "bank-fallback";
 };
 
@@ -61,6 +62,7 @@ export type GmailImportJobStatus = "queued" | "running" | "completed" | "failed"
 
 export type GmailImportJob = {
   id: string;
+  name: string | null;
   status: GmailImportJobStatus;
   attemptCount: number;
   nextAttemptAt: string | null;
@@ -85,6 +87,7 @@ export type GmailImportHistoryCriteria = {
 
 export type GmailImportHistoryItem = {
   id: string;
+  name: string | null;
   status: GmailImportJobStatus;
   criteria: GmailImportHistoryCriteria;
   progress: GmailImportJob["progress"];

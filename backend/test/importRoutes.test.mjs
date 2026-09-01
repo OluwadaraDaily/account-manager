@@ -242,6 +242,7 @@ test("lists historical import summaries for the authenticated user and bank", as
             {
               id: "job-1",
               googleSubject,
+              name: null,
               status: "completed",
               criteria: {
                 bankId,
@@ -318,6 +319,7 @@ test("lists historical import summaries for the authenticated user and bank", as
     jobs: [
       {
         id: "job-1",
+        name: null,
         status: "completed",
         criteria: {
           bankId: "union-bank",
@@ -353,6 +355,7 @@ test("lists historical import summaries for the authenticated user and bank", as
     toImportJobSummary({
       id: "job-1",
       googleSubject: "google-subject",
+      name: null,
       status: "completed",
       criteria: {
         bankId: "union-bank",
@@ -378,6 +381,7 @@ test("lists historical import summaries for the authenticated user and bank", as
     }),
     {
       id: "job-1",
+      name: null,
       status: "completed",
       criteria: {
         bankId: "union-bank",

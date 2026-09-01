@@ -45,6 +45,7 @@ export function toTransactionResponse(transaction: StoredNormalizedTransaction) 
 export function toImportJobSummary(job: ImportJob) {
   return {
     id: job.id,
+    name: job.name,
     status: job.status,
     criteria: job.criteria,
     progress: job.progress,
@@ -92,7 +93,7 @@ export function createImportRouter({
       request,
       response: Response<unknown, ValidatedLocals<typeof createImportJobBodySchema>>,
     ) => {
-      const { bankId, searchMode, senderEmail, after, before, subject, keyword } =
+      const { bankId, name, searchMode, senderEmail, after, before, subject, keyword } =
         response.locals.validatedBody;
       const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
       const sessionStore = await sessionStorePromise;
@@ -146,7 +147,7 @@ export function createImportRouter({
         before: before ?? null,
         subject: subject ?? null,
         keyword: keyword ?? null,
-      });
+      }, name ?? null);
 
       response.status(202).json({ job });
       void runGmailImportJob(job.id, account.googleSubject);

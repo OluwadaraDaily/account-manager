@@ -19,6 +19,7 @@ export type ImportJobCriteria = {
 export type ImportJob = {
   id: string;
   googleSubject: string;
+  name: string | null;
   status: ImportJobStatus;
   attemptCount: number;
   nextAttemptAt: string | null;
@@ -67,7 +68,7 @@ export type ImportedBankSummary = {
 };
 
 export interface ImportJobStore {
-  create(googleSubject: string, criteria: ImportJobCriteria): Promise<ImportJob>;
+  create(googleSubject: string, criteria: ImportJobCriteria, name?: string | null): Promise<ImportJob>;
   get(jobId: string, googleSubject: string): Promise<ImportJob | null>;
   claim(jobId: string, googleSubject: string): Promise<ImportJob | null>;
   requeueRunning(): Promise<void>;
@@ -85,6 +86,7 @@ export interface ImportJobStore {
 type ImportJobRow = {
   job_id: string;
   google_subject: string;
+  name: string | null;
   status: ImportJobStatus;
   attempt_count: number;
   next_attempt_at: string | null;
@@ -111,6 +113,7 @@ function toImportJob(row: ImportJobRow): ImportJob {
   return {
     id: row.job_id,
     googleSubject: row.google_subject,
+    name: row.name,
     status: row.status,
     attemptCount: row.attempt_count,
     nextAttemptAt: row.next_attempt_at,
@@ -146,7 +149,7 @@ function assertNonNegative(value: number, field: string) {
 
 function getColumns() {
   return `
-    job_id, google_subject, status, attempt_count, next_attempt_at, bank_id, search_mode, sender_email,
+    job_id, google_subject, name, status, attempt_count, next_attempt_at, bank_id, search_mode, sender_email,
     after_timestamp, before_timestamp,
     subject, keyword, page_token, messages_discovered, messages_processed,
     transactions_extracted, messages_skipped, error_message, created_at, updated_at,
@@ -163,20 +166,21 @@ export class SqliteImportJobStore implements ImportJobStore {
     this.database = database;
   }
 
-  async create(googleSubject: string, criteria: ImportJobCriteria) {
+  async create(googleSubject: string, criteria: ImportJobCriteria, name: string | null = null) {
     const id = randomUUID();
     const now = new Date().toISOString();
     this.database
       .prepare(
         `INSERT INTO gmail_import_jobs
-          (job_id, google_subject, status, bank_id, search_mode, sender_email,
+          (job_id, google_subject, name, status, bank_id, search_mode, sender_email,
            after_timestamp, before_timestamp,
            subject, keyword, created_at, updated_at)
-         VALUES (?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, 'queued', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .run(
         id,
         googleSubject,
+        name,
         criteria.bankId,
         criteria.searchMode,
         criteria.senderEmail,
@@ -340,18 +344,19 @@ export class PostgresImportJobStore implements ImportJobStore {
     private readonly ownsPool = true,
   ) {}
 
-  async create(googleSubject: string, criteria: ImportJobCriteria) {
+  async create(googleSubject: string, criteria: ImportJobCriteria, name: string | null = null) {
     const id = randomUUID();
     const result = await this.pool.query<ImportJobRow>(
       `INSERT INTO gmail_import_jobs
-        (job_id, google_subject, status, bank_id, search_mode, sender_email,
+        (job_id, google_subject, name, status, bank_id, search_mode, sender_email,
          after_timestamp, before_timestamp,
          subject, keyword, created_at, updated_at)
-       VALUES ($1, $2, 'queued', $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+       VALUES ($1, $2, $3, 'queued', $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
        RETURNING ${getColumns()}`,
       [
         id,
         googleSubject,
+        name,
         criteria.bankId,
         criteria.searchMode,
         criteria.senderEmail,

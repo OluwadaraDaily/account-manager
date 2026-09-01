@@ -56,6 +56,30 @@ test("lists import jobs only for the requested user and bank", async () => {
   database.close();
 });
 
+test("persists an optional import name", async () => {
+  const database = createSqliteDatabase(":memory:");
+  await initializeDatabase({ dialect: "sqlite", database, close: async () => database.close() });
+  const store = new SqliteImportJobStore(database, false);
+
+  const job = await store.create(
+    "google-subject",
+    {
+      bankId: "union-bank",
+      searchMode: "sender",
+      senderEmail: "alerts@example.com",
+      after: null,
+      before: null,
+      subject: null,
+      keyword: null,
+    },
+    "January Union Bank import",
+  );
+
+  assert.equal(job.name, "January Union Bank import");
+  assert.equal((await store.get(job.id, "google-subject"))?.name, "January Union Bank import");
+  database.close();
+});
+
 test("lists imported banks only for the requested user with import counts", async () => {
   const database = createSqliteDatabase(":memory:");
   await initializeDatabase({ dialect: "sqlite", database, close: async () => database.close() });
