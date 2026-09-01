@@ -254,6 +254,17 @@ export async function listGmailImportHistory(
   return response.data;
 }
 
+export async function renameGmailImportJob(
+  jobId: string,
+  name: string | null,
+): Promise<GmailImportJob> {
+  const response = await apiClient.patch<{ job: GmailImportJob }>(
+    `/imports/gmail/jobs/${encodeURIComponent(jobId)}`,
+    { name },
+  );
+  return response.data.job;
+}
+
 export async function listImportedBanks(): Promise<ImportedBankSummary[]> {
   const response = await apiClient.get<{ banks: ImportedBankSummary[] }>("/imports/gmail/banks");
   return response.data.banks;

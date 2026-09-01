@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   listGmailImportHistory,
+  renameGmailImportJob,
   type GmailImportHistoryItem,
   type GmailImportHistoryPage,
 } from "../google/gmailAuth";
@@ -53,6 +54,49 @@ export function ImportedImportHistory({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [savingJobId, setSavingJobId] = useState<string | null>(null);
+
+  const startRenaming = (item: GmailImportHistoryItem) => {
+    setError(null);
+    setEditingJobId(item.id);
+    setEditingName(item.name ?? "");
+  };
+
+  const cancelRenaming = () => {
+    if (savingJobId === null) {
+      setEditingJobId(null);
+      setEditingName("");
+    }
+  };
+
+  const saveRename = async (item: GmailImportHistoryItem) => {
+    if (!history || savingJobId !== null) return;
+
+    const previousHistory = history;
+    const nextName = editingName.trim() || null;
+    setHistory({
+      ...history,
+      jobs: history.jobs.map((job) => (job.id === item.id ? { ...job, name: nextName } : job)),
+    });
+    setEditingJobId(null);
+    setEditingName("");
+    setSavingJobId(item.id);
+
+    try {
+      await renameGmailImportJob(item.id, nextName);
+      playSensoryCue("success");
+    } catch (requestError: unknown) {
+      setHistory(previousHistory);
+      setError(
+        requestError instanceof Error ? requestError.message : "The import name could not be saved.",
+      );
+      playSensoryCue("error");
+    } finally {
+      setSavingJobId(null);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -143,46 +187,95 @@ export function ImportedImportHistory({
           </a>
         </div>
       )}
-      {!loading && !error && history && history.jobs.length > 0 && (
+      {!loading && history && history.jobs.length > 0 && (
         <ol className="border-line divide-line divide-y border">
           {history.jobs.map((item) => (
             <li key={item.id}>
-              <button
-                type="button"
-                onClick={() => onSelect(item.id)}
-                aria-pressed={selectedJobId === item.id}
-                className={`flex w-full flex-col gap-3 px-4 py-4 text-left transition sm:flex-row sm:items-center sm:justify-between ${
-                  selectedJobId === item.id ? "bg-white/10" : "hover:bg-white/5"
-                }`}
-              >
-                <div className="flex min-w-0 items-start gap-3">
-                  <span
-                    className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${item.status === "completed" ? "bg-moss" : "bg-line"}`}
-                  />
-                  <div>
-                    <p className="text-ink font-mono text-[11px] font-semibold tracking-[0.02em]">
-                      {item.name ?? "Unnamed import"}
-                    </p>
-                    <p className="text-muted mt-1 text-[11px]">
-                      {item.completedAt
-                        ? `Completed ${formatDateTime(item.completedAt)}`
-                        : `Started ${formatDateTime(item.createdAt)}`}
-                    </p>
-                    <p className="text-muted mt-1 text-[11px]">
-                      {formatDateRange(item)} · {item.progress.transactionsExtracted} transaction
-                      {item.progress.transactionsExtracted === 1 ? "" : "s"} extracted ·{" "}
-                      {item.progress.messagesSkipped} skipped
-                    </p>
-                  </div>
-                </div>
-                <span
-                  className={`font-mono text-[10px] font-semibold tracking-[0.1em] uppercase ${
-                    item.status === "completed" ? "text-ink" : "text-muted"
-                  }`}
+              {editingJobId === item.id ? (
+                <form
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    void saveRename(item);
+                  }}
+                  className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center"
                 >
-                  {statusLabel(item.status)}
-                </span>
-              </button>
+                  <input
+                    autoFocus
+                    type="text"
+                    maxLength={100}
+                    value={editingName}
+                    onChange={(event) => setEditingName(event.target.value)}
+                    aria-label="Import name"
+                    placeholder="Import name"
+                    className="border-line bg-card text-ink focus:border-moss focus-visible:ring-moss min-w-0 flex-1 rounded-none border px-3 py-2 text-[12px] outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={savingJobId !== null}
+                      className="bg-white px-3 py-2 font-mono text-[10px] font-bold tracking-[0.1em] text-black uppercase disabled:opacity-50"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelRenaming}
+                      disabled={savingJobId !== null}
+                      className="border-line text-muted border px-3 py-2 font-mono text-[10px] font-bold tracking-[0.1em] uppercase disabled:opacity-50"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="flex items-stretch">
+                  <button
+                    type="button"
+                    onClick={() => onSelect(item.id)}
+                    aria-pressed={selectedJobId === item.id}
+                    className={`flex min-w-0 flex-1 flex-col gap-3 px-4 py-4 text-left transition sm:flex-row sm:items-center sm:justify-between ${
+                      selectedJobId === item.id ? "bg-white/10" : "hover:bg-white/5"
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-start gap-3">
+                      <span
+                        className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${item.status === "completed" ? "bg-moss" : "bg-line"}`}
+                      />
+                      <div>
+                        <p className="text-ink font-mono text-[11px] font-semibold tracking-[0.02em]">
+                          {item.name ?? "Unnamed import"}
+                        </p>
+                        <p className="text-muted mt-1 text-[11px]">
+                          {item.completedAt
+                            ? `Completed ${formatDateTime(item.completedAt)}`
+                            : `Started ${formatDateTime(item.createdAt)}`}
+                        </p>
+                        <p className="text-muted mt-1 text-[11px]">
+                          {formatDateRange(item)} · {item.progress.transactionsExtracted} transaction
+                          {item.progress.transactionsExtracted === 1 ? "" : "s"} extracted ·{" "}
+                          {item.progress.messagesSkipped} skipped
+                        </p>
+                      </div>
+                    </div>
+                    <span
+                      className={`font-mono text-[10px] font-semibold tracking-[0.1em] uppercase ${
+                        item.status === "completed" ? "text-ink" : "text-muted"
+                      }`}
+                    >
+                      {statusLabel(item.status)}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => startRenaming(item)}
+                    disabled={savingJobId !== null}
+                    aria-label={`Rename ${item.name ?? "unnamed import"}`}
+                    className="border-line text-muted focus-ring border-l px-3 font-mono text-[10px] font-bold tracking-[0.1em] uppercase transition hover:bg-white/5 hover:text-ink disabled:opacity-50"
+                  >
+                    Rename
+                  </button>
+                </div>
+              )}
             </li>
           ))}
         </ol>
