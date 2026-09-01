@@ -293,10 +293,11 @@ export function TransactionGroupingSummary({
       <div className="mt-3 grid gap-2">
         {groupedTotals.map((group) => (
           <div key={group.id} className="border-line bg-paper min-w-0 border px-3 py-2 text-[11px]">
-            <div className="flex items-center justify-between gap-2">
-              {editingGroupId === group.id ? (
-              <form
-                className="flex min-w-0 items-center gap-2"
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0 flex-1">
+                {editingGroupId === group.id ? (
+                <form
+                  className="flex min-w-0 flex-wrap items-center gap-2"
                 onSubmit={(event) => {
                   event.preventDefault();
                   const trimmedName = editingGroupName.trim();
@@ -341,12 +342,20 @@ export function TransactionGroupingSummary({
                 >
                   Cancel
                 </Button>
-              </form>
-            ) : (
-              <>
+                </form>
+              ) : (
                 <span className="text-ink font-semibold">{group.name}</span>
-                {group.id !== "ungrouped" && (
-                  <>
+              )}
+              </div>
+              <div className="text-muted flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                <span>
+                {Array.from(totalsByGroup.get(group.id)?.values() ?? []).reduce(
+                  (count, summary) => count + summary.count,
+                  0,
+                )} transactions
+                </span>
+                {group.id !== "ungrouped" && editingGroupId !== group.id && (
+                  <div className="flex items-center gap-2">
                     <Button
                       type="button"
                       variant="ghost"
@@ -372,16 +381,9 @@ export function TransactionGroupingSummary({
                     >
                       Delete
                     </Button>
-                  </>
+                  </div>
                 )}
-              </>
-            )}
-              <span className="text-muted">
-                {Array.from(totalsByGroup.get(group.id)?.values() ?? []).reduce(
-                  (count, summary) => count + summary.count,
-                  0,
-                )} transactions
-              </span>
+              </div>
             </div>
             <div className="mt-2 grid gap-1 sm:grid-cols-3">
               {Array.from(totalsByGroup.get(group.id)?.entries() ?? []).map(([currency, summary]) => (
