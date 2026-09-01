@@ -39,6 +39,7 @@ export type ImportJob = {
 };
 
 export type ImportJobUpdate = {
+  name?: string | null;
   status?: ImportJobStatus;
   pageToken?: string | null;
   messagesDiscovered?: number;
@@ -295,6 +296,7 @@ export class SqliteImportJobStore implements ImportJobStore {
       values.push(value);
     };
 
+    if (changes.name !== undefined) addChange("name", changes.name);
     if (changes.status !== undefined) addChange("status", changes.status);
     if (changes.pageToken !== undefined) addChange("page_token", changes.pageToken);
     if (changes.messagesDiscovered !== undefined) {
@@ -467,6 +469,7 @@ export class PostgresImportJobStore implements ImportJobStore {
       parameterIndex += 1;
     };
 
+    if (changes.name !== undefined) addChange("name", changes.name);
     if (changes.status !== undefined) addChange("status", changes.status);
     if (changes.pageToken !== undefined) addChange("page_token", changes.pageToken);
     if (changes.messagesDiscovered !== undefined) {

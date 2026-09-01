@@ -25,6 +25,7 @@ import {
   importJobsQuerySchema,
   importMessagesQuerySchema,
   importTransactionsQuerySchema,
+  updateImportJobBodySchema,
   updateImportedTransactionBodySchema,
 } from "../validators/importValidators.js";
 
@@ -151,6 +152,36 @@ export function createImportRouter({
 
       response.status(202).json({ job });
       void runGmailImportJob(job.id, account.googleSubject);
+    },
+  );
+
+  router.patch(
+    "/imports/gmail/jobs/:jobId",
+    validateBody(updateImportJobBodySchema),
+    async (
+      request,
+      response: Response<unknown, ValidatedLocals<typeof updateImportJobBodySchema>>,
+    ) => {
+      const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
+      const sessionStore = await sessionStorePromise;
+      const account = sessionId ? await sessionStore.get(sessionId) : null;
+
+      if (!account) {
+        response.status(401).json({ error: "Gmail authentication is required." });
+        return;
+      }
+
+      const importJobStore = await importJobStorePromise;
+      const job = await importJobStore.update(request.params.jobId as string, account.googleSubject, {
+        name: response.locals.validatedBody.name,
+      });
+
+      if (!job) {
+        response.status(404).json({ error: "Import job was not found." });
+        return;
+      }
+
+      response.json({ job });
     },
   );
 

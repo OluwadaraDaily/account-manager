@@ -34,6 +34,12 @@ export const createImportJobBodySchema = gmailSearchCriteriaObjectSchema
 
 export type CreateImportJobBody = z.infer<typeof createImportJobBodySchema>;
 
+export const updateImportJobBodySchema = z.object({
+  name: z.string().trim().min(1).max(100).nullable(),
+});
+
+export type UpdateImportJobBody = z.infer<typeof updateImportJobBodySchema>;
+
 export const importMessageMetadataBodySchema = z.object({
   messageIds: z.array(z.string().min(1).max(200)).min(1).max(100),
 });
