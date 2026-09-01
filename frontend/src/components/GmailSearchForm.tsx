@@ -16,6 +16,7 @@ const inputClassName =
 const activeImportJobStorageKey = "account-manager-active-import-job";
 
 type SearchForm = {
+  name: string;
   bankId: string;
   senderEmail: string;
   fromDate: string;
@@ -30,6 +31,7 @@ type GmailSearchFormProps = {
 
 export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
   const [searchForm, setSearchForm] = useState<SearchForm>({
+    name: "",
     bankId: "",
     senderEmail: "",
     fromDate: "",
@@ -211,6 +213,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
 
     void createGmailImportJob({
       bankId: searchForm.bankId,
+      name: searchForm.name.trim() || undefined,
       searchMode,
       senderEmail: searchMode === "bank-fallback" ? undefined : searchForm.senderEmail || undefined,
       after,
@@ -265,6 +268,23 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
         }
         className="grid gap-3 md:grid-cols-2 lg:grid-cols-6"
       >
+        <label
+          htmlFor="gmail-import-name"
+          className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold md:col-span-2 lg:col-span-2"
+        >
+          Import name <span className="text-muted/70 font-normal">(optional)</span>
+          <input
+            id="gmail-import-name"
+            type="text"
+            maxLength={100}
+            value={searchForm.name}
+            onChange={(event) =>
+              setSearchForm((current) => ({ ...current, name: event.target.value }))
+            }
+            placeholder="January 2026 Union Bank"
+            className={inputClassName}
+          />
+        </label>
         <label
           htmlFor="gmail-bank"
           className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold"
