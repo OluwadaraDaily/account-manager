@@ -536,6 +536,20 @@ export function ImportedTransactionReview({
                   </dl>
                 )}
 
+                <div className="mt-4">
+                  <TransactionGroupSelect
+                    groups={groupsQuery.data ?? []}
+                    value={groupIdByTransactionId.get(transaction.id) ?? ""}
+                    onChange={(groupId) => moveTransaction(transaction.id, groupId)}
+                    disabled={
+                      movingTransactionId !== null ||
+                      groupsQuery.isPending ||
+                      membershipsQuery.isPending
+                    }
+                    label={label}
+                  />
+                </div>
+
                 <div className="border-line mt-4 border-t pt-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
@@ -624,6 +638,7 @@ export function ImportedTransactionReview({
                 <th className="px-2 py-3 font-semibold">Counterparty</th>
                 <th className="px-2 py-3 font-semibold">Transaction type</th>
                 <th className="px-2 py-3 text-right font-semibold">Amount</th>
+                <th className="px-2 py-3 font-semibold">Group</th>
                 <th className="px-2 py-3 font-semibold">Review</th>
               </tr>
             </thead>
@@ -755,6 +770,19 @@ export function ImportedTransactionReview({
                       )}
                     </td>
                     <td className="px-2 py-4 text-[12px]">
+                      <TransactionGroupSelect
+                        groups={groupsQuery.data ?? []}
+                        value={groupIdByTransactionId.get(transaction.id) ?? ""}
+                        onChange={(groupId) => moveTransaction(transaction.id, groupId)}
+                        disabled={
+                          movingTransactionId !== null ||
+                          groupsQuery.isPending ||
+                          membershipsQuery.isPending
+                        }
+                        label={label}
+                      />
+                    </td>
+                    <td className="px-2 py-4 text-[12px]">
                       <div className="grid min-w-[220px] grid-cols-[minmax(0,1fr)_4.5rem_4rem] items-center gap-2">
                         <div className="min-w-0">
                           <span
@@ -842,7 +870,7 @@ export function ImportedTransactionReview({
             <tfoot>
               <tr className="border-line border-t">
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="text-muted px-2 py-4 text-right text-[12px] font-semibold"
                 >
                   Total
