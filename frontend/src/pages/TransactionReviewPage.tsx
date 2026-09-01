@@ -1,5 +1,7 @@
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { ImportedTransactionReview } from "@/components/ImportedTransactionReview";
+import { getGmailImportJob } from "@/google/gmailAuth";
 import { playSensoryCue } from "@/utils/sensoryFeedback";
 
 type TransactionReviewPageProps = {
@@ -8,6 +10,12 @@ type TransactionReviewPageProps = {
 };
 
 export function TransactionReviewPage({ bankId, importJobId }: TransactionReviewPageProps) {
+  const importJobQuery = useQuery({
+    queryKey: ["gmail-import-job", importJobId],
+    queryFn: () => getGmailImportJob(importJobId),
+  });
+  const importName = importJobQuery.data?.name ?? "Unnamed import";
+
   const goBackToWorkspace = () => {
     playSensoryCue("navigation");
     window.history.pushState({}, "", "/workspace");
@@ -31,7 +39,7 @@ export function TransactionReviewPage({ bankId, importJobId }: TransactionReview
             workspace / transaction review
           </p>
           <h1 className="font-display mt-2 text-3xl font-bold tracking-[-0.06em]">
-            Imported transactions
+            {importName}
           </h1>
           <p className="text-muted mt-2 text-[12px]">
             Review and confirm the transactions extracted from this import.
