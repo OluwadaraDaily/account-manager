@@ -42,6 +42,10 @@ export function formatTransactionDate(value: string) {
     : value;
 }
 
+export function formatTransactionTime(value: string | null) {
+  return value ?? "Time unavailable";
+}
+
 function amountValue(value: string) {
   return Number(value.replaceAll(",", "").replace(/[^\d.-]/g, "")) || 0;
 }

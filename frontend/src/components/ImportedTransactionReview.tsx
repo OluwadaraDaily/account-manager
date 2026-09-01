@@ -12,7 +12,11 @@ import {
   downloadImportedTransactionsAsCsv,
   downloadImportedTransactionsAsXlsx,
 } from "../utils/exportTransactions";
-import { formatNaira, formatTransactionDate } from "../utils/transactionPeriods";
+import {
+  formatNaira,
+  formatTransactionDate,
+  formatTransactionTime,
+} from "../utils/transactionPeriods";
 import { playSensoryCue } from "../utils/sensoryFeedback";
 import { InlineAlert } from "./InlineAlert";
 import { TransactionTabs } from "./TransactionTabs";
@@ -418,6 +422,8 @@ export function ImportedTransactionReview({
                       {transaction.transactionDate
                         ? formatTransactionDate(transaction.transactionDate)
                         : "Date not set"}
+                      <span className="text-white/35"> · </span>
+                      {formatTransactionTime(transaction.transactionTime)}
                     </p>
                   </div>
                   <span
@@ -671,6 +677,8 @@ export function ImportedTransactionReview({
                           {transaction.transactionDate
                             ? formatTransactionDate(transaction.transactionDate)
                             : "—"}
+                          <span className="text-white/35"> · </span>
+                          {formatTransactionTime(transaction.transactionTime)}
                         </span>
                       )}
                     </td>
