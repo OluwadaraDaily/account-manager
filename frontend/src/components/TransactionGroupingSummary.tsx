@@ -16,17 +16,53 @@ import {
   listTransactionGroups,
   renameTransactionGroup,
 } from "../api/transactionGroups";
+import { formatNaira } from "../utils/transactionPeriods";
 import { InlineAlert } from "./InlineAlert";
 
 type TransactionGroupingSummaryProps = {
   bankId: string;
-  transactionIds: string[];
+  transactions: Array<{
+    id: string;
+    amount: string | null;
+    currency: string | null;
+    direction: "debit" | "credit" | null;
+  }>;
   refreshKey: number;
 };
 
+type GroupMoneySummary = {
+  count: number;
+  outflowMinor: bigint;
+  inflowMinor: bigint;
+  missingAmountCount: number;
+};
+
+function parseMinorUnits(value: string | null) {
+  if (!value) return null;
+  const normalized = value.replaceAll(",", "").replace(/[^\d.-]/g, "");
+  const match = normalized.match(/^(\d+)(?:\.(\d{1,2}))?$/);
+  if (!match) return null;
+  return BigInt(match[1]) * 100n + BigInt((match[2] ?? "").padEnd(2, "0"));
+}
+
+function formatMoney(minorUnits: bigint, currency: string) {
+  if (currency === "UNKNOWN") return "—";
+  const amount = Number(minorUnits) / 100;
+  if (currency === "NGN") return formatNaira(amount);
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+function formatCurrencyLabel(currency: string) {
+  return currency === "UNKNOWN" ? "Currency unavailable" : currency;
+}
+
 export function TransactionGroupingSummary({
   bankId,
-  transactionIds,
+  transactions,
   refreshKey,
 }: TransactionGroupingSummaryProps) {
   const queryClient = useQueryClient();
@@ -76,15 +112,15 @@ export function TransactionGroupingSummary({
   const groupsQuery = useQuery({
     queryKey: ["transaction-groups", bankId, refreshKey],
     queryFn: () => listTransactionGroups(bankId),
-    enabled: Boolean(bankId && transactionIds.length > 0),
+    enabled: Boolean(bankId && transactions.length > 0),
   });
   const membershipsQuery = useQuery({
     queryKey: ["transaction-group-memberships", bankId, refreshKey],
     queryFn: () => listTransactionGroupMemberships(bankId),
-    enabled: Boolean(bankId && transactionIds.length > 0),
+    enabled: Boolean(bankId && transactions.length > 0),
   });
 
-  if (transactionIds.length === 0) return null;
+  if (transactions.length === 0) return null;
   if (groupsQuery.isPending || membershipsQuery.isPending) {
     return <p className="text-muted mb-4 text-[12px]">Loading groups…</p>;
   }
@@ -108,14 +144,43 @@ export function TransactionGroupingSummary({
     );
   }
 
-  const selectedTransactionIds = new Set(transactionIds);
+  const selectedTransactionIds = new Set(transactions.map((transaction) => transaction.id));
   const selectedMemberships = membershipsQuery.data.filter((membership) =>
     selectedTransactionIds.has(membership.transactionId),
   );
-  const countsByGroup = new Map<string, number>();
-  selectedMemberships.forEach((membership) => {
-    countsByGroup.set(membership.groupId, (countsByGroup.get(membership.groupId) ?? 0) + 1);
+  const groupIdByTransactionId = new Map(
+    selectedMemberships.map((membership) => [membership.transactionId, membership.groupId]),
+  );
+  const totalsByGroup = new Map<string, Map<string, GroupMoneySummary>>();
+  transactions.forEach((transaction) => {
+    const groupId = groupIdByTransactionId.get(transaction.id) ?? "ungrouped";
+    const currency = transaction.currency ?? "UNKNOWN";
+    const totalsByCurrency = totalsByGroup.get(groupId) ?? new Map<string, GroupMoneySummary>();
+    const current = totalsByCurrency.get(currency) ?? {
+      count: 0,
+      outflowMinor: 0n,
+      inflowMinor: 0n,
+      missingAmountCount: 0,
+    };
+    const minorUnits = parseMinorUnits(transaction.amount);
+    current.count += 1;
+    if (minorUnits === null) {
+      current.missingAmountCount += 1;
+    } else if (transaction.direction === "credit") {
+      current.inflowMinor += minorUnits;
+    } else if (transaction.direction === "debit") {
+      current.outflowMinor += minorUnits;
+    } else {
+      current.missingAmountCount += 1;
+    }
+    totalsByCurrency.set(currency, current);
+    totalsByGroup.set(groupId, totalsByCurrency);
   });
+  const groupNameById = new Map(groupsQuery.data.map((group) => [group.id, group.name]));
+  const groupedTotals = [
+    ...groupsQuery.data.map((group) => ({ id: group.id, name: group.name })),
+    { id: "ungrouped", name: "Ungrouped" },
+  ].filter((group) => totalsByGroup.has(group.id));
 
   return (
     <section aria-labelledby="transaction-groups-heading" className="border-line mb-4 border px-3 py-3">
@@ -131,7 +196,7 @@ export function TransactionGroupingSummary({
         </div>
         <div className="flex items-center gap-3">
           <span className="text-muted text-[11px]">
-            {transactionIds.length - selectedMemberships.length} ungrouped
+            {transactions.length - selectedMemberships.length} ungrouped
           </span>
           <Button
             type="button"
@@ -225,10 +290,11 @@ export function TransactionGroupingSummary({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-        {groupsQuery.data.map((group) => (
-          <div key={group.id} className="flex min-w-0 items-center gap-2 text-[11px]">
-            {editingGroupId === group.id ? (
+      <div className="mt-3 grid gap-2">
+        {groupedTotals.map((group) => (
+          <div key={group.id} className="border-line bg-paper min-w-0 border px-3 py-2 text-[11px]">
+            <div className="flex items-center justify-between gap-2">
+              {editingGroupId === group.id ? (
               <form
                 className="flex min-w-0 items-center gap-2"
                 onSubmit={(event) => {
@@ -279,37 +345,62 @@ export function TransactionGroupingSummary({
             ) : (
               <>
                 <span className="text-ink font-semibold">{group.name}</span>
-                <span className="text-muted">{countsByGroup.get(group.id) ?? 0}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setEditingGroupId(group.id);
-                    setEditingGroupName(group.name);
-                    setFormError(null);
-                  }}
-                  className="text-muted hover:text-ink h-7 rounded-none px-1 font-mono text-[9px] uppercase"
-                >
-                  Rename
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setDeletingGroup({ id: group.id, name: group.name });
-                    setFormError(null);
-                  }}
-                  className="text-muted hover:text-ink h-7 rounded-none px-1 font-mono text-[9px] uppercase"
-                >
-                  Delete
-                </Button>
+                {group.id !== "ungrouped" && (
+                  <>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditingGroupId(group.id);
+                        setEditingGroupName(group.name);
+                        setFormError(null);
+                      }}
+                      className="text-muted hover:text-ink h-7 rounded-none px-1 font-mono text-[9px] uppercase"
+                    >
+                      Rename
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDeletingGroup({ id: group.id, name: group.name });
+                        setFormError(null);
+                      }}
+                      className="text-muted hover:text-ink h-7 rounded-none px-1 font-mono text-[9px] uppercase"
+                    >
+                      Delete
+                    </Button>
+                  </>
+                )}
               </>
             )}
+              <span className="text-muted">
+                {Array.from(totalsByGroup.get(group.id)?.values() ?? []).reduce(
+                  (count, summary) => count + summary.count,
+                  0,
+                )} transactions
+              </span>
+            </div>
+            <div className="mt-2 grid gap-1 sm:grid-cols-3">
+              {Array.from(totalsByGroup.get(group.id)?.entries() ?? []).map(([currency, summary]) => (
+                <div key={currency} className="text-muted flex flex-wrap gap-x-2 gap-y-1 text-[10px]">
+                  <span className="text-ink font-semibold">{formatCurrencyLabel(currency)}</span>
+                  <span>Out {formatMoney(summary.outflowMinor, currency)}</span>
+                  <span>In {formatMoney(summary.inflowMinor, currency)}</span>
+                  <span>
+                    Net {formatMoney(summary.inflowMinor - summary.outflowMinor, currency)}
+                  </span>
+                  {summary.missingAmountCount > 0 && <span>{summary.missingAmountCount} unavailable</span>}
+                </div>
+              ))}
+            </div>
           </div>
         ))}
-        {groupsQuery.data.length === 0 && <p className="text-muted text-[11px]">No groups created yet.</p>}
+        {groupsQuery.data.length === 0 && (
+          <p className="text-muted text-[11px]">No groups created yet.</p>
+        )}
       </div>
     </section>
   );

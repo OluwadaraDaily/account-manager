@@ -361,7 +361,7 @@ export function ImportedTransactionReview({
       {!loading && !error && transactions.length > 0 && (
         <TransactionGroupingSummary
           bankId={bankId}
-          transactionIds={transactions.map((transaction) => transaction.id)}
+          transactions={transactions}
           refreshKey={refreshKey}
         />
       )}
