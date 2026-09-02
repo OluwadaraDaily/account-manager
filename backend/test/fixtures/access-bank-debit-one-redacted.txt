@@ -1,0 +1,21 @@
+Your account has been Debited
+NGN 2,900.00
+today at 2.15pm
+
+Transaction Summary
+A/C Number
+XXX******860
+Account Name
+REDACTED CUSTOMER
+Description
+WEB PYMT REDACTED MERCHANT
+Reference Number
+REDACTED-REFERENCE-1
+Transaction Branch
+CENTRAL PROCESSING BRANCH
+Transaction Date
+30-Jun-2025
+Value Date
+30-Jun-2025
+Available Balance
+101,206.75

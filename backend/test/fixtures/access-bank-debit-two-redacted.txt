@@ -1,0 +1,21 @@
+Your account has been Debited
+NGN 3,400.00
+today at 2.15pm
+
+Transaction Summary
+A/C Number
+XXX******860
+Account Name
+REDACTED CUSTOMER
+Description
+TRF/REDACTED TRANSFER DESCRIPTION
+Reference Number
+REDACTED-REFERENCE-2
+Transaction Branch
+REDACTED BRANCH
+Transaction Date
+29-Jun-2025
+Value Date
+29-Jun-2025
+Available Balance
+126,793.76

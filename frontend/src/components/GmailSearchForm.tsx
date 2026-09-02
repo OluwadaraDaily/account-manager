@@ -299,7 +299,7 @@ export function GmailSearchForm({ onImportCompleted }: GmailSearchFormProps) {
           htmlFor="gmail-import-name"
           className="text-muted flex flex-col gap-1.5 text-[11px] font-semibold"
         >
-          Import name <span className="text-muted/70 font-normal">(optional)</span>
+          Import name
           <input
             id="gmail-import-name"
             type="text"

@@ -11,6 +11,7 @@ import type { BankDirectoryStore } from "../db/repositories/bankDirectoryStore.j
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { TransactionStore } from "../db/repositories/transactionStore.js";
 import { parseUnionBankTransaction } from "../parsers/unionBankParser.js";
+import { parseAccessBankTransaction } from "../parsers/accessBankParser.js";
 import { decryptToken } from "../security/encryption.js";
 import { buildGmailSearchQuery } from "./gmailSearch.js";
 import { buildTransactionFingerprint } from "./transactionFingerprint.js";
@@ -165,7 +166,11 @@ export function createGmailImportJobRunner({
                 if (savedBank) senderConfirmed = true;
               }
 
-              const transaction = parseUnionBankTransaction(messageContent);
+              const transaction =
+                bankId === "access-bank"
+                  ? parseAccessBankTransaction(messageContent)
+                  : bankId === "union-bank" ? parseUnionBankTransaction(messageContent)
+                  : null;
 
               if (transaction) {
                 const existingTransaction = await transactionStore.findByFingerprint(

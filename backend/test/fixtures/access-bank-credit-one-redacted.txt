@@ -1,0 +1,21 @@
+Your account has been Credited
+NGN 120,000.00
+today at 2.15pm
+
+Transaction Summary
+A/C Number
+XXX******860
+Account Name
+REDACTED CUSTOMER
+Description
+TRF/Refund. REDACTED DESCRIPTION
+Reference Number
+REDACTED-REFERENCE-3
+Transaction Branch
+REDACTED BRANCH
+Transaction Date
+01-Jun-2025
+Value Date
+01-Jun-2025
+Available Balance
+193,383.43

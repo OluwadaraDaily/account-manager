@@ -1,0 +1,21 @@
+Your account has been Credited
+NGN 100,000.00
+today at 2.15pm
+
+Transaction Summary
+A/C Number
+XXX******860
+Account Name
+REDACTED CUSTOMER
+Description
+REDACTED CUSTOMER/MOBILE/REDACTED TRANSFER
+Reference Number
+REDACTED-REFERENCE-4
+Transaction Branch
+HEAD OFFICE
+Transaction Date
+05-May-2025
+Value Date
+05-May-2025
+Available Balance
+133,961.68
