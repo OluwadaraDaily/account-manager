@@ -3,6 +3,7 @@ import type { GmailMessageContent } from "../../integrations/google/gmailClient.
 import {
   assessTransaction,
   fallbackMessageDate,
+  fallbackMessageTime,
   parseDateValue,
   parseTimeValue,
 } from "../shared/utils.js";
@@ -54,7 +55,7 @@ export function parseUnionBankTransaction(
   return {
     sourceMessageId: message.id,
     transactionDate,
-    transactionTime: parseTimeValue(transactionDateValue),
+    transactionTime: parseTimeValue(transactionDateValue) ?? fallbackMessageTime(message),
     direction,
     amount,
     currency: amount ? "NGN" : null,

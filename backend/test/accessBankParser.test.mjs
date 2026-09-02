@@ -61,3 +61,24 @@ test("rejects a non-Access sender", () => {
     null,
   );
 });
+
+test("falls back to the Access Bank email time when no transaction time is present", async () => {
+  const body = await readFile(
+    new URL("./fixtures/access-bank-debit-one-redacted.txt", import.meta.url),
+    "utf8",
+  );
+  const transaction = parseAccessBankTransaction({
+    id: "fixture-email-time",
+    threadId: "thread-email-time",
+    internalDate: null,
+    headers: {
+      from: "no_reply@accessbankplc.com",
+      subject: "AccessAlert Transaction Alert [Debit: 2900.00 NGN]",
+      date: "Mon, 30 Jun 2025 15:08:11 +0530",
+    },
+    body: { text: body, source: "html" },
+  });
+
+  assert.ok(transaction);
+  assert.equal(transaction.transactionTime, "15:08:11");
+});

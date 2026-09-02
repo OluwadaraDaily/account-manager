@@ -1,6 +1,6 @@
 import type { NormalizedTransaction } from "@account-manager/shared";
 import type { GmailMessageContent } from "../../integrations/google/gmailClient.js";
-import { assessTransaction, fallbackMessageDate } from "../shared/utils.js";
+import { assessTransaction, fallbackMessageDate, fallbackMessageTime } from "../shared/utils.js";
 import { getAccessFields } from "./utils.js";
 
 export function parseAccessBankTransaction(
@@ -31,7 +31,7 @@ export function parseAccessBankTransaction(
   return {
     sourceMessageId: message.id,
     transactionDate,
-    transactionTime: null,
+    transactionTime: fallbackMessageTime(message),
     direction: fields.direction,
     amount: fields.amount,
     currency: fields.amount ? "NGN" : null,

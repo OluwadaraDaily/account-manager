@@ -71,6 +71,16 @@ export function fallbackMessageDate(message: GmailMessageContent) {
   return null;
 }
 
+export function fallbackMessageTime(message: GmailMessageContent) {
+  const timeMatch = message.headers.date?.match(/\b(\d{1,2}):(\d{2})(?::(\d{2}))?\b/);
+  if (!timeMatch) return null;
+  const hours = Number(timeMatch[1]);
+  const minutes = Number(timeMatch[2]);
+  const seconds = Number(timeMatch[3] ?? "0");
+  if (hours > 23 || minutes > 59 || seconds > 59) return null;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
 export function normalizeAmount(value: string | null) {
   const amount = value?.match(/[0-9][0-9,]*(?:\.[0-9]{1,2})?/);
   return amount ? amount[0].replaceAll(",", "") : null;

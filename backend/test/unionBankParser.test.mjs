@@ -109,6 +109,26 @@ test("extracts transaction time from a combined date and time field", () => {
   assert.equal(transaction.transactionTime, "14:35:22");
 });
 
+test("falls back to the Union Bank email time when no transaction time is present", () => {
+  const transaction = parseUnionBankTransaction({
+    id: "fixture-email-time",
+    threadId: "thread-email-time",
+    internalDate: null,
+    headers: {
+      from: "alerts@unionbankng.com",
+      subject: "Union Bank transaction alert",
+      date: "Mon, 30 Jun 2025 15:08:11 +0530",
+    },
+    body: {
+      text: "Transaction Type: DebitAlert\nTransaction Date: 30/06/2025\nTransaction Amount: NGN 1,250.00",
+      source: "plain",
+    },
+  });
+
+  assert.ok(transaction);
+  assert.equal(transaction.transactionTime, "15:08:11");
+});
+
 test("handles an incomplete Union Bank fixture without throwing", async () => {
   const body = await readFile(
     new URL("./fixtures/union-bank-incomplete-redacted.txt", import.meta.url),
