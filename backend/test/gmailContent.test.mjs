@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { extractGmailBodyText } from "../dist/integrations/google/gmailContent.js";
-import { parseUnionBankTransaction } from "../dist/parsers/unionBankParser.js";
+import { parseUnionBankTransaction } from "../dist/parsers/union/parser.js";
 
 test("extracts and parses a redacted Union Bank HTML fixture", async () => {
   const html = await readFile(

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-import { parseUnionBankTransaction } from "../dist/parsers/unionBankParser.js";
+import { parseUnionBankTransaction } from "../dist/parsers/union/parser.js";
 
 const fixtures = [
   ["debit", "debit"],

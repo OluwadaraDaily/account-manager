@@ -10,8 +10,8 @@ import type { ImportJobTransactionStore } from "../db/repositories/importJobTran
 import type { BankDirectoryStore } from "../db/repositories/bankDirectoryStore.js";
 import type { RefreshTokenStore } from "../db/repositories/refreshTokenStore.js";
 import type { TransactionStore } from "../db/repositories/transactionStore.js";
-import { parseUnionBankTransaction } from "../parsers/unionBankParser.js";
-import { parseAccessBankTransaction } from "../parsers/accessBankParser.js";
+import { parseUnionBankTransaction } from "../parsers/union/parser.js";
+import { parseAccessBankTransaction } from "../parsers/access/parser.js";
 import { decryptToken } from "../security/encryption.js";
 import { buildGmailSearchQuery } from "./gmailSearch.js";
 import { buildTransactionFingerprint } from "./transactionFingerprint.js";
