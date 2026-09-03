@@ -54,6 +54,13 @@ type GmailMessageContentResponse = {
   };
 };
 
+type GmailErrorResponse = {
+  error?: {
+    message?: string;
+    errors?: Array<{ reason?: string; message?: string }>;
+  };
+};
+
 const retryableGmailStatuses = new Set([429, 500, 502, 503, 504]);
 const maxGmailRequestAttempts = 3;
 const defaultRetryDelayMs = 250;
@@ -79,6 +86,18 @@ function wait(milliseconds: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 }
 
+async function getGmailErrorDetails(response: Response) {
+  try {
+    const body = (await response.json()) as GmailErrorResponse;
+    return {
+      reason: body.error?.errors?.[0]?.reason ?? null,
+      message: body.error?.message ?? body.error?.errors?.[0]?.message ?? null,
+    };
+  } catch {
+    return { reason: null, message: null };
+  }
+}
+
 async function requestGmailJson<T>(url: URL, accessToken: string, description: string) {
   for (let attempt = 1; attempt <= maxGmailRequestAttempts; attempt += 1) {
     let response: Response;
@@ -98,12 +117,27 @@ async function requestGmailJson<T>(url: URL, accessToken: string, description: s
 
     if (response.ok) return (await response.json()) as T;
 
+    const errorDetails = await getGmailErrorDetails(response);
+    console.warn("Gmail API request failed.", {
+      operation: description,
+      status: response.status,
+      reason: errorDetails.reason,
+      message: errorDetails.message,
+      attempt,
+      retryableStatus: retryableGmailStatuses.has(response.status),
+    });
+    const detail = errorDetails.reason
+      ? ` (${errorDetails.reason}${errorDetails.message ? `: ${errorDetails.message}` : ""})`
+      : "";
+
     if (!retryableGmailStatuses.has(response.status) || attempt === maxGmailRequestAttempts) {
       if (retryableGmailStatuses.has(response.status)) {
-        throw new TemporaryGmailError(`${description} failed with status ${response.status}.`);
+        throw new TemporaryGmailError(
+          `${description} failed with status ${response.status}${detail}.`,
+        );
       }
 
-      throw new Error(`${description} failed with status ${response.status}.`);
+      throw new Error(`${description} failed with status ${response.status}${detail}.`);
     }
 
     await wait(getRetryDelayMs(response, attempt));

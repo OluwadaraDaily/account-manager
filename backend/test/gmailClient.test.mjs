@@ -38,3 +38,26 @@ test("does not retry a permanent Gmail API failure", async (t) => {
   );
   assert.equal(attempts, 1);
 });
+
+test("includes Gmail's structured error reason for diagnostics", async (t) => {
+  t.mock.method(OAuth2Client.prototype, "getAccessToken", async () => ({ token: "access-token" }));
+  t.mock.method(
+    globalThis,
+    "fetch",
+    async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            message: "User rate limit exceeded.",
+            errors: [{ reason: "userRateLimitExceeded", message: "User rate limit exceeded." }],
+          },
+        }),
+        { status: 403, headers: { "content-type": "application/json" } },
+      ),
+  );
+
+  await assert.rejects(
+    listGmailMessages({ refreshToken: "refresh-token" }),
+    /Gmail message listing failed with status 403 \(userRateLimitExceeded: User rate limit exceeded\.\)\./,
+  );
+});

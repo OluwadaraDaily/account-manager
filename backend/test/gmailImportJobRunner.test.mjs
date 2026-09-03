@@ -155,6 +155,7 @@ test("processes Gmail messages sequentially and updates extraction progress", as
       transaction: {
         sourceMessageId: "transaction-message",
         transactionDate: "2026-02-01",
+        transactionTime: null,
         direction: "debit",
         amount: "123.45",
         currency: "NGN",
