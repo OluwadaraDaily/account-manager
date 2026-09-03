@@ -29,6 +29,21 @@ export type StoredNormalizedTransaction = NormalizedTransaction & {
   updatedAt: string;
 };
 
+export type TransactionPageOptions = {
+  page: number;
+  pageSize: number;
+};
+
+export type TransactionPage = {
+  transactions: StoredNormalizedTransaction[];
+  total: number;
+  reviewCounts: {
+    ready: number;
+    needsReview: number;
+    dismissed: number;
+  };
+};
+
 export interface TransactionStore {
   upsert(input: NormalizedTransactionWrite): Promise<StoredNormalizedTransaction>;
   update(
@@ -48,11 +63,22 @@ export interface TransactionStore {
     fingerprint: string,
   ): Promise<StoredNormalizedTransaction | null>;
   list(googleSubject: string, bankId: string): Promise<StoredNormalizedTransaction[]>;
+  listPage(
+    googleSubject: string,
+    bankId: string,
+    options: TransactionPageOptions,
+  ): Promise<TransactionPage>;
   listForImportJob(
     googleSubject: string,
     bankId: string,
     jobId: string,
   ): Promise<StoredNormalizedTransaction[]>;
+  listForImportJobPage(
+    googleSubject: string,
+    bankId: string,
+    jobId: string,
+    options: TransactionPageOptions,
+  ): Promise<TransactionPage>;
   close(): Promise<void>;
 }
 
@@ -134,6 +160,21 @@ function getValues(input: NormalizedTransactionWrite, transactionId: string, tim
     timestamp,
     timestamp,
   ];
+}
+
+function toTransactionPage(
+  rows: TransactionRow[],
+  count: { total: number; ready: number; needs_review: number; dismissed: number },
+): TransactionPage {
+  return {
+    transactions: rows.map(toStoredTransaction),
+    total: count.total,
+    reviewCounts: {
+      ready: count.ready,
+      needsReview: count.needs_review,
+      dismissed: count.dismissed,
+    },
+  };
 }
 
 function validateInput(input: NormalizedTransactionWrite) {
@@ -322,6 +363,37 @@ export class SqliteTransactionStore implements TransactionStore {
     return rows.map(toStoredTransaction);
   }
 
+  async listPage(googleSubject: string, bankId: string, options: TransactionPageOptions) {
+    assertIdentifier(googleSubject, "googleSubject");
+    assertIdentifier(bankId, "bankId");
+    const offset = (options.page - 1) * options.pageSize;
+    const rows = this.database
+      .prepare(
+        `SELECT ${getColumns()}
+         FROM normalized_transactions
+         WHERE google_subject = ? AND bank_id = ?
+         ORDER BY transaction_date, transaction_id
+         LIMIT ? OFFSET ?`,
+      )
+      .all(googleSubject, bankId, options.pageSize, offset) as TransactionRow[];
+    const count = this.database
+      .prepare(
+        `SELECT COUNT(*) AS total,
+                SUM(CASE WHEN review_status = 'ready' THEN 1 ELSE 0 END) AS ready,
+                SUM(CASE WHEN review_status = 'needs-review' THEN 1 ELSE 0 END) AS needs_review,
+                SUM(CASE WHEN review_status = 'dismissed' THEN 1 ELSE 0 END) AS dismissed
+         FROM normalized_transactions
+         WHERE google_subject = ? AND bank_id = ?`,
+      )
+      .get(googleSubject, bankId) as {
+      total: number;
+      ready: number;
+      needs_review: number;
+      dismissed: number;
+    };
+    return toTransactionPage(rows, count);
+  }
+
   async listForImportJob(googleSubject: string, bankId: string, jobId: string) {
     assertIdentifier(googleSubject, "googleSubject");
     assertIdentifier(bankId, "bankId");
@@ -341,6 +413,51 @@ export class SqliteTransactionStore implements TransactionStore {
       .all(googleSubject, bankId, jobId) as TransactionRow[];
 
     return rows.map(toStoredTransaction);
+  }
+
+  async listForImportJobPage(
+    googleSubject: string,
+    bankId: string,
+    jobId: string,
+    options: TransactionPageOptions,
+  ) {
+    assertIdentifier(googleSubject, "googleSubject");
+    assertIdentifier(bankId, "bankId");
+    assertIdentifier(jobId, "jobId");
+    const offset = (options.page - 1) * options.pageSize;
+    const rows = this.database
+      .prepare(
+        `SELECT ${getColumns("transactions")}
+         FROM normalized_transactions AS transactions
+         INNER JOIN gmail_import_job_transactions AS links
+           ON links.transaction_id = transactions.transaction_id
+          AND links.google_subject = transactions.google_subject
+          AND links.bank_id = transactions.bank_id
+         WHERE links.google_subject = ? AND links.bank_id = ? AND links.job_id = ?
+         ORDER BY transactions.transaction_date, transactions.transaction_id
+         LIMIT ? OFFSET ?`,
+      )
+      .all(googleSubject, bankId, jobId, options.pageSize, offset) as TransactionRow[];
+    const count = this.database
+      .prepare(
+        `SELECT COUNT(*) AS total,
+                SUM(CASE WHEN transactions.review_status = 'ready' THEN 1 ELSE 0 END) AS ready,
+                SUM(CASE WHEN transactions.review_status = 'needs-review' THEN 1 ELSE 0 END) AS needs_review,
+                SUM(CASE WHEN transactions.review_status = 'dismissed' THEN 1 ELSE 0 END) AS dismissed
+         FROM normalized_transactions AS transactions
+         INNER JOIN gmail_import_job_transactions AS links
+           ON links.transaction_id = transactions.transaction_id
+          AND links.google_subject = transactions.google_subject
+          AND links.bank_id = transactions.bank_id
+         WHERE links.google_subject = ? AND links.bank_id = ? AND links.job_id = ?`,
+      )
+      .get(googleSubject, bankId, jobId) as {
+      total: number;
+      ready: number;
+      needs_review: number;
+      dismissed: number;
+    };
+    return toTransactionPage(rows, count);
   }
 
   async close() {
@@ -476,6 +593,35 @@ export class PostgresTransactionStore implements TransactionStore {
     return result.rows.map(toStoredTransaction);
   }
 
+  async listPage(googleSubject: string, bankId: string, options: TransactionPageOptions) {
+    assertIdentifier(googleSubject, "googleSubject");
+    assertIdentifier(bankId, "bankId");
+    const offset = (options.page - 1) * options.pageSize;
+    const result = await this.pool.query<TransactionRow>(
+      `SELECT ${getColumns()}
+       FROM normalized_transactions
+       WHERE google_subject = $1 AND bank_id = $2
+       ORDER BY transaction_date, transaction_id
+       LIMIT $3 OFFSET $4`,
+      [googleSubject, bankId, options.pageSize, offset],
+    );
+    const countResult = await this.pool.query<{
+      total: number;
+      ready: number;
+      needs_review: number;
+      dismissed: number;
+    }>(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE review_status = 'ready')::int AS ready,
+              COUNT(*) FILTER (WHERE review_status = 'needs-review')::int AS needs_review,
+              COUNT(*) FILTER (WHERE review_status = 'dismissed')::int AS dismissed
+       FROM normalized_transactions
+       WHERE google_subject = $1 AND bank_id = $2`,
+      [googleSubject, bankId],
+    );
+    return toTransactionPage(result.rows, countResult.rows[0]);
+  }
+
   async listForImportJob(googleSubject: string, bankId: string, jobId: string) {
     assertIdentifier(googleSubject, "googleSubject");
     assertIdentifier(bankId, "bankId");
@@ -494,6 +640,49 @@ export class PostgresTransactionStore implements TransactionStore {
     );
 
     return result.rows.map(toStoredTransaction);
+  }
+
+  async listForImportJobPage(
+    googleSubject: string,
+    bankId: string,
+    jobId: string,
+    options: TransactionPageOptions,
+  ) {
+    assertIdentifier(googleSubject, "googleSubject");
+    assertIdentifier(bankId, "bankId");
+    assertIdentifier(jobId, "jobId");
+    const offset = (options.page - 1) * options.pageSize;
+    const result = await this.pool.query<TransactionRow>(
+      `SELECT ${getColumns("transactions")}
+       FROM normalized_transactions AS transactions
+       INNER JOIN gmail_import_job_transactions AS links
+         ON links.transaction_id = transactions.transaction_id
+        AND links.google_subject = transactions.google_subject
+        AND links.bank_id = transactions.bank_id
+       WHERE links.google_subject = $1 AND links.bank_id = $2 AND links.job_id = $3
+       ORDER BY transactions.transaction_date, transactions.transaction_id
+       LIMIT $4 OFFSET $5`,
+      [googleSubject, bankId, jobId, options.pageSize, offset],
+    );
+    const countResult = await this.pool.query<{
+      total: number;
+      ready: number;
+      needs_review: number;
+      dismissed: number;
+    }>(
+      `SELECT COUNT(*)::int AS total,
+              COUNT(*) FILTER (WHERE transactions.review_status = 'ready')::int AS ready,
+              COUNT(*) FILTER (WHERE transactions.review_status = 'needs-review')::int AS needs_review,
+              COUNT(*) FILTER (WHERE transactions.review_status = 'dismissed')::int AS dismissed
+       FROM normalized_transactions AS transactions
+       INNER JOIN gmail_import_job_transactions AS links
+         ON links.transaction_id = transactions.transaction_id
+        AND links.google_subject = transactions.google_subject
+        AND links.bank_id = transactions.bank_id
+       WHERE links.google_subject = $1 AND links.bank_id = $2 AND links.job_id = $3`,
+      [googleSubject, bankId, jobId],
+    );
+    return toTransactionPage(result.rows, countResult.rows[0]);
   }
 
   async close() {

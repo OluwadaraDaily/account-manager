@@ -543,28 +543,32 @@ test("lists transactions for an authenticated import job and enforces bank scope
       },
     }),
     transactionStorePromise: Promise.resolve({
-      async listForImportJob(googleSubject, bankId, jobId) {
-        calls.push({ googleSubject, bankId, jobId });
-        return [
-          {
-            id: "transaction-1",
-            googleSubject,
-            bankId,
-            sourceMessageId: "message-1",
-            transactionDate: "2026-02-01",
-            direction: "debit",
-            amount: "123.45",
-            currency: "NGN",
-            counterparty: "Example Merchant",
-            description: "Example transaction",
-            channel: "POS",
-            confidence: "high",
-            reviewReasons: [],
-            reviewStatus: "ready",
-            createdAt: "2026-02-01T00:00:00.000Z",
-            updatedAt: "2026-02-01T00:00:00.000Z",
-          },
-        ];
+      async listForImportJobPage(googleSubject, bankId, jobId, options) {
+        calls.push({ googleSubject, bankId, jobId, options });
+        return {
+          transactions: [
+            {
+              id: "transaction-1",
+              googleSubject,
+              bankId,
+              sourceMessageId: "message-1",
+              transactionDate: "2026-02-01",
+              direction: "debit",
+              amount: "123.45",
+              currency: "NGN",
+              counterparty: "Example Merchant",
+              description: "Example transaction",
+              channel: "POS",
+              confidence: "high",
+              reviewReasons: [],
+              reviewStatus: "ready",
+              createdAt: "2026-02-01T00:00:00.000Z",
+              updatedAt: "2026-02-01T00:00:00.000Z",
+            },
+          ],
+          total: 1,
+          reviewCounts: { ready: 1, needsReview: 0, dismissed: 0 },
+        };
       },
     }),
     runGmailImportJob: async () => {},
@@ -598,10 +602,17 @@ test("lists transactions for an authenticated import job and enforces bank scope
       );
     });
 
-  const response = await runRequest("/imports/gmail/jobs/job-1/transactions?bankId=union-bank");
+  const response = await runRequest(
+    "/imports/gmail/jobs/job-1/transactions?bankId=union-bank&page=1&pageSize=10",
+  );
   assert.equal(response.statusCode, 200);
   assert.deepEqual(calls, [
-    { googleSubject: "google-subject", bankId: "union-bank", jobId: "job-1" },
+    {
+      googleSubject: "google-subject",
+      bankId: "union-bank",
+      jobId: "job-1",
+      options: { page: 1, pageSize: 10 },
+    },
   ]);
   assert.deepEqual(response.body.transactions, [
     {
@@ -621,6 +632,15 @@ test("lists transactions for an authenticated import job and enforces bank scope
       updatedAt: "2026-02-01T00:00:00.000Z",
     },
   ]);
+  assert.deepEqual(response.body.reviewCounts, { ready: 1, needsReview: 0, dismissed: 0 });
+  assert.deepEqual(response.body.pagination, {
+    page: 1,
+    pageSize: 10,
+    total: 1,
+    totalPages: 1,
+    hasNext: false,
+    hasPrevious: false,
+  });
 
   const wrongBankResponse = await runRequest(
     "/imports/gmail/jobs/job-1/transactions?bankId=other-bank",

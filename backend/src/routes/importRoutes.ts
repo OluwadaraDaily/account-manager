@@ -140,15 +140,19 @@ export function createImportRouter({
       }
 
       const importJobStore = await importJobStorePromise;
-      const job = await importJobStore.create(account.googleSubject, {
-        bankId,
-        searchMode,
-        senderEmail: resolvedSenderEmail,
-        after: after ?? null,
-        before: before ?? null,
-        subject: subject ?? null,
-        keyword: keyword ?? null,
-      }, name ?? null);
+      const job = await importJobStore.create(
+        account.googleSubject,
+        {
+          bankId,
+          searchMode,
+          senderEmail: resolvedSenderEmail,
+          after: after ?? null,
+          before: before ?? null,
+          subject: subject ?? null,
+          keyword: keyword ?? null,
+        },
+        name ?? null,
+      );
 
       response.status(202).json({ job });
       void runGmailImportJob(job.id, account.googleSubject);
@@ -172,9 +176,13 @@ export function createImportRouter({
       }
 
       const importJobStore = await importJobStorePromise;
-      const job = await importJobStore.update(request.params.jobId as string, account.googleSubject, {
-        name: response.locals.validatedBody.name,
-      });
+      const job = await importJobStore.update(
+        request.params.jobId as string,
+        account.googleSubject,
+        {
+          name: response.locals.validatedBody.name,
+        },
+      );
 
       if (!job) {
         response.status(404).json({ error: "Import job was not found." });
@@ -251,7 +259,7 @@ export function createImportRouter({
       request,
       response: Response<unknown, ValidatedLocals<typeof importTransactionsQuerySchema>>,
     ) => {
-      const { bankId } = response.locals.validatedQuery;
+      const { bankId, page, pageSize } = response.locals.validatedQuery;
       const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
       const sessionStore = await sessionStorePromise;
       const account = sessionId ? await sessionStore.get(sessionId) : null;
@@ -275,12 +283,25 @@ export function createImportRouter({
       }
 
       const transactionStore = await transactionStorePromise;
-      const transactions = await transactionStore.listForImportJob(
+      const result = await transactionStore.listForImportJobPage(
         account.googleSubject,
         bankId,
         job.id,
+        { page, pageSize },
       );
-      response.json({ transactions: transactions.map(toTransactionResponse) });
+      const totalPages = result.total === 0 ? 0 : Math.ceil(result.total / pageSize);
+      response.json({
+        transactions: result.transactions.map(toTransactionResponse),
+        reviewCounts: result.reviewCounts,
+        pagination: {
+          page,
+          pageSize,
+          total: result.total,
+          totalPages,
+          hasNext: totalPages > 0 && page < totalPages,
+          hasPrevious: page > 1 && totalPages > 0,
+        },
+      });
     },
   );
 
@@ -312,7 +333,7 @@ export function createImportRouter({
       request,
       response: Response<unknown, ValidatedLocals<typeof importTransactionsQuerySchema>>,
     ) => {
-      const { bankId } = response.locals.validatedQuery;
+      const { bankId, page, pageSize } = response.locals.validatedQuery;
       const sessionId = parseCookies(request.headers.cookie).get(appConfig.sessionCookieName);
       const sessionStore = await sessionStorePromise;
       const account = sessionId ? await sessionStore.get(sessionId) : null;
@@ -323,8 +344,23 @@ export function createImportRouter({
       }
 
       const transactionStore = await transactionStorePromise;
-      const transactions = await transactionStore.list(account.googleSubject, bankId);
-      response.json({ transactions: transactions.map(toTransactionResponse) });
+      const result = await transactionStore.listPage(account.googleSubject, bankId, {
+        page,
+        pageSize,
+      });
+      const totalPages = result.total === 0 ? 0 : Math.ceil(result.total / pageSize);
+      response.json({
+        transactions: result.transactions.map(toTransactionResponse),
+        reviewCounts: result.reviewCounts,
+        pagination: {
+          page,
+          pageSize,
+          total: result.total,
+          totalPages,
+          hasNext: totalPages > 0 && page < totalPages,
+          hasPrevious: page > 1 && totalPages > 0,
+        },
+      });
     },
   );
 

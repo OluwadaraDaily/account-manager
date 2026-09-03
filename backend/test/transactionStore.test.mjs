@@ -76,6 +76,15 @@ test("stores normalized fields and updates an existing Gmail message idempotentl
   assert.equal(directionUpdated?.counterparty, "Updated Merchant");
   assert.equal(directionUpdated?.description, "Updated description");
   assert.equal(directionUpdated?.reviewStatus, "dismissed");
+  const page = await store.listPage("google-subject", "union-bank", { page: 1, pageSize: 1 });
+  assert.equal(page.total, 1);
+  assert.equal(page.transactions.length, 1);
+  assert.deepEqual(page.reviewCounts, { ready: 0, needsReview: 0, dismissed: 1 });
+  assert.deepEqual(await store.listPage("google-subject", "union-bank", { page: 2, pageSize: 1 }), {
+    transactions: [],
+    total: 1,
+    reviewCounts: { ready: 0, needsReview: 0, dismissed: 1 },
+  });
   assert.equal(
     (
       await store.findByFingerprint(
