@@ -53,6 +53,13 @@ export function extractUnionCounterparty(description: string | null) {
   const transferMatch = description.match(/\btransfer\s+to\s+(.+?)(?=\s{2,}|$)/i);
   if (transferMatch) return transferMatch[1].replace(/\s+/g, " ").trim() || null;
 
+  const incomingTransferMatch =
+    description.match(/\btransfer\s+from\s+(.+?)(?=\s{2,}|$)/i) ??
+    description.match(/\btrf\s+from\s+(.+?)(?=\s{2,}|$)/i);
+  if (incomingTransferMatch) {
+    return incomingTransferMatch[1].replace(/\s+/g, " ").trim() || null;
+  }
+
   const cardMatch = description.match(/\b[^/\s]+\/(.+)$/i);
   if (!cardMatch) return null;
 

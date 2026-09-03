@@ -164,6 +164,29 @@ test("extracts Union Bank transfer and card counterparties from transaction desc
   }
 });
 
+test("extracts the sender from an incoming Union Bank transfer description", () => {
+  const transaction = parseUnionBankTransaction({
+    id: "fixture-incoming-transfer-counterparty",
+    threadId: "thread-incoming-transfer-counterparty",
+    internalDate: null,
+    headers: {
+      from: "alerts@unionbankng.com",
+      subject: "Union Bank transaction alert",
+      date: null,
+    },
+    body: {
+      text:
+        "Transaction Type\nCreditAlert\nTransaction Amount\nNGN 100.00\nTransaction Description\n" +
+        "UIP Trf from Paystack - Transfer from PiggyVestPiggyVest\nTransaction Date\n01/09/2026",
+      source: "plain",
+    },
+  });
+
+  assert.ok(transaction);
+  assert.equal(transaction.direction, "credit");
+  assert.equal(transaction.counterparty, "PiggyVestPiggyVest");
+});
+
 test("handles an incomplete Union Bank fixture without throwing", async () => {
   const body = await readFile(
     new URL("./fixtures/union-bank-incomplete-redacted.txt", import.meta.url),
