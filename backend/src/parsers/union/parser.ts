@@ -7,7 +7,13 @@ import {
   parseDateValue,
   parseTimeValue,
 } from "../shared/utils.js";
-import { captureAdjacentField, captureField, fieldLabels, parseUnionAmount } from "./utils.js";
+import {
+  captureAdjacentField,
+  captureField,
+  extractUnionCounterparty,
+  fieldLabels,
+  parseUnionAmount,
+} from "./utils.js";
 
 export function parseUnionBankTransaction(
   message: GmailMessageContent,
@@ -41,6 +47,10 @@ export function parseUnionBankTransaction(
   const parsedTransactionDate = parseDateValue(transactionDateValue);
   const transactionDate = parsedTransactionDate ?? fallbackMessageDate(message);
   const reviewReasons: string[] = [];
+  const description =
+    captureField(bodyText, fieldLabels.description) ??
+    captureAdjacentField(bodyText, fieldLabels.description) ??
+    (subject || null);
   if (!direction && hasDebitSignal && hasCreditSignal)
     reviewReasons.push("conflicting_direction_signals");
   if (hasReversalOrRefundSignal) reviewReasons.push("possible_reversal_or_refund");
@@ -60,12 +70,10 @@ export function parseUnionBankTransaction(
     amount,
     currency: amount ? "NGN" : null,
     counterparty:
+      extractUnionCounterparty(description) ??
       captureField(bodyText, fieldLabels.counterparty) ??
       captureAdjacentField(bodyText, fieldLabels.counterparty),
-    description:
-      captureField(bodyText, fieldLabels.description) ??
-      captureAdjacentField(bodyText, fieldLabels.description) ??
-      (subject || null),
+    description,
     channel:
       captureField(bodyText, fieldLabels.channel) ??
       captureAdjacentField(bodyText, fieldLabels.channel) ??

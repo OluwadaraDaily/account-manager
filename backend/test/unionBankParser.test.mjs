@@ -129,6 +129,41 @@ test("falls back to the Union Bank email time when no transaction time is presen
   assert.equal(transaction.transactionTime, "15:08:11");
 });
 
+test("extracts Union Bank transfer and card counterparties from transaction descriptions", () => {
+  const examples = [
+    [
+      "MOBILEUNION Transfer to UGO OIL AND GAS VENTURESACCOUNT 2  gas refill",
+      "UGO OIL AND GAS VENTURESACCOUNT 2",
+    ],
+    ["POS@2058G7KK/ADEWUYI BAMIDELE M. (MO Lagos       LANG", "ADEWUYI BAMIDELE M. (MO Lagos"],
+    ["PYA@2FBP9045/WT-OLAYINKA              Ifako-ijaye  NG", "WT-OLAYINKA"],
+    ["POS@3IPG0001/18805495081            Google PlaystLANG", "Google PlaystLANG"],
+  ];
+
+  for (const [description, expectedCounterparty] of examples) {
+    const transaction = parseUnionBankTransaction({
+      id: "fixture-counterparty-" + expectedCounterparty,
+      threadId: "thread-counterparty",
+      internalDate: null,
+      headers: {
+        from: "alerts@unionbankng.com",
+        subject: "Union Bank transaction alert",
+        date: null,
+      },
+      body: {
+        text:
+          "Transaction Type\nDebitAlert\nTransaction Amount\nNGN 100.00\nTransaction Description\n" +
+          description +
+          "\nTransaction Date\n01/09/2026",
+        source: "plain",
+      },
+    });
+
+    assert.ok(transaction);
+    assert.equal(transaction.counterparty, expectedCounterparty);
+  }
+});
+
 test("handles an incomplete Union Bank fixture without throwing", async () => {
   const body = await readFile(
     new URL("./fixtures/union-bank-incomplete-redacted.txt", import.meta.url),

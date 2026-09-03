@@ -47,4 +47,23 @@ export function parseUnionAmount(text: string) {
   return normalizeAmount(source);
 }
 
+export function extractUnionCounterparty(description: string | null) {
+  if (!description) return null;
+
+  const transferMatch = description.match(/\btransfer\s+to\s+(.+?)(?=\s{2,}|$)/i);
+  if (transferMatch) return transferMatch[1].replace(/\s+/g, " ").trim() || null;
+
+  const cardMatch = description.match(/\b[^/\s]+\/(.+)$/i);
+  if (!cardMatch) return null;
+
+  const segments = cardMatch[1]
+    .split(/\s{2,}/)
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  if (segments.length === 0) return null;
+
+  const descriptor = segments[0];
+  return /^\d+$/.test(descriptor) && segments[1] ? segments[1] : descriptor;
+}
+
 export { fieldLabels };
